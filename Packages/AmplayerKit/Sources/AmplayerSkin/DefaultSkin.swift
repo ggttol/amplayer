@@ -390,8 +390,13 @@ struct DefaultSkin {
             p.fill(0, y, 1, 20, frameLight)
             p.fill(177, y, 1, 20, frameDark)
             p.text("playlist", 26 + 50 - 15, y + 7, active ? accent : frameLight)
-            // 右上角的关闭按钮位置
-            p.inset(153 + 14, y + 3, 9, 9, frameDark)
+            // 右上角的关闭按钮（和均衡器的一样：凸起按钮 + ×）
+            p.gradient(153 + 14, y + 3, 9, 9, buttonTop, buttonBottom)
+            p.bevel(153 + 14, y + 3, 9, 9, light: frameLight, dark: frameDark)
+            for i in 0..<5 {
+                p.fill(153 + 16 + i, y + 5 + i, 1, 1, active ? icon : frameLight)
+                p.fill(153 + 20 - i, y + 5 + i, 1, 1, active ? icon : frameLight)
+            }
         }
         // 关闭按钮按下态
         p.gradient(52, 42, 9, 9, buttonDownTop, buttonDownBottom)

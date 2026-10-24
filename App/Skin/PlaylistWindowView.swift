@@ -84,12 +84,10 @@ struct PlaylistWindowView: View {
                 .at(25, 0)
                 .accessibilityLabel(app.showLyrics ? "切换到播放列表" : "切换到歌词")
                 .accessibilityAddTraits(.isButton)
-            // 关闭按钮区：隐藏播放列表
-            Color.clear
-                .frame(width: 11 * scale, height: 11 * scale)
-                .contentShape(Rectangle())
-                .onTapGesture { app.showPlaylist = false }
-                .at(width - 12, 2)
+            // 关闭按钮：常态画在右上角平铺块里，按下时盖上按下态
+            Button { app.showPlaylist = false } label: { EmptyView() }
+                .buttonStyle(PressedOverlayStyle(pressed: S.plCloseSelected))
+                .at(width - 11, 3)
                 .accessibilityLabel("关闭播放列表")
         }
     }
@@ -379,5 +377,22 @@ struct PlaylistWindowView: View {
             }
             app.show(failed == 0 ? "离线下载完成" : "\(failed) 首下载失败")
         }
+    }
+}
+
+/// 常态透明（皮肤底图里已画好），按下时显示按下态精灵
+private struct PressedOverlayStyle: ButtonStyle {
+    let pressed: Sprite
+    @Environment(\.skinScale) private var scale
+
+    func makeBody(configuration: Configuration) -> some View {
+        ZStack {
+            if configuration.isPressed { SpriteView(pressed) } else { Color.clear }
+        }
+        .frame(width: pressed.rect.width * scale, height: pressed.rect.height * scale)
+        // 点击区域比 9 像素大一圈，手指好点
+        .padding(4 * scale)
+        .contentShape(Rectangle())
+        .padding(-4 * scale)
     }
 }
