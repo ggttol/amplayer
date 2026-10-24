@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import Observation
 import AmplayerCore
 import AmplayerSources
 
@@ -69,8 +70,16 @@ public actor AudioCache {
         let key = track.id
         if let task = inFlight[key] { return try await task.value }
         let destination = cacheDirectory.appendingPathComponent(fileName(for: track))
+        let expected = track.fileSize ?? -1
         let task = Task<URL, Error> {
-            try await source.download(path: track.path, to: destination)
+            let report: @Sendable (Int64, Int64) -> Void = { received, total in
+                let size = total > 0 ? total : expected
+                Task { @MainActor in DownloadProgressCenter.shared.update(key, received: received, total: size) }
+            }
+            defer { Task { @MainActor in DownloadProgressCenter.shared.finish(key) } }
+            try await DownloadProgress.$report.withValue(report) {
+                try await source.download(path: track.path, to: destination)
+            }
             return destination
         }
         inFlight[key] = task
@@ -135,5 +144,36 @@ public actor AudioCache {
     private static func size(of dir: URL) -> Int64 {
         let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
         return files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+    }
+}
+
+/// 正在下载的曲目进度（界面读取）
+@MainActor
+@Observable
+public final class DownloadProgressCenter {
+    public static let shared = DownloadProgressCenter()
+
+    public struct Item: Sendable, Equatable {
+        public var received: Int64
+        /// 总大小；未知为 -1
+        public var total: Int64
+        public var fraction: Double? { total > 0 ? min(1, Double(received) / Double(total)) : nil }
+    }
+
+    public private(set) var items: [String: Item] = [:]
+
+    func update(_ key: String, received: Int64, total: Int64) {
+        items[key] = Item(received: received, total: total)
+    }
+
+    func finish(_ key: String) {
+        items[key] = nil
+    }
+
+    /// 给界面用的短文字：“35%”或“3.2 MB”
+    public func label(for key: String) -> String? {
+        guard let item = items[key] else { return nil }
+        if let f = item.fraction { return "\(Int(f * 100))%" }
+        return ByteCountFormatter.string(fromByteCount: item.received, countStyle: .file)
     }
 }

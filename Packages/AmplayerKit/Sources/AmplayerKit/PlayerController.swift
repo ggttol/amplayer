@@ -31,6 +31,8 @@ public final class PlayerController {
     @ObservationIgnored private let saver = Debouncer()
     @ObservationIgnored private let lyricsStore = LyricsStore()
     @ObservationIgnored private var lyricsTask: Task<Void, Never>?
+    /// 已经无缝排在当前曲目后面的那首
+    @ObservationIgnored private var armedTrackID: String?
     /// 读到新标签时通知（曲库据此更新）
     @ObservationIgnored public var onTrackUpdated: ((Track) -> Void)?
 
@@ -51,6 +53,7 @@ public final class PlayerController {
             audio.equalizer = saved.equalizer
         }
         audio.onFinished = { [weak self] in self?.trackFinished() }
+        audio.onAdvancedToNext = { [weak self] url in self?.advancedGaplessly(to: url) }
         audio.onStateChangedExternally = { [weak self] in self?.updateNowPlaying() }
         setupRemoteCommands()
     }
@@ -58,6 +61,10 @@ public final class PlayerController {
     public var current: Track? { queue.current }
     public var isPlaying: Bool { audio.state == .playing }
     public var isLoading: Bool { loadingTrackID != nil }
+    /// 正在下载的当前曲目进度文字（“35%”），没在下载时为 nil
+    public var loadingProgress: String? {
+        loadingTrackID.flatMap { DownloadProgressCenter.shared.label(for: $0) }
+    }
 
     // MARK: 播放控制
 
@@ -113,7 +120,9 @@ public final class PlayerController {
 
     public func seek(to time: TimeInterval) {
         audio.seek(to: time)
+        armedTrackID = nil
         updateNowPlaying()
+        armGapless()
     }
 
     public func seek(by delta: TimeInterval) {
@@ -223,11 +232,8 @@ public final class PlayerController {
         loadTask?.cancel()
         prefetchTask?.cancel()
         audio.stop()
-        lastError = nil
-        artwork = nil
-        lyricsTask?.cancel()
-        lyrics = Self.forDisplay(lyricsStore.cached(track))
-        lyricsLoading = lyrics == nil
+        armedTrackID = nil
+        resetPerTrackState(for: track)
         loadingTrackID = track.id
         updateNowPlaying()
         loadTask = Task { [weak self] in
@@ -256,6 +262,66 @@ public final class PlayerController {
         }
     }
 
+    /// 换曲目时清掉上一首的封面、错误、歌词
+    private func resetPerTrackState(for track: Track) {
+        lastError = nil
+        artwork = nil
+        lyricsTask?.cancel()
+        lyrics = Self.forDisplay(lyricsStore.cached(track))
+        lyricsLoading = lyrics == nil
+    }
+
+    // MARK: 无缝衔接
+
+    /// 下一首已经在本地（本机或缓存）时，排到当前这首后面
+    private func armGapless() {
+        guard armedTrackID == nil, !audio.hasQueuedNext, audio.info != nil, loadingTrackID == nil,
+              let i = queue.nextIndex(auto: true) else { return }
+        let next = queue.tracks[i]
+        guard let source = sources.source(next.sourceID) else { return }
+        let cache = cache
+        let currentID = current?.id
+        Task { [weak self] in
+            let url: URL? = if let local = source.localURL(path: next.path) { local } else { await cache.cachedURL(for: next) }
+            guard let self, let url, self.current?.id == currentID, self.armedTrackID == nil,
+                  self.queue.nextIndex(auto: true).map({ self.queue.tracks[$0].id }) == next.id else { return }
+            if self.audio.enqueueNext(url: url) { self.armedTrackID = next.id }
+        }
+    }
+
+    /// 排好的下一首已经开始播了
+    private func advancedGaplessly(to url: URL) {
+        let expected = armedTrackID
+        armedTrackID = nil
+        guard let next = queue.advance(auto: true) else { return }
+        guard next.id == expected, let source = sources.source(next.sourceID) else {
+            // 播放列表在这期间变了：按普通方式切到正确的那首
+            load(next, autoplay: true)
+            persist()
+            return
+        }
+        prefetchTask?.cancel()
+        resetPerTrackState(for: next)
+        updateNowPlaying()
+        persist()
+        loadTask = Task { [weak self] in
+            guard let self else { return }
+            await self.enrich(next, fileURL: url, source: source)
+            self.prefetchNext()
+        }
+    }
+
+    /// 播放列表、随机、循环改了以后，排好的下一首可能不对了：撤掉重排
+    private func revalidateGapless() {
+        guard let armed = armedTrackID else { return }
+        let expected = queue.nextIndex(auto: true).map { queue.tracks[$0].id }
+        guard expected != armed else { return }
+        armedTrackID = nil
+        // AVAudioPlayerNode 不能单独撤掉一段，只能在当前位置重新调度
+        if audio.hasQueuedNext { audio.seek(to: audio.currentTime) }
+        armGapless()
+    }
+
     private func trackFinished() {
         guard let next = queue.advance(auto: true) else {
             updateNowPlaying()
@@ -267,12 +333,18 @@ public final class PlayerController {
 
     /// 预先缓存下一首，减少切歌等待
     private func prefetchNext() {
-        guard let i = queue.nextIndex(auto: true), i != queue.currentIndex else { return }
+        guard let i = queue.nextIndex(auto: true) else { return }
         let track = queue.tracks[i]
-        guard let source = sources.source(track.sourceID), source.localURL(path: track.path) == nil else { return }
+        guard let source = sources.source(track.sourceID), i != queue.currentIndex,
+              source.localURL(path: track.path) == nil else {
+            armGapless()
+            return
+        }
         let cache = cache
-        prefetchTask = Task.detached(priority: .utility) {
-            _ = try? await cache.localURL(for: track, source: source)
+        prefetchTask = Task { [weak self] in
+            _ = try? await Task.detached(priority: .utility) { try await cache.localURL(for: track, source: source) }.value
+            guard !Task.isCancelled else { return }
+            self?.armGapless()
         }
     }
 
@@ -395,6 +467,7 @@ public final class PlayerController {
     }
 
     private func persist() {
+        revalidateGapless()
         saver.schedule { [weak self] in
             guard let self else { return }
             Storage.save(Saved(queue: self.queue, volume: self.audio.volume, balance: self.audio.balance, equalizer: self.audio.equalizer), to: "player.json")

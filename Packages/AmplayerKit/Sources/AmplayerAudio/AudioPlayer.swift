@@ -20,6 +20,8 @@ public final class AudioPlayer {
     public private(set) var info: FileInfo?
     /// 当前文件自然播完时回调（不包括 stop 和跳转）
     @ObservationIgnored public var onFinished: (() -> Void)?
+    /// 无缝衔接：预先排好的下一首开始播放时回调（参数是它的文件地址）
+    @ObservationIgnored public var onAdvancedToNext: ((URL) -> Void)?
     /// 系统打断（来电等）或耳机拔出导致暂停/恢复时回调
     @ObservationIgnored public var onStateChangedExternally: (() -> Void)?
 
@@ -64,8 +66,14 @@ public final class AudioPlayer {
     @ObservationIgnored private var source: Source?
     @ObservationIgnored private var segmentStart: AVAudioFramePosition = 0
     @ObservationIgnored private var pausedTime: TimeInterval = 0
-    /// 每次重新调度递增，用来忽略旧调度的完成回调
+    /// 每次调度递增；完成回调带着自己的编号，只认当前段（currentToken）的
     @ObservationIgnored private var generation = 0
+    @ObservationIgnored private var currentToken = -1
+    /// 当前段调度的帧数、它在播放节点时间轴上的起点（无缝衔接后节点时间不归零）
+    @ObservationIgnored private var scheduledFrames: AVAudioFramePosition = 0
+    @ObservationIgnored private var nodeOffset: AVAudioFramePosition = 0
+    /// 已经排在当前段后面的下一首
+    @ObservationIgnored private var pending: (file: AVAudioFile, url: URL, token: Int)?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
 
     public init() {
@@ -105,14 +113,32 @@ public final class AudioPlayer {
         engine.connect(playerNode, to: eqNode, format: format)
         engine.connect(eqNode, to: engine.mainMixerNode, format: format)
 
-        let duration = Double(source.length) / format.sampleRate
-        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-        let kbps = duration > 0 ? Int(Double(size) * 8 / duration / 1000) : 0
-        info = FileInfo(duration: duration, sampleRate: format.sampleRate, channels: Int(format.channelCount), bitrate: kbps)
+        info = Self.makeInfo(length: source.length, format: format, url: url)
         pausedTime = 0
         schedule(from: 0)
         state = .paused
     }
+
+    /// 无缝衔接：把下一首排在当前这首后面（同采样率、同声道的普通文件才行；APE 和格式不同的退回普通切歌）。
+    /// 成功返回 true；之后跳转、停止、重新加载都会取消它。
+    @discardableResult
+    public func enqueueNext(url: URL) -> Bool {
+        guard pending == nil, currentToken >= 0, case .file(let current) = source,
+              url.pathExtension.lowercased() != "ape",
+              let file = try? AVAudioFile(forReading: url),
+              file.processingFormat == current.processingFormat, file.length > 0 else { return false }
+        generation += 1
+        let token = generation
+        playerNode.scheduleSegment(
+            file, startingFrame: 0, frameCount: AVAudioFrameCount(file.length), at: nil,
+            completionCallbackType: .dataPlayedBack,
+            completionHandler: Self.makeCompletion(self, token: token)
+        )
+        pending = (file, url, token)
+        return true
+    }
+
+    public var hasQueuedNext: Bool { pending != nil }
 
     public func play() {
         guard source != nil else { return }
@@ -167,7 +193,7 @@ public final class AudioPlayer {
               let nodeTime = playerNode.lastRenderTime,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime)
         else { return pausedTime }
-        let seconds = Double(segmentStart + playerTime.sampleTime) / source.format.sampleRate
+        let seconds = Double(segmentStart + playerTime.sampleTime - nodeOffset) / source.format.sampleRate
         return min(max(0, seconds), info?.duration ?? seconds)
     }
 
@@ -175,6 +201,9 @@ public final class AudioPlayer {
 
     private func stopNode() {
         generation += 1
+        currentToken = -1
+        pending = nil
+        nodeOffset = 0
         if case .stream(_, let scheduler) = source { scheduler.invalidate() }
         playerNode.stop()
     }
@@ -186,6 +215,8 @@ public final class AudioPlayer {
         segmentStart = frame
         generation += 1
         let token = generation
+        currentToken = token
+        scheduledFrames = remaining
         switch source {
         case .file(let file):
             playerNode.scheduleSegment(
@@ -217,12 +248,32 @@ public final class AudioPlayer {
     }
 
     private func segmentFinished(_ token: Int) {
-        guard token == generation, state == .playing else { return }
+        guard token == currentToken, state == .playing else { return }
+        if let next = pending {
+            // 下一首已经在节点上接着播了：只切换记账，不停节点
+            pending = nil
+            nodeOffset += scheduledFrames
+            segmentStart = 0
+            scheduledFrames = next.file.length
+            currentToken = next.token
+            source = .file(next.file)
+            info = Self.makeInfo(length: next.file.length, format: next.file.processingFormat, url: next.url)
+            pausedTime = 0
+            onAdvancedToNext?(next.url)
+            return
+        }
         stopNode()
         if source != nil { schedule(from: 0) }
         pausedTime = 0
         state = .stopped
         onFinished?()
+    }
+
+    private static func makeInfo(length: AVAudioFramePosition, format: AVAudioFormat, url: URL) -> FileInfo {
+        let duration = Double(length) / format.sampleRate
+        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+        let kbps = duration > 0 ? Int(Double(size) * 8 / duration / 1000) : 0
+        return FileInfo(duration: duration, sampleRate: format.sampleRate, channels: Int(format.channelCount), bitrate: kbps)
     }
 
     private func applyEqualizer() {

@@ -37,9 +37,9 @@ struct MainWindowView: View {
             SpriteView(S.titleBarSelected)
             SpriteButton(normal: S.optionsButton, pressed: S.optionsButtonDown, label: "菜单", hitSlop: EdgeInsets(top: 6, leading: 6, bottom: 8, trailing: 10)) { app.showSideMenu = true }
                 .at(SkinLayout.options)
-            SpriteButton(normal: S.minimizeButton, pressed: S.minimizeButtonDown, label: "皮肤", hitSlop: EdgeInsets(top: 4, leading: 3, bottom: 8, trailing: 0)) { app.sheet = .skins }
+            SpriteButton(normal: S.minimizeButton, pressed: S.minimizeButtonDown, label: app.isMiniMode ? "恢复窗口" : "迷你模式", hitSlop: EdgeInsets(top: 4, leading: 3, bottom: 8, trailing: 0)) { app.toggleMiniMode() }
                 .at(SkinLayout.minimize)
-            SpriteButton(normal: S.shadeButton, pressed: S.shadeButtonDown, label: "来源", hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0)) { app.sheet = .sources }
+            SpriteButton(normal: S.shadeButton, pressed: S.shadeButtonDown, label: "换下一套皮肤", hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0)) { app.nextSkin() }
                 .at(SkinLayout.shade)
             SpriteButton(normal: S.closeButton, pressed: S.closeButtonDown, label: "关闭（停止播放）", hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 3)) { player.stop() }
                 .at(SkinLayout.close)
@@ -62,7 +62,7 @@ struct MainWindowView: View {
         if let error = player.lastError { return error }
         guard let track = player.current, let index = player.queue.currentIndex else { return "Amplayer - 点左上角菜单打开来源，或点播放列表的 ADD 添加音乐" }
         let duration = (player.audio.info?.duration ?? track.duration).map { " (\(TimeFormat.clock($0)))" } ?? ""
-        let prefix = player.isLoading ? "[缓冲中] " : ""
+        let prefix = player.isLoading ? "[缓冲中\(player.loadingProgress.map { " " + $0 } ?? "")] " : ""
         return "\(prefix)\(index + 1). \(track.displayName)\(duration)"
     }
 

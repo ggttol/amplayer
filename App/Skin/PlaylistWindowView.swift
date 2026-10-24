@@ -166,7 +166,11 @@ struct PlaylistWindowView: View {
                 .lineLimit(1)
             Spacer(minLength: 2)
             if player.loadingTrackID == track.id {
-                ProgressView().controlSize(.mini).tint(style.current.color)
+                if let progress = player.loadingProgress {
+                    Text(progress).monospacedDigit()
+                } else {
+                    ProgressView().controlSize(.mini).tint(style.current.color)
+                }
             }
             Text((track.duration).map(TimeFormat.clock) ?? "")
                 .monospacedDigit()

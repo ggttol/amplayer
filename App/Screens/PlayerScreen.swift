@@ -57,11 +57,13 @@ struct ClosedWindowsHint: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            Text("播放列表已关闭").font(.footnote).foregroundStyle(.secondary)
+            Text(app.isMiniMode ? "迷你模式" : "播放列表已关闭").font(.footnote).foregroundStyle(.secondary)
             HStack(spacing: 10) {
+                if app.isMiniMode { Button("恢复窗口") { app.toggleMiniMode() } } else {
                 Button("显示播放列表") { app.showLyrics = false; app.showPlaylist = true }
                 Button("显示歌词") { app.showLyrics = true; app.showPlaylist = true }
                 if !app.showEqualizer { Button("均衡器") { app.showEqualizer = true } }
+                }
             }
             .buttonStyle(.bordered)
             .tint(.gray)

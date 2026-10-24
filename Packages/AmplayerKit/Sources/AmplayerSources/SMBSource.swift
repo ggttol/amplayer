@@ -57,7 +57,11 @@ public final class SMBSource: MediaSource, @unchecked Sendable {
         try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         let tmp = destination.appendingPathExtension("part")
         try? fm.removeItem(at: tmp)
-        try await manager.downloadItem(atPath: inner, to: tmp, progress: nil)
+        let report = DownloadProgress.report
+        try await manager.downloadItem(atPath: inner, to: tmp) { received, total in
+            report?(received, total)
+            return true
+        }
         if fm.fileExists(atPath: destination.path) { try fm.removeItem(at: destination) }
         try fm.moveItem(at: tmp, to: destination)
     }

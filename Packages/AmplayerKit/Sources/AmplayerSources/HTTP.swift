@@ -52,7 +52,8 @@ public final class HTTPClient: Sendable {
 
     /// 下载到目标路径（先写临时文件，成功后再移动）
     public func download(_ request: URLRequest, to destination: URL) async throws {
-        let (tmp, response) = try await session.download(for: request)
+        let delegate = DownloadProgress.report.map(ProgressDelegate.init)
+        let (tmp, response) = try await session.download(for: request, delegate: delegate)
         guard let http = response as? HTTPURLResponse else { throw SourceError.protocolError("非 HTTP 响应") }
         guard (200..<300).contains(http.statusCode) else {
             try? FileManager.default.removeItem(at: tmp)
@@ -109,4 +110,29 @@ extension Dictionary where Key == String, Value == Any {
 
     func dict(_ key: String) -> [String: Any]? { self[key] as? [String: Any] }
     func array(_ key: String) -> [[String: Any]] { self[key] as? [[String: Any]] ?? [] }
+}
+
+/// 下载进度上报：AudioCache 在下载时装上回调（TaskLocal），各来源的下载实现往里报（已收字节，总字节；未知为 -1）
+public enum DownloadProgress {
+    @TaskLocal public static var report: (@Sendable (Int64, Int64) -> Void)?
+}
+
+/// 观察下载任务的已收字节数；按 1% 或 512 KB 节流
+final class ProgressDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let report: @Sendable (Int64, Int64) -> Void
+    private var observation: NSKeyValueObservation?
+    private var last: Int64 = 0
+
+    init(_ report: @escaping @Sendable (Int64, Int64) -> Void) { self.report = report }
+
+    func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
+        observation = task.observe(\.countOfBytesReceived, options: [.new]) { [weak self] task, _ in
+            guard let self else { return }
+            let received = task.countOfBytesReceived, total = task.countOfBytesExpectedToReceive
+            let step = total > 0 ? max(total / 100, 64 * 1024) : 512 * 1024
+            guard received - self.last >= step || (total > 0 && received >= total) else { return }
+            self.last = received
+            self.report(received, total)
+        }
+    }
 }

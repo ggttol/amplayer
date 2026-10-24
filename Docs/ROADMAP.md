@@ -129,6 +129,6 @@
 2. **SSDP 发现 DLNA** 在 iOS 真机上需要 `com.apple.developer.networking.multicast` 权限（要向 Apple 申请）；没有权限时只能手填设备描述地址，Bonjour 发现不受影响。
 3. **CarPlay** 需要 Apple 单独批准的音频类 CarPlay 权限，未做。
 4. **FTP/SFTP、115、夸克**未做（115、夸克没有可用于上架 App 的官方 API）。
-5. 无缝播放（gapless）未做，切歌有很短的停顿。
+5. 无缝播放：下一首已缓存、且采样率和声道与当前相同时无缝衔接；APE 和格式不同的曲目仍是普通切歌（有很短的停顿）。
 6. 播放列表不支持拖动排序（可用排序菜单和“下一首播放”）。
 7. EQ 窗口的 AUTO 按钮只保留外观。

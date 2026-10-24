@@ -21,8 +21,18 @@ final class AppModel {
     enum VisualizerMode: Int { case spectrum, oscilloscope, off }
 
     var sheet: Sheet?
-    var showEqualizer: Bool { didSet { UserDefaults.standard.set(showEqualizer, forKey: "amplayer.showEQ") } }
-    var showPlaylist: Bool { didSet { UserDefaults.standard.set(showPlaylist, forKey: "amplayer.showPL") } }
+    var showEqualizer: Bool {
+        didSet {
+            UserDefaults.standard.set(showEqualizer, forKey: "amplayer.showEQ")
+            if showEqualizer { miniRestore = nil }
+        }
+    }
+    var showPlaylist: Bool {
+        didSet {
+            UserDefaults.standard.set(showPlaylist, forKey: "amplayer.showPL")
+            if showPlaylist { miniRestore = nil }
+        }
+    }
     var visualizerMode: VisualizerMode { didSet { UserDefaults.standard.set(visualizerMode.rawValue, forKey: "amplayer.vis") } }
     var showRemainingTime = false
     /// 播放列表窗口改为显示歌词
@@ -32,6 +42,36 @@ final class AppModel {
     /// 播放列表多选模式：开着时点行是勾选，否则点行直接播放
     var isSelecting = false
     var showSideMenu = false
+
+    /// 迷你模式：只留主窗口；记住进入前哪些窗口开着
+    private var miniRestore: (eq: Bool, pl: Bool)?
+    var isMiniMode: Bool { miniRestore != nil }
+
+    func toggleMiniMode() {
+        if let restore = miniRestore {
+            miniRestore = nil
+            showEqualizer = restore.eq
+            showPlaylist = restore.pl
+        } else if showEqualizer || showPlaylist {
+            miniRestore = (showEqualizer, showPlaylist)
+            showEqualizer = false
+            showPlaylist = false
+            show("迷你模式，再点一次恢复")
+        } else {
+            showEqualizer = true
+            showPlaylist = true
+        }
+    }
+
+    /// 标题栏“□”：换下一套皮肤
+    func nextSkin() {
+        let entries = skins.entries
+        guard !entries.isEmpty else { return }
+        let i = entries.firstIndex { $0.id == skins.current.id } ?? -1
+        let next = entries[(i + 1) % entries.count]
+        skins.select(next.id)
+        show("皮肤：\(next.name)")
+    }
 
     /// 退出多选并清空选择
     func endSelection() {
