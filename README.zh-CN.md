@@ -60,7 +60,9 @@
 
 ## 试用
 
-目前还没上架 App Store，也没有 TestFlight，需要自己编译安装：
+**TestFlight 公开测试**：https://testflight.apple.com/join/tkH6ZD3E 。在 iPhone 上装好 TestFlight，打开链接就能安装。App Store 正式版正在审核中。
+
+也可以自己编译安装：
 
 1. 需要一台 Mac，装好 **Xcode 16 或更高版本**（在 Xcode 27 上测试过）和 [XcodeGen](https://github.com/yonaskolb/XcodeGen)（`brew install xcodegen`）。App 支持 iOS 17 及以上。
 2. 克隆仓库，配置签名团队：

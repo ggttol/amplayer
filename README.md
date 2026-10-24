@@ -60,7 +60,9 @@ Bonjour and SSDP find SMB, WebDAV and DLNA servers on your local network automat
 
 ## Try it
 
-Amplayer isn't on the App Store or TestFlight yet, so for now you build it yourself:
+**TestFlight (public beta):** https://testflight.apple.com/join/tkH6ZD3E. Install TestFlight on your iPhone and open the link. The App Store release is in review.
+
+You can also build it yourself:
 
 1. You need a Mac with **Xcode 16 or later** (tested with Xcode 27) and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`). The app runs on iOS 17 or later.
 2. Clone the repo and set your signing team:
