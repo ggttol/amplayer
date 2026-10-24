@@ -1,0 +1,302 @@
+import MP9Kit
+import SwiftUI
+
+/// 经典播放列表窗口：宽 275，高度随屏幕
+struct PlaylistWindowView: View {
+    @Environment(AppModel.self) private var app
+    @Environment(\.skin) private var skin
+    @Environment(\.skinScale) private var scale
+    /// 窗口高度（皮肤像素），至少 116
+    let height: CGFloat
+
+    @State private var isSaving = false
+    @State private var playlistName = ""
+    @State private var infoTrack: Track?
+
+    private var player: PlayerController { app.player }
+    private let width: CGFloat = 275
+
+    var body: some View {
+        let style = skin.playlistStyle
+        SkinCanvas(size: CGSize(width: width, height: height)) {
+            frame
+            trackList(style)
+                .frame(width: (width - 12 - 20) * scale, height: (height - 20 - 38) * scale)
+                .background(style.normalBackground.color)
+                .at(12, 20)
+            bottomControls
+        }
+        .alert("保存播放列表", isPresented: $isSaving) {
+            TextField("名称", text: $playlistName)
+            Button("保存") {
+                do {
+                    try app.library.savePlaylist(player.queue.tracks, name: playlistName)
+                    app.show("已保存到 文件 › MP9 › Playlists")
+                } catch {
+                    app.show("保存失败：\(error.localizedDescription)")
+                }
+            }
+            Button("取消", role: .cancel) {}
+        }
+        .sheet(item: $infoTrack) { track in
+            TrackInfoView(track: track)
+        }
+    }
+
+    // MARK: 边框
+
+    private var frame: some View {
+        let midH = height - 20 - 38
+        let titleX = ((width - 100) / 2).rounded(.down)
+        return Group {
+            // 顶部：左角、平铺、标题、平铺、右角
+            tiles(S.plTopTile, from: 25, to: titleX, y: 0)
+            tiles(S.plTopTile, from: titleX + 100, to: width - 25, y: 0)
+            SpriteView(S.plTopLeft)
+            SpriteView(S.plTitle).at(titleX, 0)
+            SpriteView(S.plTopRight).at(width - 25, 0)
+            // 两侧
+            ForEach(0..<Int((midH / 29).rounded(.up)), id: \.self) { i in
+                SpriteView(S.plLeftTile).at(0, 20 + CGFloat(i) * 29)
+                SpriteView(S.plRightTile).at(width - 20, 20 + CGFloat(i) * 29)
+            }
+            // 底部
+            SpriteView(S.plBottomLeft).at(0, height - 38)
+            SpriteView(S.plBottomRight).at(width - 150, height - 38)
+            // 关闭按钮区：隐藏播放列表
+            Color.clear
+                .frame(width: 11 * scale, height: 11 * scale)
+                .contentShape(Rectangle())
+                .onTapGesture { app.showPlaylist = false }
+                .at(width - 12, 2)
+                .accessibilityLabel("关闭播放列表")
+        }
+    }
+
+    private func tiles(_ sprite: Sprite, from x0: CGFloat, to x1: CGFloat, y: CGFloat) -> some View {
+        let count = max(0, Int(((x1 - x0) / sprite.rect.width).rounded(.up)))
+        return ZStack(alignment: .topLeading) {
+            ForEach(0..<count, id: \.self) { i in
+                SpriteView(sprite).offset(x: CGFloat(i) * sprite.rect.width * scale)
+            }
+        }
+        .frame(width: max(0, x1 - x0) * scale, height: sprite.rect.height * scale, alignment: .topLeading)
+        .clipped()
+        .at(x0, y)
+    }
+
+    // MARK: 曲目列表
+
+    private func trackList(_ style: PlaylistStyle) -> some View {
+        let tracks = player.queue.tracks
+        return ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(tracks.enumerated()), id: \.offset) { index, track in
+                        row(index: index, track: track, style: style)
+                            .id(index)
+                    }
+                }
+            }
+            .scrollIndicators(.visible)
+            .onChange(of: player.queue.currentIndex) { _, new in
+                if let new { withAnimation { proxy.scrollTo(new, anchor: .center) } }
+            }
+        }
+    }
+
+    private func row(index: Int, track: Track, style: PlaylistStyle) -> some View {
+        let isCurrent = index == player.queue.currentIndex
+        let selected = app.selection.contains(index)
+        let fontSize = 8.5 * scale
+        return HStack(spacing: 4) {
+            Text("\(index + 1). \(track.displayName)")
+                .lineLimit(1)
+            Spacer(minLength: 2)
+            if player.loadingTrackID == track.id {
+                ProgressView().controlSize(.mini).tint(style.current.color)
+            }
+            Text((track.duration).map(TimeFormat.clock) ?? "")
+                .monospacedDigit()
+        }
+        .font(.system(size: fontSize))
+        .foregroundStyle((isCurrent ? style.current : style.normal).color)
+        .padding(.horizontal, 2 * scale)
+        .frame(height: 13 * scale)
+        .background(selected ? style.selectedBackground.color : Color.clear)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { player.play(index: index) }
+        .onTapGesture {
+            if selected { app.selection.remove(index) } else { app.selection.insert(index) }
+        }
+        .contextMenu {
+            Button("播放", systemImage: "play.fill") { player.play(index: index) }
+            Button("下一首播放", systemImage: "text.line.first.and.arrowtriangle.forward") {
+                // 先插入副本到当前曲目之后，再删掉原位置的那一条
+                let current = player.queue.currentIndex
+                player.playNext([track])
+                if let c = current {
+                    if index > c { player.remove(at: IndexSet([index + 1])) } else if index < c { player.remove(at: IndexSet([index])) }
+                }
+                app.selection = []
+            }
+            Button("离线下载", systemImage: "arrow.down.circle") { makeOffline([track]) }
+            Button("曲目信息", systemImage: "info.circle") { infoTrack = track }
+            Button("从列表删除", systemImage: "trash", role: .destructive) {
+                player.remove(at: IndexSet([index]))
+                app.selection = []
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("轻点两下播放")
+    }
+
+    // MARK: 底部按钮
+
+    private var bottomControls: some View {
+        let y = height - 38 + 8
+        let right = width - 150
+        return Group {
+            Menu {
+                Button("从“文件”导入…", systemImage: "folder") { app.isImportingFiles = true }
+                Button("从来源添加…", systemImage: "externaldrive.connected.to.line.below") { app.sheet = .sources }
+                Button("从曲库添加…", systemImage: "music.note.list") { app.sheet = .library }
+            } label: { hitArea }
+                .accessibilityLabel("添加到播放列表")
+                .at(14, y)
+            Menu {
+                Button("删除所选", systemImage: "minus.circle") { removeSelected() }
+                    .disabled(app.selection.isEmpty)
+                Button("只保留所选", systemImage: "crop") { cropToSelection() }
+                    .disabled(app.selection.isEmpty)
+                Button("删除重复项", systemImage: "square.on.square") { removeDuplicates() }
+                Button("清空列表", systemImage: "trash", role: .destructive) {
+                    player.clear()
+                    app.selection = []
+                }
+            } label: { hitArea }
+                .accessibilityLabel("删除曲目")
+                .at(43, y)
+            Menu {
+                Button("全选") { app.selection = Set(player.queue.tracks.indices) }
+                Button("全不选") { app.selection = [] }
+                Button("反选") { app.selection = Set(player.queue.tracks.indices).subtracting(app.selection) }
+            } label: { hitArea }
+                .accessibilityLabel("选择曲目")
+                .at(72, y)
+            Menu {
+                Menu("排序") {
+                    Button("按标题") { sort(.title) }
+                    Button("按艺术家") { sort(.artist) }
+                    Button("按专辑") { sort(.album) }
+                    Button("按路径") { sort(.path) }
+                }
+                Button("反转顺序") { player.reverse(); app.selection = [] }
+                Button("随机打乱") { player.randomize(); app.selection = [] }
+                Button("离线下载所选") {
+                    makeOffline(app.selection.sorted().map { player.queue.tracks[$0] })
+                }
+                .disabled(app.selection.isEmpty)
+                Button("曲目信息") {
+                    if let first = app.selection.min() ?? player.queue.currentIndex { infoTrack = player.queue.tracks[first] }
+                }
+            } label: { hitArea }
+                .accessibilityLabel("更多操作")
+                .at(101, y)
+            Menu {
+                Button("保存播放列表…", systemImage: "square.and.arrow.down") {
+                    playlistName = player.current?.album ?? "我的播放列表"
+                    isSaving = true
+                }
+                .disabled(player.queue.isEmpty)
+                Button("打开播放列表…", systemImage: "folder") { app.sheet = .library }
+                Button("新建（清空）", systemImage: "doc") { player.clear(); app.selection = [] }
+            } label: { hitArea }
+                .accessibilityLabel("播放列表文件")
+                .at(width - 44, y)
+
+            // 总时长显示
+            SkinText(text: runningTime)
+                .frame(width: 90 * scale, alignment: .leading)
+                .at(right + 7, height - 38 + 10)
+            // 迷你播放按钮（6 个 10x10 热区）
+            miniTransport.at(right + 3, height - 38 + 22)
+        }
+    }
+
+    private var hitArea: some View {
+        Color.clear
+            .frame(width: 22 * scale, height: 18 * scale)
+            .contentShape(Rectangle())
+    }
+
+    private var miniTransport: some View {
+        HStack(spacing: 0) {
+            mini("列表·上一首") { player.previous() }
+            mini("列表·播放") { player.play() }
+            mini("列表·暂停") { player.togglePause() }
+            mini("列表·停止") { player.stop() }
+            mini("列表·下一首") { player.next() }
+            mini("列表·打开文件") { app.isImportingFiles = true }
+        }
+    }
+
+    private func mini(_ label: String, action: @escaping () -> Void) -> some View {
+        Color.clear
+            .frame(width: 10 * scale, height: 10 * scale)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: action)
+            .accessibilityLabel(label)
+            .accessibilityAddTraits(.isButton)
+    }
+
+    private var runningTime: String {
+        let tracks = player.queue.tracks
+        let selected = app.selection.compactMap { tracks.indices.contains($0) ? tracks[$0].duration : nil }.reduce(0, +)
+        let total = tracks.compactMap(\.duration).reduce(0, +)
+        return "\(TimeFormat.clock(selected))/\(TimeFormat.clock(total))"
+    }
+
+    // MARK: 操作
+
+    private func removeSelected() {
+        player.remove(at: IndexSet(app.selection))
+        app.selection = []
+    }
+
+    private func cropToSelection() {
+        let keep = app.selection
+        player.remove(at: IndexSet(player.queue.tracks.indices.filter { !keep.contains($0) }))
+        app.selection = []
+    }
+
+    private func removeDuplicates() {
+        var seen = Set<String>()
+        var dupes = IndexSet()
+        for (i, t) in player.queue.tracks.enumerated() {
+            if !seen.insert(t.id).inserted { dupes.insert(i) }
+        }
+        player.remove(at: dupes)
+        app.selection = []
+        app.show(dupes.isEmpty ? "没有重复项" : "已删除 \(dupes.count) 个重复项")
+    }
+
+    private func sort(_ key: PlayerController.SortKey) {
+        player.sort(by: key)
+        app.selection = []
+    }
+
+    private func makeOffline(_ tracks: [Track]) {
+        let sources = app.sources
+        let cache = player.cache
+        app.show("开始离线下载 \(tracks.count) 首")
+        Task {
+            var failed = 0
+            for t in tracks {
+                guard let source = sources.source(t.sourceID) else { failed += 1; continue }
+                do { try await cache.makeOffline(t, source: source) } catch { failed += 1 }
+            }
+            app.show(failed == 0 ? "离线下载完成" : "\(failed) 首下载失败")
+        }
+    }
+}

@@ -103,3 +103,29 @@
 - SFBAudioEngine：https://github.com/sbooth/SFBAudioEngine
 - AMSMB2：https://github.com/amosavian/AMSMB2
 - 官方 Winamp iOS 版评测：https://www.ghacks.net/?p=198403
+
+---
+
+## 四、进度（2026-10-24）
+
+| 阶段 | 状态 | 验证方式 |
+|---|---|---|
+| M0 骨架 | ✅ | 模拟器启动 |
+| M1 播放内核 | ✅ AVAudioEngine 播放、10 段 EQ、平衡、vDSP 频谱/示波器、锁屏与远程控制、打断恢复 | 模拟器播放 FLAC/AAC/WAV；UI 测试覆盖播放/暂停/下一首/停止 |
+| M2 经典皮肤 | ✅ .wsz 解析（自带 ZIP 读取器）、主窗/EQ/播放列表三窗、原创默认皮肤、导入与“用 MP9 打开” | 用 Webamp 附带的 base-2.91.wsz 快照对比；模拟器截图 |
+| M3 网络来源 | ✅ WebDAV、SMB、Subsonic、Jellyfin/Emby、群晖 Audio Station、DLNA、局域网发现、下载缓存与预取 | `Tools/test-servers.sh` 起真实服务器，`MP9_LIVE=1 swift test` 逐个列目录、下载、解码；群晖用模拟 DSM 接口测试；UI 测试走完“添加 WebDAV → 浏览 → 播放” |
+| M4 曲库 | ✅ 扫描、歌曲/艺术家/专辑、搜索、离线下载、M3U/PLS 保存与打开 | 单元测试 + 手动 |
+| M5 扩展 | 🟡 阿里云盘、百度网盘 OpenAPI 已实现（OAuth + PKCE） | **未实测**：需要先申请开放平台 AppKey |
+
+与计划的差异：
+- **音频内核用 AVAudioEngine 原生解码，没有引入 SFBAudioEngine**。原因：SFBAudioEngine 的部分依赖（如 mpg123、TagLib）是 LGPL，以静态库形式集成，不便满足上架要求；原生解码已覆盖 MP3/AAC/ALAC/FLAC/WAV/AIFF。代价：暂不支持 APE、DSD、OGG Vorbis、WMA。
+- **边下边播**目前是“整首缓存后播放 + 预缓存下一首”，局域网下几乎无感，慢速网盘首曲会等几秒。
+
+尚未完成 / 已知限制：
+1. **群晖真机未测**：只按文档与社区资料实现并用模拟接口测试；QuickConnect 未实现，需要填 IP 或 DDNS 地址；不支持开启了两步验证的账号。
+2. **SSDP 发现 DLNA** 在 iOS 真机上需要 `com.apple.developer.networking.multicast` 权限（要向 Apple 申请）；没有权限时只能手填设备描述地址，Bonjour 发现不受影响。
+3. **CarPlay** 需要 Apple 单独批准的音频类 CarPlay 权限，未做。
+4. **FTP/SFTP、115、夸克**未做（115、夸克没有可用于上架 App 的官方 API）。
+5. 无缝播放（gapless）未做，切歌有很短的停顿。
+6. 播放列表不支持拖动排序（可用排序菜单和“下一首播放”）。
+7. EQ 窗口的 AUTO 按钮只保留外观。

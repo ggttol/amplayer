@@ -1,2 +1,11 @@
 // 本地签名配置（DEVELOPMENT_TEAM）放在 Signing.local.xcconfig，不入库
 #include? "Signing.local.xcconfig"
+
+// 网盘开放平台的 AppKey（申请后写进 Secrets.local.xcconfig，不入库；见 Secrets.xcconfig.example）
+MP9_ALIYUN_CLIENT_ID =
+MP9_ALIYUN_CLIENT_SECRET =
+MP9_ALIYUN_REDIRECT_URI = mp9:/$()/oauth/aliyun
+MP9_BAIDU_CLIENT_ID =
+MP9_BAIDU_CLIENT_SECRET =
+MP9_BAIDU_REDIRECT_URI = mp9:/$()/oauth/baidu
+#include? "Secrets.local.xcconfig"

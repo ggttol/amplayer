@@ -54,6 +54,91 @@
 		<string>_webdav._tcp</string>
 		<string>_webdavs._tcp</string>
 	</array>
+	<key>MP9AliyunClientID</key>
+	<string>$(MP9_ALIYUN_CLIENT_ID)</string>
+	<key>MP9AliyunClientSecret</key>
+	<string>$(MP9_ALIYUN_CLIENT_SECRET)</string>
+	<key>MP9AliyunRedirectURI</key>
+	<string>$(MP9_ALIYUN_REDIRECT_URI)</string>
+	<key>MP9BaiduClientID</key>
+	<string>$(MP9_BAIDU_CLIENT_ID)</string>
+	<key>MP9BaiduClientSecret</key>
+	<string>$(MP9_BAIDU_CLIENT_SECRET)</string>
+	<key>MP9BaiduRedirectURI</key>
+	<string>$(MP9_BAIDU_REDIRECT_URI)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.gaotao.mp9</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mp9</string>
+			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>dev.gaotao.mp9.wsz</string>
+			<key>UTTypeDescription</key>
+			<string>Classic Skin</string>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>wsz</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Classic Skin</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>dev.gaotao.mp9.wsz</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Playlist</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.m3u-playlist</string>
+				<string>public.pls-playlist</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Audio</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.audio</string>
+			</array>
+		</dict>
+	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>

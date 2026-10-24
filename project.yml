@@ -31,10 +31,23 @@ targets:
     dependencies:
       - package: MP9Kit
         product: MP9Kit
+  MP9UITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: dev.gaotao.mp9.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: MP9
+    dependencies:
+      - target: MP9
 schemes:
   MP9:
     build:
       targets:
         MP9: all
     test:
-      targets: []
+      targets:
+        - MP9UITests
