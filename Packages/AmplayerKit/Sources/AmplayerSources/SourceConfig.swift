@@ -1,7 +1,7 @@
 import Foundation
 
 public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
-    case local, webdav, smb, subsonic, jellyfin, emby, synology, dlna, aliyun, baidu
+    case local, webdav, smb, subsonic, jellyfin, emby, synology, dlna
 
     public var id: String { rawValue }
 
@@ -15,8 +15,6 @@ public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .emby: "Emby"
         case .synology: "群晖 Audio Station"
         case .dlna: "UPnP / DLNA 媒体服务器"
-        case .aliyun: "阿里云盘"
-        case .baidu: "百度网盘"
         }
     }
 
@@ -29,14 +27,12 @@ public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .jellyfin, .emby: "play.tv"
         case .synology: "server.rack"
         case .dlna: "dot.radiowaves.left.and.right"
-        case .aliyun, .baidu: "icloud"
         }
     }
 
     /// 表单需要哪些字段
-    public var needsURL: Bool { self != .local && self != .aliyun && self != .baidu }
+    public var needsURL: Bool { self != .local }
     public var needsCredentials: Bool { [.webdav, .smb, .subsonic, .jellyfin, .emby, .synology].contains(self) }
-    public var usesOAuth: Bool { self == .aliyun || self == .baidu }
 
     public var urlPlaceholder: String {
         switch self {

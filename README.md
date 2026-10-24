@@ -29,7 +29,6 @@ iOS 音乐播放器，界面像素级复刻经典 Winamp 2.x，可加载 `.wsz` 
   | Jellyfin / Emby | 媒体库、专辑、艺术家、文件夹浏览 |
   | 群晖 DSM | 支持 IP / 域名 / **QuickConnect ID**；File Station 浏览全部共享文件夹（不依赖索引），Audio Station 有索引时另有专辑、播放列表 |
   | UPnP / DLNA | 几乎所有 NAS 自带的媒体服务器 |
-  | 阿里云盘 / 百度网盘 | 走官方开放平台 OAuth，需要先配置 AppKey（见下） |
 - **局域网发现**：Bonjour（SMB、WebDAV）+ SSDP（DLNA）
 - **缓存**：网络曲目完整缓存后播放，并预缓存下一首；LRU 上限可调；支持离线下载
 - **曲库**：扫描来源进曲库，按歌曲、艺术家、专辑浏览和搜索
@@ -63,7 +62,7 @@ xcodegen generate
 xcodebuild -project Amplayer.xcodeproj -scheme Amplayer -destination "platform=iOS Simulator,name=Amplayer iPhone" build
 ```
 
-网盘直连需要开放平台的应用凭据：复制 `Config/Secrets.xcconfig.example` 为 `Config/Secrets.local.xcconfig` 并填写。不配置时，界面会提示改用 Alist/OpenList 的 WebDAV。
+网盘：用 Alist / OpenList 把网盘转成 WebDAV 后添加。
 
 ## 测试
 

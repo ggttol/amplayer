@@ -58,17 +58,6 @@
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>dev.gaotao.amplayer</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>amplayer</string>
-			</array>
-		</dict>
-	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -85,18 +74,6 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Amplayer 需要访问局域网，以便发现并播放 NAS、SMB、WebDAV 和 DLNA 上的音乐。</string>
-	<key>AmplayerAliyunClientID</key>
-	<string>$(AMP_ALIYUN_CLIENT_ID)</string>
-	<key>AmplayerAliyunClientSecret</key>
-	<string>$(AMP_ALIYUN_CLIENT_SECRET)</string>
-	<key>AmplayerAliyunRedirectURI</key>
-	<string>$(AMP_ALIYUN_REDIRECT_URI)</string>
-	<key>AmplayerBaiduClientID</key>
-	<string>$(AMP_BAIDU_CLIENT_ID)</string>
-	<key>AmplayerBaiduClientSecret</key>
-	<string>$(AMP_BAIDU_CLIENT_SECRET)</string>
-	<key>AmplayerBaiduRedirectURI</key>
-	<string>$(AMP_BAIDU_REDIRECT_URI)</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

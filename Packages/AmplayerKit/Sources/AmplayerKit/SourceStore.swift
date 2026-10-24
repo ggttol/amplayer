@@ -11,9 +11,20 @@ public final class SourceStore {
     private static let fileName = "sources.json"
 
     public init() {
-        var saved = Storage.load([SourceConfig].self, from: Self.fileName) ?? []
+        var saved = Self.loadSaved()
         saved.removeAll { $0.id == SourceConfig.localID }
         configs = [.local] + saved
+    }
+
+    /// 逐条解码，认不出的（比如已经去掉的来源类型）只跳过那一条
+    private static func loadSaved() -> [SourceConfig] {
+        let url = Storage.supportDirectory.appendingPathComponent(fileName)
+        guard let data = try? Data(contentsOf: url),
+              let items = try? JSONSerialization.jsonObject(with: data) as? [Any] else { return [] }
+        return items.compactMap { item in
+            guard let one = try? JSONSerialization.data(withJSONObject: item) else { return nil }
+            return try? JSONDecoder().decode(SourceConfig.self, from: one)
+        }
     }
 
     public func config(_ id: String) -> SourceConfig? { configs.first { $0.id == id } }

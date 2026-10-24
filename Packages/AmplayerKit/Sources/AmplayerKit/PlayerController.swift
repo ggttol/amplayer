@@ -351,7 +351,7 @@ public final class PlayerController {
     /// 从文件标签补全信息，并取封面
     private func enrich(_ track: Track, fileURL: URL, source: any MediaSource) async {
         let tags = await MetadataReader.read(url: fileURL)
-        let preferFileTags = [.local, .webdav, .smb, .aliyun, .baidu].contains(source.config.kind)
+        let preferFileTags = [.local, .webdav, .smb].contains(source.config.kind)
         let updated = MetadataReader.merge(tags, into: track, preferFileTags: preferFileTags)
         if updated != track {
             queue.update(updated)

@@ -77,7 +77,3 @@ import Testing
     #expect(try SourceConfig(kind: .smb, name: "x", url: "192.168.1.2/Music").baseURL().scheme == "smb")
 }
 
-@Test func pkceChallenge() {
-    // RFC 7636 附录 B 的示例
-    #expect(PKCE.challenge(for: "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk") == "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM")
-}

@@ -8,9 +8,6 @@ public enum CredentialStore {
     public static func password(for sourceID: String) -> String? { get(sourceID + ".password") }
     public static func setPassword(_ value: String?, for sourceID: String) { set(value, account: sourceID + ".password") }
 
-    /// OAuth 等令牌（JSON）
-    public static func token(for sourceID: String) -> Data? { getData(sourceID + ".token") }
-    public static func setToken(_ value: Data?, for sourceID: String) { setData(value, account: sourceID + ".token") }
 
     public static func removeAll(for sourceID: String) {
         set(nil, account: sourceID + ".password")

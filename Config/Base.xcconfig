@@ -1,11 +1,3 @@
 // 本地签名配置（DEVELOPMENT_TEAM）放在 Signing.local.xcconfig，不入库
 #include? "Signing.local.xcconfig"
 
-// 网盘开放平台的 AppKey（申请后写进 Secrets.local.xcconfig，不入库；见 Secrets.xcconfig.example）
-AMP_ALIYUN_CLIENT_ID =
-AMP_ALIYUN_CLIENT_SECRET =
-AMP_ALIYUN_REDIRECT_URI = amplayer:/$()/oauth/aliyun
-AMP_BAIDU_CLIENT_ID =
-AMP_BAIDU_CLIENT_SECRET =
-AMP_BAIDU_REDIRECT_URI = amplayer:/$()/oauth/baidu
-#include? "Secrets.local.xcconfig"

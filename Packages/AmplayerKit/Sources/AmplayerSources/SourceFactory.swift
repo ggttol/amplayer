@@ -12,8 +12,6 @@ public enum SourceFactory {
         case .jellyfin, .emby: return JellyfinSource(config: config, password: pw)
         case .synology: return SynologySource(config: config, password: pw)
         case .dlna: return DLNASource(config: config)
-        case .aliyun: return AliyunDriveSource(config: config)
-        case .baidu: return BaiduPanSource(config: config)
         }
     }
 }

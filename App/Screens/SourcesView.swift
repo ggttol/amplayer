@@ -1,4 +1,3 @@
-import AuthenticationServices
 import AmplayerKit
 import SwiftUI
 
@@ -118,7 +117,6 @@ struct BrowseTarget: Hashable {
 struct SourceEditorView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.webAuthenticationSession) private var webAuth
     @State var config: SourceConfig
     let isNew: Bool
     let onSave: (SourceConfig, String?) -> Void
@@ -156,16 +154,6 @@ struct SourceEditorView: View {
                         Toggle("信任自签名证书", isOn: $config.allowInsecureTLS)
                     } footer: {
                         Text("NAS 的 HTTPS 常用自签名证书；仅在局域网或你信任的服务器上开启。")
-                    }
-                }
-                if config.kind.usesOAuth {
-                    Section {
-                        Button("登录\(config.kind.title)") { Task { await oauthLogin() } }
-                            .disabled(!oauthConfigured)
-                    } footer: {
-                        Text(oauthConfigured
-                             ? "将在系统浏览器中打开\(config.kind.title)官方授权页面。"
-                             : "该版本未配置\(config.kind.title)开放平台的 AppKey（见 Config/Secrets.xcconfig.example）。也可以用 Alist / OpenList 把网盘转成 WebDAV 再添加。")
                     }
                 }
                 Section {
@@ -209,16 +197,7 @@ struct SourceEditorView: View {
         case .emby: "填 Emby 服务器地址，部分安装需要带 /emby 后缀。"
         case .synology: "填 DSM 地址（例如 https://IP:5001、DDNS 域名），或直接填 QuickConnect ID，会自动选择局域网或外网线路。可浏览所有共享文件夹；装了 Audio Station 并建好索引时，还会显示专辑与播放列表。不支持开启了两步验证的账号。"
         case .dlna: "填媒体服务器的设备描述地址；一般在上方“局域网”里自动发现即可。"
-        case .aliyun, .baidu: "通过官方开放平台授权，只读取文件。"
         case .local: ""
-        }
-    }
-
-    private var oauthConfigured: Bool {
-        switch config.kind {
-        case .aliyun: AliyunDriveSource.credentials.isConfigured
-        case .baidu: BaiduPanSource.credentials.isConfigured
-        default: false
         }
     }
 
@@ -236,44 +215,6 @@ struct SourceEditorView: View {
             if let syno = source as? SynologySource, syno.quickConnectID != nil, let address = try? await syno.connectedAddress() {
                 testResult! += "\n经 QuickConnect 连接到 \(address.host ?? "")"
             }
-        } catch {
-            testOK = false
-            testResult = error.localizedDescription
-        }
-    }
-
-    private func oauthLogin() async {
-        let verifier = PKCE.makeVerifier()
-        let state = UUID().uuidString
-        let url: URL
-        let redirect: String
-        switch config.kind {
-        case .aliyun:
-            url = AliyunDriveSource.authorizeURL(state: state, codeVerifier: verifier)
-            redirect = AliyunDriveSource.credentials.redirectURI
-        case .baidu:
-            url = BaiduPanSource.authorizeURL(state: state, codeVerifier: verifier)
-            redirect = BaiduPanSource.credentials.redirectURI
-        default:
-            return
-        }
-        let scheme = URL(string: redirect)?.scheme ?? "amplayer"
-        do {
-            let callback = try await webAuth.authenticate(using: url, callbackURLScheme: scheme)
-            let items = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems ?? []
-            guard items.first(where: { $0.name == "state" })?.value ?? state == state,
-                  let code = items.first(where: { $0.name == "code" })?.value else {
-                testOK = false
-                testResult = "授权被取消或失败"
-                return
-            }
-            let token = try await (config.kind == .aliyun
-                ? AliyunDriveSource.exchange(code: code, codeVerifier: verifier)
-                : BaiduPanSource.exchange(code: code, codeVerifier: verifier))
-            CredentialStore.setToken(try JSONEncoder().encode(token), for: config.id)
-            app.sources.invalidate(config.id)
-            testOK = true
-            testResult = "登录成功，保存后即可浏览"
         } catch {
             testOK = false
             testResult = error.localizedDescription
