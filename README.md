@@ -86,3 +86,7 @@ xcodebuild test -project Amplayer.xcodeproj -scheme Amplayer -destination "platf
 ## 许可
 
 依赖只使用 MIT / Apache / LGPL（AMSMB2 以动态库链接）。详见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。Amplayer 与 Winamp / Nullsoft / Llama Group 无关。
+
+## 许可证
+
+本项目代码以 [MIT](LICENSE) 许可发布。第三方组件（Monkey's Audio SDK、AMSMB2/libsmb2 等）沿用各自许可，见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。
