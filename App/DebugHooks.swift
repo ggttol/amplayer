@@ -4,7 +4,7 @@ import AmplayerKit
 
 /// 仅调试版：通过启动参数驱动界面，方便命令行截图和自测
 /// -AmplayerReset YES         删除所有来源（本机除外）并清空播放列表，用于 UI 测试
-/// -AmplayerDemoPlay YES      把 Documents 里的音频加入播放列表并播放
+/// -AmplayerDemoPlay YES      把 Documents 里的音频加入播放列表并播放（-AmplayerPlayIndex N 从第 N 首开始，0 起）
 /// -AmplayerSheet <name>      打开 sources / library / skins / settings / menu
 /// -AmplayerSkin <name>       切换到指定名称的皮肤
 /// -AmplayerAddSource <base64>  添加一个来源（base64 编码的 SourceConfig JSON，可带 "password"；参数域会把 { 开头的值当 plist 解析，所以用 base64）
@@ -32,7 +32,7 @@ enum DebugHooks {
         if defaults.bool(forKey: "AmplayerDemoPlay") {
             Task {
                 let tracks = (try? await LocalSource().collectTracks(path: "/")) ?? []
-                if !tracks.isEmpty { app.player.setQueue(tracks, startAt: 0, autoplay: true) }
+                if !tracks.isEmpty { app.player.setQueue(tracks, startAt: min(defaults.integer(forKey: "AmplayerPlayIndex"), tracks.count - 1), autoplay: true) }
             }
         }
         if let name = defaults.string(forKey: "AmplayerPlaySource"),

@@ -62,6 +62,10 @@ struct SettingsView: View {
 
                 Section("关于") {
                     LabeledContent("版本", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
+                    Link(destination: AppLinks.repository) {
+                        LabeledContent("开源项目", value: "github.com/ggttol/amplayer")
+                    }
+                    Link("反馈问题 / 提建议", destination: AppLinks.issues)
                     NavigationLink("播放日志") { PlaybackLogView() }
                     NavigationLink("开源许可") { LicensesView() }
                 }
@@ -152,4 +156,9 @@ struct PlaybackLogView: View {
             }
         }
     }
+}
+
+enum AppLinks {
+    static let repository = URL(string: "https://github.com/ggttol/amplayer")!
+    static let issues = URL(string: "https://github.com/ggttol/amplayer/issues")!
 }

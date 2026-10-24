@@ -96,6 +96,25 @@ final class AppModel {
 
     var skin: Skin { skins.current }
 
+    /// 首次启动：把内置示例曲（原创合成）放进“本机文件 › 示例 Demo”，播放列表为空时加进去（不自动播放）
+    func installDemoContentIfNeeded() {
+        let key = "amplayer.demoInstalled"
+        guard !UserDefaults.standard.bool(forKey: key),
+              let files = Bundle.main.urls(forResourcesWithExtension: nil, subdirectory: "Demo"), !files.isEmpty else { return }
+        UserDefaults.standard.set(true, forKey: key)
+        let folder = LocalSource.defaultRoot.appendingPathComponent("示例 Demo", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        for file in files {
+            let target = folder.appendingPathComponent(file.lastPathComponent)
+            if !FileManager.default.fileExists(atPath: target.path) { try? FileManager.default.copyItem(at: file, to: target) }
+        }
+        guard player.queue.isEmpty else { return }
+        Task {
+            let tracks = (try? await LocalSource().collectTracks(path: "/示例 Demo")) ?? []
+            if player.queue.isEmpty, !tracks.isEmpty { player.setQueue(tracks, startAt: 0, autoplay: false) }
+        }
+    }
+
     func show(_ message: String) {
         toast = message
         Task {

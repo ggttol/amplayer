@@ -100,9 +100,17 @@ struct SideMenuView: View {
                 }
                 Toggle(isOn: $app.showRemainingTime) { Label("显示剩余时间", systemImage: "timer") }
             }
-            Section("外观与设置") {
+            Section {
                 row("皮肤", "paintpalette") { open(.skins) }
                 row("设置", "gearshape") { open(.settings) }
+            } header: {
+                Text("外观与设置")
+            } footer: {
+                Link(destination: AppLinks.repository) {
+                    Label("免费开源 · github.com/ggttol/amplayer", systemImage: "chevron.left.forwardslash.chevron.right")
+                        .font(.footnote)
+                }
+                .padding(.top, 8)
             }
         }
         .listStyle(.insetGrouped)

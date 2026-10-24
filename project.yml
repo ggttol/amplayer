@@ -10,9 +10,9 @@ packages:
 settings:
   base:
     SWIFT_VERSION: '6.0'
-    TARGETED_DEVICE_FAMILY: '1,2'
+    TARGETED_DEVICE_FAMILY: '1'
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: '0.1'
+    MARKETING_VERSION: '1.0'
     CURRENT_PROJECT_VERSION: '1'
 configFiles:
   Debug: Config/Base.xcconfig
@@ -23,9 +23,15 @@ targets:
     platform: iOS
     sources:
       - path: App
+        excludes: ["Resources/Demo"]
+      # 示例曲按文件夹打包，运行时从 Bundle 的 Demo 子目录读取
+      - path: App/Resources/Demo
+        type: folder
+        buildPhase: resources
     settings:
       base:
         INFOPLIST_FILE: App/Resources/Info.plist
+        TARGETED_DEVICE_FAMILY: 1
         PRODUCT_BUNDLE_IDENTIFIER: dev.gaotao.amplayer
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
     dependencies:

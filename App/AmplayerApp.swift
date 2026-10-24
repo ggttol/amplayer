@@ -10,6 +10,7 @@ struct AmplayerApp: App {
             PlayerScreen()
                 .environment(model)
                 .tint(.orange)
+                .task { model.installDemoContentIfNeeded() }
                 #if DEBUG
                 .task { DebugHooks.run(model) }
                 #endif
