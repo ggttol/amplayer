@@ -349,6 +349,11 @@ public final class PlayerController {
         }
     }
 
+    /// 系统会在后台队列向封面要图，闭包不能在 MainActor 里创建（否则 Swift 6 隔离检查直接崩溃）
+    nonisolated private static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
+        MPMediaItemArtwork(boundsSize: image.size) { @Sendable _ in image }
+    }
+
     private func updateNowPlaying() {
         let center = MPNowPlayingInfoCenter.default()
         guard let track = current else {
@@ -365,7 +370,7 @@ public final class PlayerController {
         if let duration = audio.info?.duration ?? track.duration { info[MPMediaItemPropertyPlaybackDuration] = duration }
         #if canImport(UIKit)
         if let data = artwork, let image = UIImage(data: data) {
-            info[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { _ in image }
+            info[MPMediaItemPropertyArtwork] = Self.makeArtwork(image)
         }
         #endif
         center.nowPlayingInfo = info
