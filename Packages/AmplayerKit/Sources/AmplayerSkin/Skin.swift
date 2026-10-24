@@ -138,7 +138,7 @@ public final class Skin: @unchecked Sendable, Identifiable {
 
     // MARK: 加载
 
-    public static let defaultSkin: Skin = DefaultSkin.make()
+    public static let defaultSkin: Skin = DefaultSkin(palette: .graphite).make()
 
     /// 从 .wsz（zip）数据加载
     public static func load(wszData data: Data, id: String, name: String) throws -> Skin {

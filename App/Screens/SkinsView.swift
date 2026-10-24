@@ -13,31 +13,26 @@ struct SkinsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("内置皮肤") {
+                    ForEach(app.skins.entries.filter { $0.file == nil }) { entry in
+                        skinRow(entry)
+                    }
+                }
                 Section {
-                    ForEach(app.skins.entries) { entry in
-                        Button {
-                            app.skins.select(entry.id)
-                        } label: {
-                            HStack(spacing: 12) {
-                                SkinThumbnail(skin: app.skins.skin(for: entry))
-                                VStack(alignment: .leading) {
-                                    Text(entry.name).foregroundStyle(.primary)
-                                    Text(entry.file == nil ? "内置" : "已导入").font(.caption).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                if app.skins.current.id == entry.id {
-                                    Image(systemName: "checkmark").foregroundStyle(.tint)
-                                }
-                            }
-                        }
-                        .swipeActions {
-                            if entry.file != nil {
-                                Button("删除", role: .destructive) { app.skins.delete(entry) }
-                            }
-                        }
+                    ForEach(app.skins.entries.filter { $0.file != nil }) { entry in
+                        skinRow(entry)
+                    }
+                } header: {
+                    Text("已导入")
+                } footer: {
+                    Text("支持经典 .wsz 皮肤（Winamp 2.x 格式）。在下面的皮肤库里下载后，在“文件”App 里用 Amplayer 打开，或点右上角导入。皮肤版权归原作者所有。")
+                }
+                Section {
+                    Link(destination: URL(string: "https://skins.webamp.org")!) {
+                        Label("在线皮肤库（Winamp Skin Museum）", systemImage: "safari")
                     }
                 } footer: {
-                    Text("支持经典 .wsz 皮肤（Winamp 2.x 格式）。可在 Winamp Skin Museum（skins.webamp.org）下载，然后在“文件”App 里用 Amplayer 打开，或点右上角导入。皮肤版权归原作者所有。")
+                    Text("收录了七万多款经典皮肤，可以直接在浏览器里预览和下载 .wsz。")
                 }
             }
             .navigationTitle("皮肤")
@@ -55,6 +50,29 @@ struct SkinsView: View {
                     if (try? app.skins.importSkin(from: url)) != nil { ok += 1 }
                 }
                 app.show(ok == urls.count ? "已导入 \(ok) 个皮肤" : "\(urls.count - ok) 个文件不是有效皮肤")
+            }
+        }
+    }
+
+    private func skinRow(_ entry: SkinManager.Entry) -> some View {
+        Button {
+            app.skins.select(entry.id)
+        } label: {
+            HStack(spacing: 12) {
+                SkinThumbnail(skin: app.skins.skin(for: entry))
+                VStack(alignment: .leading) {
+                    Text(entry.name).foregroundStyle(.primary)
+                    Text(entry.file == nil ? "原创" : "已导入").font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if app.skins.current.id == entry.id {
+                    Image(systemName: "checkmark").foregroundStyle(.tint)
+                }
+            }
+        }
+        .swipeActions {
+            if entry.file != nil {
+                Button("删除", role: .destructive) { app.skins.delete(entry) }
             }
         }
     }

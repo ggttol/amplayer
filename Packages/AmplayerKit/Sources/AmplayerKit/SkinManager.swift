@@ -39,11 +39,15 @@ public final class SkinManager {
         let imported = files.filter { ["wsz", "zip"].contains($0.pathExtension.lowercased()) }
             .map { Entry(id: "file:" + $0.lastPathComponent, name: $0.deletingPathExtension().lastPathComponent, file: $0) }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
-        entries = [Entry(id: Skin.defaultSkin.id, name: Skin.defaultSkin.name, file: nil)] + imported
+        entries = Skin.builtIn.map { Entry(id: $0.id, name: $0.name, file: nil) } + imported
     }
 
     public func skin(for entry: Entry) -> Skin? {
         if let s = loaded[entry.id] { return s }
+        if entry.file == nil, let skin = Skin.builtIn(id: entry.id) {
+            loaded[entry.id] = skin
+            return skin
+        }
         guard let file = entry.file, let data = try? Data(contentsOf: file),
               let skin = try? Skin.load(wszData: data, id: entry.id, name: entry.name) else { return nil }
         loaded[entry.id] = skin

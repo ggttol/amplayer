@@ -1,31 +1,38 @@
 import CoreGraphics
 import Foundation
 
-/// Amplayer 原创默认皮肤 "Amplayer Graphite"：全部用代码绘制，坐标布局与经典皮肤一致。
-enum DefaultSkin {
-    // 配色
-    static let frame = SkinColor(hex: "#2A2D34")!
-    static let frameLight = SkinColor(hex: "#4A4F5A")!
-    static let frameDark = SkinColor(hex: "#111216")!
-    static let lcd = SkinColor(hex: "#07110C")!
-    static let lcdGrid = SkinColor(hex: "#10241A")!
-    static let accent = SkinColor(hex: "#3CF0A0")!
-    static let accentDim = SkinColor(hex: "#1E6B4C")!
-    static let segmentOff = SkinColor(hex: "#0F2419")!
-    static let titleTop = SkinColor(hex: "#3D4250")!
-    static let titleBottom = SkinColor(hex: "#24272E")!
-    static let buttonTop = SkinColor(hex: "#454A55")!
-    static let buttonBottom = SkinColor(hex: "#2C2F37")!
-    static let buttonDownTop = SkinColor(hex: "#1B1D22")!
-    static let buttonDownBottom = SkinColor(hex: "#25282E")!
-    static let icon = SkinColor(hex: "#D8DEE9")!
-    static let warm = SkinColor(hex: "#FFD166")!
-    static let hot = SkinColor(hex: "#FF5E5B")!
+/// Amplayer 原创内置皮肤：全部用代码绘制，坐标布局与经典皮肤一致；换调色板就是另一套皮肤。
+struct DefaultSkin {
+    let palette: SkinPalette
 
-    static func make() -> Skin {
+    var frame: SkinColor { palette.frame }
+    var frameLight: SkinColor { palette.frameLight }
+    var frameDark: SkinColor { palette.frameDark }
+    var lcd: SkinColor { palette.lcd }
+    var lcdGrid: SkinColor { palette.lcdGrid }
+    var accent: SkinColor { palette.accent }
+    var accentDim: SkinColor { palette.accentDim }
+    var segmentOff: SkinColor { palette.segmentOff }
+    var titleTop: SkinColor { palette.titleTop }
+    var titleBottom: SkinColor { palette.titleBottom }
+    var buttonTop: SkinColor { palette.buttonTop }
+    var buttonBottom: SkinColor { palette.buttonBottom }
+    var buttonDownTop: SkinColor { palette.buttonDownTop }
+    var buttonDownBottom: SkinColor { palette.buttonDownBottom }
+    var icon: SkinColor { palette.icon }
+    var warm: SkinColor { palette.warm }
+    var hot: SkinColor { palette.hot }
+    /// 机身上的小字：深色机身用浅色，浅色机身用深色
+    var label: SkinColor {
+        let luminance = 0.299 * frame.r + 0.587 * frame.g + 0.114 * frame.b
+        return luminance > 0.5 ? Self.mix(frame, SkinColor(0, 0, 0), 0.55) : frameLight
+    }
+
+    func make() -> Skin {
         var sheets: [SkinSheet: CGImage] = [:]
         for sheet in SkinSheet.allCases {
             let p = Painter(sheet.size)
+            p.palette = palette
             switch sheet {
             case .main: drawMain(p)
             case .titlebar: drawTitleBar(p)
@@ -44,10 +51,12 @@ enum DefaultSkin {
             }
             sheets[sheet] = p.image()
         }
-        return Skin(id: "amplayer-graphite", name: "Amplayer Graphite", sheets: sheets, visColors: visColors, playlistStyle: .fallback, hasNumsEx: false)
+        let playlist = PlaylistStyle(normal: accent, current: palette.playlistCurrent, normalBackground: lcd,
+                                     selectedBackground: Self.mix(lcd, accent, 0.28), font: "Arial")
+        return Skin(id: palette.id, name: palette.name, sheets: sheets, visColors: visColors, playlistStyle: playlist, hasNumsEx: false)
     }
 
-    static let visColors: [SkinColor] = {
+    var visColors: [SkinColor] {
         var c: [SkinColor] = [lcd, lcdGrid]
         // 2...17：频谱从顶部（热）到底部（冷）
         for i in 0..<16 {
@@ -55,13 +64,13 @@ enum DefaultSkin {
             let from = t < 0.4 ? hot : warm
             let to = t < 0.4 ? warm : accent
             let local = t < 0.4 ? t / 0.4 : (t - 0.4) / 0.6
-            c.append(mix(from, to, local))
+            c.append(Self.mix(from, to, local))
         }
         // 18...22：示波器亮到暗
-        for i in 0..<5 { c.append(mix(accent, accentDim, CGFloat(i) / 4)) }
+        for i in 0..<5 { c.append(Self.mix(accent, accentDim, CGFloat(i) / 4)) }
         c.append(SkinColor(1, 1, 1))
         return c
-    }()
+    }
 
     static func mix(_ a: SkinColor, _ b: SkinColor, _ t: CGFloat) -> SkinColor {
         SkinColor(a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t)
@@ -69,7 +78,7 @@ enum DefaultSkin {
 
     // MARK: 主窗口
 
-    static func drawMain(_ p: Painter) {
+    func drawMain(_ p: Painter) {
         p.fill(0, 0, 275, 116, frame)
         p.bevel(0, 0, 275, 116, light: frameLight, dark: frameDark)
         // 左侧显示屏
@@ -85,8 +94,8 @@ enum DefaultSkin {
         p.text("kbps", 131, 43, accentDim)
         p.text("khz", 171, 43, accentDim)
         // 音量/平衡标签
-        p.text("vol", 107, 52, frameLight)
-        p.text("bal", 177, 52, frameLight)
+        p.text("vol", 107, 52, label)
+        p.text("bal", 177, 52, label)
         // 按钮区分隔线
         p.fill(10, 85, 255, 1, frameDark)
         p.fill(10, 86, 255, 1, frameLight.with(alpha: 0.5))
@@ -95,7 +104,7 @@ enum DefaultSkin {
         p.fill(246, 102, 11, 1, accentDim)
     }
 
-    static func drawTitleBar(_ p: Painter) {
+    func drawTitleBar(_ p: Painter) {
         // 标题栏：选中 (27,0)，未选中 (27,15)
         for (y, active) in [(0, true), (15, false)] {
             p.gradient(27, y, 275, 14, active ? titleTop : frame, active ? titleBottom : frameDark)
@@ -126,7 +135,7 @@ enum DefaultSkin {
         }
     }
 
-    static func drawControlButtons(_ p: Painter) {
+    func drawControlButtons(_ p: Painter) {
         let widths = [23, 23, 23, 23, 22, 22]
         var x = 0
         for (i, w) in widths.enumerated() {
@@ -164,7 +173,7 @@ enum DefaultSkin {
     }
 
     /// 七段数码管
-    static func drawNumbers(_ p: Painter, ex: Bool) {
+    func drawNumbers(_ p: Painter, ex: Bool) {
         p.fill(0, 0, Int(p.size.width), 13, lcd)
         // 段：a 上、b 右上、c 右下、d 下、e 左下、f 左上、g 中
         let map: [[Bool]] = [
@@ -192,7 +201,7 @@ enum DefaultSkin {
         }
     }
 
-    static func drawPlayPause(_ p: Painter) {
+    func drawPlayPause(_ p: Painter) {
         p.fill(0, 0, 42, 9, lcd)
         p.triangle(left: false, x: 2, y: 1, w: 5, h: 7, accent) // 播放中
         p.fill(10, 1, 2, 7, warm); p.fill(14, 1, 2, 7, warm) // 暂停
@@ -201,7 +210,7 @@ enum DefaultSkin {
         p.fill(39, 1, 2, 7, accent) // 加载中
     }
 
-    static func drawMonoStereo(_ p: Painter) {
+    func drawMonoStereo(_ p: Painter) {
         for (y, on) in [(0, true), (12, false)] {
             p.fill(0, y, 56, 12, frame)
             p.inset(0, y + 1, 29, 10, lcd)
@@ -211,7 +220,7 @@ enum DefaultSkin {
         }
     }
 
-    static func drawPositionBar(_ p: Painter) {
+    func drawPositionBar(_ p: Painter) {
         p.fill(0, 0, 248, 10, frame)
         p.inset(0, 2, 248, 6, frameDark)
         p.fill(1, 4, 246, 2, lcd)
@@ -223,7 +232,7 @@ enum DefaultSkin {
     }
 
     /// volume.bmp / balance.bmp：28 帧背景 + 滑块
-    static func drawVolume(_ p: Painter, balance: Bool) {
+    func drawVolume(_ p: Painter, balance: Bool) {
         let width = balance ? 47 : 68
         p.fill(0, 0, width, 433, frame)
         for i in 0..<28 {
@@ -233,12 +242,12 @@ enum DefaultSkin {
             let w = balance ? 38 : 68
             p.inset(x0, y + 4, w, 5, frameDark)
             if balance {
-                let c = mix(accent, hot, t)
+                let c = Self.mix(accent, hot, t)
                 p.fill(x0 + 19 - Int(t * 18), y + 5, max(1, Int(t * 36)), 3, c.with(alpha: 0.35 + 0.65 * t))
                 p.fill(x0 + 18, y + 3, 2, 7, frameLight)
             } else {
                 let fillW = Int(t * CGFloat(w - 2))
-                if fillW > 0 { p.fill(x0 + 1, y + 5, fillW, 3, mix(accentDim, i > 22 ? warm : accent, t)) }
+                if fillW > 0 { p.fill(x0 + 1, y + 5, fillW, 3, Self.mix(accentDim, i > 22 ? warm : accent, t)) }
             }
         }
         for (x, selected) in [(0, true), (15, false)] {
@@ -248,7 +257,7 @@ enum DefaultSkin {
         }
     }
 
-    static func drawShuffleRepeat(_ p: Painter) {
+    func drawShuffleRepeat(_ p: Painter) {
         p.fill(0, 0, 92, 85, frame)
         func button(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ label: String, on: Bool, down: Bool) {
             p.gradient(x, y, w, h, down ? buttonDownTop : buttonTop, down ? buttonDownBottom : buttonBottom)
@@ -270,7 +279,7 @@ enum DefaultSkin {
         }
     }
 
-    static func drawText(_ p: Painter) {
+    func drawText(_ p: Painter) {
         p.fill(0, 0, 155, 18, lcd)
         for (c, pos) in S.fontLookup {
             // 同一位置的多个字符（如 < 与 [）只画一次
@@ -283,7 +292,7 @@ enum DefaultSkin {
 
     static let bandLabels = ["60", "170", "310", "600", "1k", "3k", "6k", "12k", "14k", "16k"]
 
-    static func drawEqualizer(_ p: Painter) {
+    func drawEqualizer(_ p: Painter) {
         p.fill(0, 0, 275, 315, frame)
         p.bevel(0, 0, 275, 116, light: frameLight, dark: frameDark)
         // 滑块槽与标签
@@ -291,7 +300,7 @@ enum DefaultSkin {
         for i in 0..<10 {
             let x = 78 + i * 18
             p.inset(x + 5, 38, 4, 63, frameDark)
-            let label = bandLabels[i]
+            let label = Self.bandLabels[i]
             p.text(label, x + 7 - (label.count * 4 - 1) / 2, 104, icon)
         }
         p.inset(26, 38, 4, 63, frameDark)
@@ -341,7 +350,7 @@ enum DefaultSkin {
             let level = Int(CGFloat(i) / 27 * 61)
             for row in 0..<level {
                 let t = CGFloat(row) / 61
-                p.fill(x + 6, y + 62 - row, 2, 1, mix(accentDim, t > 0.5 ? warm : accent, t))
+                p.fill(x + 6, y + 62 - row, 2, 1, Self.mix(accentDim, t > 0.5 ? warm : accent, t))
             }
         }
         // PRESETS
@@ -355,14 +364,14 @@ enum DefaultSkin {
         for x in stride(from: 0, to: 113, by: 4) { p.fill(x, 303, 2, 1, lcdGrid) }
         for y in 0..<19 {
             let t = CGFloat(y) / 18
-            p.fill(115, 294 + y, 1, 1, t < 0.5 ? mix(hot, warm, t * 2) : mix(warm, accent, (t - 0.5) * 2))
+            p.fill(115, 294 + y, 1, 1, t < 0.5 ? Self.mix(hot, warm, t * 2) : Self.mix(warm, accent, (t - 0.5) * 2))
         }
         p.fill(0, 314, 113, 1, accentDim)
     }
 
     // MARK: 播放列表
 
-    static func drawPlaylist(_ p: Painter) {
+    func drawPlaylist(_ p: Painter) {
         p.fill(0, 0, 280, 186, frame)
         for (y, active) in [(0, true), (21, false)] {
             let top = active ? titleTop : frame, bottom = active ? titleBottom : frameDark
@@ -394,7 +403,7 @@ enum DefaultSkin {
         // 纵向平铺，槽只画左右边，避免出现横向接缝
         p.fill(31, 42, 20, 29, frame)
         p.fill(31 + 7, 42, 10, 29, frameDark)
-        p.fill(31 + 7, 42, 1, 29, DefaultSkin.frameDark)
+        p.fill(31 + 7, 42, 1, 29, frameDark)
         p.fill(31 + 16, 42, 1, 29, frameLight.with(alpha: 0.6))
         p.fill(50, 42, 1, 29, frameDark)
         // 滚动条滑块
@@ -438,6 +447,7 @@ extension SkinColor {
 
 /// 左上原点的像素画笔
 final class Painter {
+    var palette: SkinPalette = .graphite
     let size: CGSize
     private let ctx: CGContext
     private let height: Int
@@ -474,7 +484,7 @@ final class Painter {
     /// 凹陷面板
     func inset(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ c: SkinColor) {
         fill(x, y, w, h, c)
-        bevel(x, y, w, h, light: DefaultSkin.frameDark, dark: DefaultSkin.frameLight.with(alpha: 0.6))
+        bevel(x, y, w, h, light: palette.frameDark, dark: palette.frameLight.with(alpha: 0.6))
     }
 
     func gradient(_ x: Int, _ y: Int, _ w: Int, _ h: Int, _ top: SkinColor, _ bottom: SkinColor) {

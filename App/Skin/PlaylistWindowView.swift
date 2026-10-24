@@ -69,6 +69,17 @@ struct PlaylistWindowView: View {
             // 底部
             SpriteView(S.plBottomLeft).at(0, height - 38)
             SpriteView(S.plBottomRight).at(width - 150, height - 38)
+            // 标题栏：点一下在播放列表和歌词之间切换
+            Color.clear
+                .frame(width: (width - 50) * scale, height: 20 * scale)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    app.showLyrics.toggle()
+                    app.show(app.showLyrics ? "歌词" : "播放列表")
+                }
+                .at(25, 0)
+                .accessibilityLabel(app.showLyrics ? "切换到播放列表" : "切换到歌词")
+                .accessibilityAddTraits(.isButton)
             // 关闭按钮区：隐藏播放列表
             Color.clear
                 .frame(width: 11 * scale, height: 11 * scale)
