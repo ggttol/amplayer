@@ -11,7 +11,8 @@ struct VisualizerView: View {
     @State private var peaks = [Double](repeating: 0, count: 19)
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: mode == .off)) { timeline in
+        // 只在播放时逐帧刷新；暂停、停止、关闭时停帧（高刷屏上一直重画会很耗电发热）
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: mode == .off || app.player.audio.state != .playing)) { timeline in
             Canvas { ctx, size in
                 let colors = skin.visColors
                 let s = scale
@@ -25,7 +26,7 @@ struct VisualizerView: View {
                 }
                 guard mode != .off else { return }
                 let audio = app.player.audio
-                if audio.state != .playing { audio.analyzer.decay() }
+                guard audio.state == .playing else { return }
                 let snapshot = audio.analyzer.snapshot()
                 if mode == .spectrum {
                     // 75 个频段合成 19 根柱，每根 3 像素宽、间隔 1 像素

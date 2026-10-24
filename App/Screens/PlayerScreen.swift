@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 /// 主界面：主窗口 + 均衡器 + 播放列表竖向排列，按屏宽等比放大
 struct PlayerScreen: View {
     @Environment(AppModel.self) private var app
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         @Bindable var app = app
@@ -45,6 +46,8 @@ struct PlayerScreen: View {
             if case let .success(urls) = result { app.importAudioFiles(urls, play: true) }
         }
         .onOpenURL { app.open(url: $0) }
+        .onChange(of: scenePhase, initial: true) { _, _ in updateAnalyzer() }
+        .onChange(of: app.visualizerMode) { _, _ in updateAnalyzer() }
         .onChange(of: app.player.lastError) { _, error in
             if let error { app.show(error) }
         }
@@ -72,6 +75,13 @@ struct ClosedWindowsHint: View {
             .font(.footnote)
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+extension PlayerScreen {
+    /// 频谱只在前台且可视化开着时计算
+    func updateAnalyzer() {
+        app.player.audio.analyzer.isEnabled = scenePhase == .active && app.visualizerMode != .off
     }
 }
 

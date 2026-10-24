@@ -224,7 +224,7 @@ struct Marquee: View {
     var body: some View {
         let gap = 25 * scale
         let needsScroll = textWidth > width * scale
-        TimelineView(.periodic(from: .now, by: 1.0 / 20)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 15, paused: !needsScroll)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             let cycle = textWidth + gap
             let offset = needsScroll && cycle > 0 ? -CGFloat((t * 30 * Double(scale)).truncatingRemainder(dividingBy: Double(cycle))) : 0

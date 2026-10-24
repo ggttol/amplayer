@@ -104,12 +104,18 @@ final class EffectsChain {
 
     /// 渲染回调在音频线程上执行，必须在 nonisolated 上下文里创建（否则继承 MainActor 隔离会崩溃）
     private nonisolated static func makeNoiseNode(_ state: NoiseState) -> AVAudioSourceNode {
-        AVAudioSourceNode { _, _, frameCount, audioBufferList -> OSStatus in
+        AVAudioSourceNode { isSilence, _, frameCount, audioBufferList -> OSStatus in
             let buffers = UnsafeMutableAudioBufferListPointer(audioBufferList)
             let level = state.level
+            // 没开底噪：整块清零并标记静音，下游可以跳过
+            guard level > 0 else {
+                for buffer in buffers { if let data = buffer.mData { memset(data, 0, Int(buffer.mDataByteSize)) } }
+                isSilence.pointee = true
+                return noErr
+            }
             for frame in 0..<Int(frameCount) {
                 var sample: Float = 0
-                if level > 0 {
+                do {
                     state.seed ^= state.seed << 13; state.seed ^= state.seed >> 17; state.seed ^= state.seed << 5
                     let white = Float(state.seed) / Float(UInt32.max) * 2 - 1
                     // 低通后的沙沙声

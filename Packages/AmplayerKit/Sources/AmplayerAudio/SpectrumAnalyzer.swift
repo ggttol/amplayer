@@ -8,6 +8,8 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
     private static let fftSize = 1 << 10
 
     private let lock = NSLock()
+    /// 可视化关闭、App 在后台或锁屏时关掉，不再每块音频都做 FFT
+    nonisolated(unsafe) public var isEnabled = true
     private var spectrum = [Float](repeating: 0, count: SpectrumAnalyzer.bandCount)
     private var waveform = [Float](repeating: 0, count: SpectrumAnalyzer.bandCount)
     private let fftSetup: FFTSetup
@@ -40,7 +42,7 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
     }
 
     func process(_ buffer: AVAudioPCMBuffer) {
-        guard let channels = buffer.floatChannelData else { return }
+        guard isEnabled, let channels = buffer.floatChannelData else { return }
         let frames = Int(buffer.frameLength)
         guard frames > 0 else { return }
         let channelCount = Int(buffer.format.channelCount)

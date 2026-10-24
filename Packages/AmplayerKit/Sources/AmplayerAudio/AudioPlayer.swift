@@ -56,6 +56,7 @@ public final class AudioPlayer {
     @ObservationIgnored private let eqNode = AVAudioUnitEQ(numberOfBands: 10)
     @ObservationIgnored private let effectsChain = EffectsChain()
     @ObservationIgnored private var surroundTimer: Timer?
+    @ObservationIgnored private var idleTask: Task<Void, Never>?
     @ObservationIgnored private var surroundPhase: Double = 0
     /// 当前音源：Core Audio 能直接读的文件，或逐块解码的流（APE）
     private enum Source {
@@ -164,6 +165,7 @@ public final class AudioPlayer {
         } catch {
             return
         }
+        idleTask?.cancel()
         playerNode.play()
         state = .playing
         startPositionTimer()
@@ -185,6 +187,17 @@ public final class AudioPlayer {
         pausedTime = currentTime
         playerNode.pause()
         state = .paused
+        scheduleIdleStop()
+    }
+
+    /// 不在播放时过一会儿暂停音频引擎（音频硬件跟着休眠，省电、不发热）；再按播放时 play() 会重新启动
+    private func scheduleIdleStop() {
+        idleTask?.cancel()
+        idleTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(15))
+            guard let self, !Task.isCancelled, self.state != .playing, self.engine.isRunning else { return }
+            self.engine.pause()
+        }
     }
 
     public func stop() {
@@ -193,6 +206,7 @@ public final class AudioPlayer {
         pausedTime = 0
         state = .stopped
         analyzer.decay()
+        scheduleIdleStop()
     }
 
     /// 释放文件（播放列表清空时）
