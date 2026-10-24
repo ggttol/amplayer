@@ -9,19 +9,22 @@ struct PlayerScreen: View {
     var body: some View {
         @Bindable var app = app
         GeometryReader { geo in
-            let scale = geo.size.width / 275
-            let toolbarHeight: CGFloat = 0
+            // 按宽度放大；高度放不下（iPad 横屏）时按高度缩小，保证主窗口 + 均衡器 + 最矮的播放列表都在屏幕内
+            let windows: CGFloat = 116 * (app.showEqualizer ? 2 : 1) + (app.showPlaylist ? 116 : 0)
+            let scale = min(geo.size.width / 275, geo.size.height / windows)
             let used = 116 * scale * (app.showEqualizer ? 2 : 1)
-            let playlistHeight = max(116, (geo.size.height - used - toolbarHeight) / scale)
+            let playlistHeight = max(116, (geo.size.height - used) / scale)
             VStack(spacing: 0) {
                 MainWindowView()
                 if app.showEqualizer { EqualizerWindowView() }
                 if app.showPlaylist {
                     PlaylistWindowView(height: playlistHeight.rounded(.down))
                 } else {
-                    Spacer(minLength: 0)
+                    ClosedWindowsHint().frame(maxHeight: .infinity)
                 }
             }
+            .frame(width: 275 * scale)
+            .frame(maxWidth: .infinity)
             .environment(\.skinScale, scale)
             .environment(\.skin, app.skin)
         }
@@ -40,8 +43,31 @@ struct PlayerScreen: View {
             if case let .success(urls) = result { app.importAudioFiles(urls, play: true) }
         }
         .onOpenURL { app.open(url: $0) }
+        .onChange(of: app.player.lastError) { _, error in
+            if let error { app.show(error) }
+        }
         .preferredColorScheme(.dark)
         .statusBarHidden(false)
+    }
+}
+
+/// 播放列表被关掉后下面的空白处：告诉用户怎么找回窗口
+struct ClosedWindowsHint: View {
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        VStack(spacing: 10) {
+            Text("播放列表已关闭").font(.footnote).foregroundStyle(.secondary)
+            HStack(spacing: 10) {
+                Button("显示播放列表") { app.showLyrics = false; app.showPlaylist = true }
+                Button("显示歌词") { app.showLyrics = true; app.showPlaylist = true }
+                if !app.showEqualizer { Button("均衡器") { app.showEqualizer = true } }
+            }
+            .buttonStyle(.bordered)
+            .tint(.gray)
+            .font(.footnote)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

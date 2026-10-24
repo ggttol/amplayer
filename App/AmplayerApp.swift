@@ -9,6 +9,7 @@ struct AmplayerApp: App {
         WindowGroup {
             PlayerScreen()
                 .environment(model)
+                .tint(.orange)
                 #if DEBUG
                 .task { DebugHooks.run(model) }
                 #endif

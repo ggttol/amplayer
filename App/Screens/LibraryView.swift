@@ -89,7 +89,20 @@ struct LibraryView: View {
             }
             .overlay {
                 if tab != .playlists && app.library.tracks.isEmpty && app.library.scanning.isEmpty {
-                    ContentUnavailableView("曲库是空的", systemImage: "music.note.house", description: Text("在“来源”里长按某个来源或文件夹，选择“扫描到曲库”。"))
+                    ContentUnavailableView {
+                        Label("曲库是空的", systemImage: "music.note.house")
+                    } description: {
+                        Text("在“来源”里长按某个来源或文件夹，选择“扫描到曲库”。")
+                    } actions: {
+                        Button("打开来源") {
+                            dismiss()
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .milliseconds(350))
+                                app.sheet = .sources
+                            }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 } else if tab == .playlists && playlists.isEmpty {
                     ContentUnavailableView("还没有保存的播放列表", systemImage: "music.note.list", description: Text("在播放列表窗口点 LIST › 保存播放列表。"))
                 }

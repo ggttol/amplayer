@@ -27,7 +27,9 @@ struct PlaylistWindowView: View {
                 if app.showLyrics {
                     LyricsPanelView(style: style)
                 } else {
-                    trackList(style).overlay(alignment: .top) { if app.isSelecting { selectionBar } }
+                    trackList(style)
+                        .overlay(alignment: .top) { if app.isSelecting { selectionBar } }
+                        .overlay { if player.queue.isEmpty { emptyHint(style) } }
                 }
             }
                 .frame(width: (width - 12 - 20) * scale, height: (height - 20 - 38) * scale)
@@ -206,6 +208,21 @@ struct PlaylistWindowView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func emptyHint(_ style: PlaylistStyle) -> some View {
+        VStack(spacing: 6 * scale) {
+            Text("播放列表是空的")
+            Button("打开来源") { app.sheet = .sources }
+                .buttonStyle(.bordered)
+                .tint(style.normal.color)
+            Text("也可以点下面的 ADD 从“文件”或曲库添加")
+                .opacity(0.6)
+        }
+        .font(.system(size: 9 * scale))
+        .foregroundStyle(style.normal.color)
+        .multilineTextAlignment(.center)
+        .padding(.horizontal, 10 * scale)
     }
 
     private var selectionBar: some View {

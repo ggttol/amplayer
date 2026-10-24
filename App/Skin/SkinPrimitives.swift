@@ -93,22 +93,46 @@ struct SpriteButton: View {
     let normal: Sprite
     let pressed: Sprite
     let label: String
+    /// 点击区域向外扩展（皮肤像素）：标题栏那种 9 像素的小按钮手指很难点中
+    var hitSlop: EdgeInsets = EdgeInsets()
     let action: () -> Void
 
+    @State private var taps = 0
+
+    init(normal: Sprite, pressed: Sprite, label: String, hitSlop: EdgeInsets = EdgeInsets(), action: @escaping () -> Void) {
+        self.normal = normal
+        self.pressed = pressed
+        self.label = label
+        self.hitSlop = hitSlop
+        self.action = action
+    }
+
     var body: some View {
-        Button(action: action) { EmptyView() }
-            .buttonStyle(SpriteButtonStyle(normal: normal, pressed: pressed))
+        Button {
+            taps += 1
+            action()
+        } label: { EmptyView() }
+            .buttonStyle(SpriteButtonStyle(normal: normal, pressed: pressed, hitSlop: hitSlop))
             .accessibilityLabel(label)
+            .sensoryFeedback(.impact(weight: .light), trigger: taps)
     }
 }
 
 struct SpriteButtonStyle: ButtonStyle {
     let normal: Sprite
     let pressed: Sprite
+    var hitSlop = EdgeInsets()
+    @Environment(\.skinScale) private var scale
 
     func makeBody(configuration: Configuration) -> some View {
         SpriteView(configuration.isPressed ? pressed : normal)
+            .padding(scaled(hitSlop))
             .contentShape(Rectangle())
+            .padding(scaled(hitSlop, sign: -1))
+    }
+
+    private func scaled(_ e: EdgeInsets, sign: CGFloat = 1) -> EdgeInsets {
+        EdgeInsets(top: e.top * scale * sign, leading: e.leading * scale * sign, bottom: e.bottom * scale * sign, trailing: e.trailing * scale * sign)
     }
 }
 
@@ -139,7 +163,9 @@ struct SkinHSlider: View {
             }
         }
         .frame(width: width * scale, height: height * scale, alignment: .topLeading)
-        .contentShape(Rectangle().inset(by: -4 * scale))
+        .padding(.vertical, 8 * scale)
+        .contentShape(Rectangle())
+        .padding(.vertical, -8 * scale)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { g in
