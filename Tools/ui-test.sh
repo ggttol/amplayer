@@ -16,8 +16,21 @@ xcodebuild build-for-testing -project Amplayer.xcodeproj -scheme Amplayer -desti
 xcrun simctl install "$UDID" build/sim/Build/Products/Debug-iphonesimulator/Amplayer.app
 DOCS="$(xcrun simctl get_app_container "$UDID" dev.gaotao.amplayer data)/Documents"
 mkdir -p "$DOCS" && cp "$M/Album One/"* "$DOCS/"
-xcodebuild test-without-building -project Amplayer.xcodeproj -scheme Amplayer -destination "id=$UDID" -derivedDataPath build/sim 2>&1 \
-  | grep -E "Test Case .*(passed|failed)|error:|TEST (EXECUTE )?(SUCCEEDED|FAILED)"
-status=${PIPESTATUS[0]}
+
+# 当前 Xcode 跑完测试后解析系统版本号会挂住不退出：看到 All tests 的结果行就结束它
+LOG=$(mktemp)
+xcodebuild test-without-building -project Amplayer.xcodeproj -scheme Amplayer -destination "id=$UDID" -derivedDataPath build/sim >"$LOG" 2>&1 &
+XCB=$!
+for _ in $(seq 1 300); do
+  kill -0 "$XCB" 2>/dev/null || break
+  if grep -qE "^Test Suite 'All tests' (passed|failed)" "$LOG"; then sleep 3; break; fi
+  sleep 2
+done
+kill "$XCB" 2>/dev/null
+grep -E "^Test Case .*(passed|failed)|error:" "$LOG" | sort -u
+grep -E "^Test Suite 'All tests' (passed|failed)" "$LOG" || echo "测试没有跑完（超时或崩溃），日志：$LOG"
+grep -qE "^Test Suite 'All tests' passed" "$LOG"
+status=$?
+[ $status -eq 0 ] && rm -f "$LOG"
 docker rm -f amplayertest-webdav >/dev/null 2>&1
 exit $status
