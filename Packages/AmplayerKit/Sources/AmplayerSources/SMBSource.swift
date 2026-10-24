@@ -47,6 +47,8 @@ public final class SMBSource: MediaSource, @unchecked Sendable {
         }
     }
 
+    public func lyrics(for track: Track) async -> String? { await siblingLyrics(of: track.path) }
+
     public func download(path: String, to destination: URL) async throws {
         let (share, inner) = split(path)
         guard let share else { throw SourceError.protocolError("路径缺少共享名：\(path)") }

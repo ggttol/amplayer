@@ -41,6 +41,8 @@ public struct WebDAVSource: MediaSource {
         }
     }
 
+    public func lyrics(for track: Track) async -> String? { await siblingLyrics(of: track.path) }
+
     public func download(path: String, to destination: URL) async throws {
         try await http.download(request(for: path, method: "GET"), to: destination)
     }

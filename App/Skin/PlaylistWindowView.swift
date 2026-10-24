@@ -20,7 +20,9 @@ struct PlaylistWindowView: View {
         let style = skin.playlistStyle
         SkinCanvas(size: CGSize(width: width, height: height)) {
             frame
-            trackList(style)
+            Group {
+                if app.showLyrics { LyricsPanelView(style: style) } else { trackList(style) }
+            }
                 .frame(width: (width - 12 - 20) * scale, height: (height - 20 - 38) * scale)
                 .background(style.normalBackground.color)
                 .at(12, 20)

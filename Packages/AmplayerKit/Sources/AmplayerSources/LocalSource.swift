@@ -37,6 +37,8 @@ public struct LocalSource: MediaSource {
         }
     }
 
+    public func lyrics(for track: Track) async -> String? { await siblingLyrics(of: track.path) }
+
     public func download(path: String, to destination: URL) async throws {
         try FileManager.default.copyItem(at: url(for: path), to: destination)
     }

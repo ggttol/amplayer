@@ -25,6 +25,8 @@ final class AppModel {
     var showPlaylist: Bool { didSet { UserDefaults.standard.set(showPlaylist, forKey: "amplayer.showPL") } }
     var visualizerMode: VisualizerMode { didSet { UserDefaults.standard.set(visualizerMode.rawValue, forKey: "amplayer.vis") } }
     var showRemainingTime = false
+    /// 播放列表窗口改为显示歌词
+    var showLyrics: Bool { didSet { UserDefaults.standard.set(showLyrics, forKey: "amplayer.showLyrics") } }
     /// 播放列表里选中的行（tracks 下标）
     var selection: Set<Int> = []
     var isImportingFiles = false
@@ -35,6 +37,7 @@ final class AppModel {
         defaults.register(defaults: ["amplayer.showEQ": true, "amplayer.showPL": true])
         showEqualizer = defaults.bool(forKey: "amplayer.showEQ")
         showPlaylist = defaults.bool(forKey: "amplayer.showPL")
+        showLyrics = defaults.bool(forKey: "amplayer.showLyrics")
         visualizerMode = VisualizerMode(rawValue: defaults.integer(forKey: "amplayer.vis")) ?? .spectrum
         player = PlayerController(sources: sources)
         player.onTrackUpdated = { [weak library] track in library?.update(track) }

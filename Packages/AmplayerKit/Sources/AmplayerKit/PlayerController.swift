@@ -20,12 +20,17 @@ public final class PlayerController {
     public var lastError: String?
     /// 当前曲目的封面
     public private(set) var artwork: Data?
+    /// 当前曲目的歌词；lyricsLoading 为真表示还在找
+    public private(set) var lyrics: Lyrics?
+    public private(set) var lyricsLoading = false
 
     @ObservationIgnored public let cache: AudioCache
     @ObservationIgnored private let sources: SourceStore
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var prefetchTask: Task<Void, Never>?
     @ObservationIgnored private let saver = Debouncer()
+    @ObservationIgnored private let lyricsStore = LyricsStore()
+    @ObservationIgnored private var lyricsTask: Task<Void, Never>?
     /// 读到新标签时通知（曲库据此更新）
     @ObservationIgnored public var onTrackUpdated: ((Track) -> Void)?
 
@@ -220,6 +225,9 @@ public final class PlayerController {
         audio.stop()
         lastError = nil
         artwork = nil
+        lyricsTask?.cancel()
+        lyrics = lyricsStore.cached(track)
+        lyricsLoading = lyrics == nil
         loadingTrackID = track.id
         updateNowPlaying()
         loadTask = Task { [weak self] in
@@ -241,6 +249,7 @@ public final class PlayerController {
             } catch {
                 guard !Task.isCancelled else { return }
                 self.loadingTrackID = nil
+                self.lyricsLoading = false
                 self.lastError = "\(track.displayName)：\(error.localizedDescription)"
                 self.updateNowPlaying()
             }
@@ -277,6 +286,7 @@ public final class PlayerController {
             onTrackUpdated?(updated)
             persist()
         }
+        findLyrics(for: updated, source: source, embedded: tags.lyrics)
         if let data = tags.artwork {
             artwork = data
         } else if let ref = track.artworkRef, let request = try? await source.artworkRequest(ref: ref),
@@ -285,6 +295,59 @@ public final class PlayerController {
             if current?.id == track.id { artwork = data }
         }
         updateNowPlaying()
+    }
+
+    // MARK: 歌词
+
+    /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌；有时间轴的优先
+    private func findLyrics(for track: Track, source: any MediaSource, embedded: String?) {
+        guard lyrics == nil else { lyricsLoading = false; return }
+        let store = lyricsStore
+        lyricsTask = Task { [weak self] in
+            let remote: String? = await store.isKnownMissing(track) ? nil : await source.lyrics(for: track)
+            guard !Task.isCancelled else { return }
+            let remoteLyrics = remote.flatMap(Lyrics.parse)
+            let embeddedLyrics = embedded.flatMap(Lyrics.parse)
+            let pick: (String, Lyrics)?
+            if let remote, let r = remoteLyrics, r.isSynced || embeddedLyrics?.isSynced != true {
+                pick = (remote, r)
+            } else if let embedded, let e = embeddedLyrics {
+                pick = (embedded, e)
+            } else {
+                pick = nil
+            }
+            if let pick { await store.save(pick.0, for: track) } else { await store.markMissing(track) }
+            guard let self, !Task.isCancelled, self.current?.id == track.id else { return }
+            self.lyrics = pick?.1
+            self.lyricsLoading = false
+        }
+    }
+
+    /// 手动指定歌词文本（例如从“文件”导入 .lrc）
+    public func setLyrics(_ text: String) -> Bool {
+        guard let track = current, let parsed = Lyrics.parse(text) else { return false }
+        lyrics = parsed
+        lyricsLoading = false
+        let store = lyricsStore
+        Task { await store.save(text, for: track) }
+        return true
+    }
+
+    /// 清掉当前曲目的歌词缓存并重新查找
+    public func reloadLyrics() {
+        guard let track = current, let source = sources.source(track.sourceID) else { return }
+        lyricsTask?.cancel()
+        lyrics = nil
+        lyricsLoading = true
+        let store = lyricsStore
+        let cache = cache
+        lyricsTask = Task { [weak self] in
+            await store.remove(track)
+            let fileURL = if let local = source.localURL(path: track.path) { local } else { await cache.cachedURL(for: track) }
+            let embedded = if let fileURL { await MetadataReader.read(url: fileURL).lyrics } else { String?.none }
+            guard let self, !Task.isCancelled else { return }
+            self.findLyrics(for: track, source: source, embedded: embedded)
+        }
     }
 
     /// 本机文件读标签很快，加入列表时就补全时长和标题
@@ -350,9 +413,11 @@ public final class PlayerController {
     }
 
     /// 系统会在后台队列向封面要图，闭包不能在 MainActor 里创建（否则 Swift 6 隔离检查直接崩溃）
+#if canImport(UIKit)
     nonisolated private static func makeArtwork(_ image: UIImage) -> MPMediaItemArtwork {
         MPMediaItemArtwork(boundsSize: image.size) { @Sendable _ in image }
     }
+    #endif
 
     private func updateNowPlaying() {
         let center = MPNowPlayingInfoCenter.default()

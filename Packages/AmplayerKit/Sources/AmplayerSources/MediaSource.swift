@@ -96,6 +96,9 @@ public protocol MediaSource: Sendable {
 
     /// 测试连接与登录
     func testConnection() async throws
+
+    /// 歌词文本（LRC 或纯文本）；没有返回 nil
+    func lyrics(for track: Track) async -> String?
 }
 
 extension MediaSource {
@@ -105,6 +108,7 @@ extension MediaSource {
     public func localURL(path: String) -> URL? { nil }
     public func artworkRequest(ref: String) async throws -> URLRequest? { nil }
     public func testConnection() async throws { _ = try await list(path: "/") }
+    public func lyrics(for track: Track) async -> String? { nil }
 
     /// 递归列出目录下所有可播放曲目（用于“添加整个文件夹”和建库）
     public func collectTracks(path: String, maxDepth: Int = 8, limit: Int = 5000) async throws -> [Track] {

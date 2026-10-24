@@ -54,6 +54,9 @@ struct BottomBar: View {
         HStack {
             item("来源", "externaldrive.connected.to.line.below") { app.sheet = .sources }
             item("曲库", "music.note.list") { app.sheet = .library }
+            item(app.showLyrics && app.showPlaylist ? "列表" : "歌词", app.showLyrics && app.showPlaylist ? "list.bullet" : "quote.bubble") {
+                if app.showPlaylist { app.showLyrics.toggle() } else { app.showLyrics = true; app.showPlaylist = true }
+            }
             item("皮肤", "paintpalette") { app.sheet = .skins }
             item("设置", "gearshape") { app.sheet = .settings }
         }
@@ -107,6 +110,7 @@ struct MainMenuView: View {
                 Section("窗口") {
                     Toggle("均衡器", isOn: $app.showEqualizer)
                     Toggle("播放列表", isOn: $app.showPlaylist)
+                    Toggle("歌词（代替播放列表显示）", isOn: $app.showLyrics)
                     Picker("可视化", selection: $app.visualizerMode) {
                         Text("频谱").tag(AppModel.VisualizerMode.spectrum)
                         Text("示波器").tag(AppModel.VisualizerMode.oscilloscope)

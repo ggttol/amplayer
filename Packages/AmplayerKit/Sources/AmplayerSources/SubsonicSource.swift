@@ -72,6 +72,27 @@ public struct SubsonicSource: MediaSource {
         try await http.download(URLRequest(url: try endpoint("stream", ["id": id, "format": "raw"])), to: destination)
     }
 
+    public func lyrics(for track: Track) async -> String? {
+        guard track.path.hasPrefix("song/") else { return nil }
+        let id = String(track.path.dropFirst("song/".count))
+        if let body = try? await call("getLyricsBySongId", ["id": id]),
+           let list = body.dict("lyricsList")?.array("structuredLyrics"), !list.isEmpty {
+            let best = list.first { $0["synced"] as? Bool == true } ?? list[0]
+            let synced = best["synced"] as? Bool == true
+            let lines = best.array("line")
+            let text = lines.map { line -> String in
+                let value = line.string("value") ?? ""
+                guard synced, let ms = line.double("start") else { return value }
+                return String(format: "[%02d:%05.2f]", Int(ms / 1000) / 60, (ms / 1000).truncatingRemainder(dividingBy: 60)) + value
+            }.joined(separator: "\n")
+            if Lyrics.parse(text) != nil { return text }
+        }
+        guard let artist = track.artist,
+              let body = try? await call("getLyrics", ["artist": artist, "title": track.title]),
+              let text = body.dict("lyrics")?.string("value"), Lyrics.parse(text) != nil else { return nil }
+        return text
+    }
+
     public func artworkRequest(ref: String) async throws -> URLRequest? {
         URLRequest(url: try endpoint("getCoverArt", ["id": ref, "size": "600"]))
     }

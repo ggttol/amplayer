@@ -10,6 +10,8 @@ public enum MetadataReader {
         public var trackNumber: Int?
         public var duration: TimeInterval?
         public var artwork: Data?
+        /// 内嵌歌词（ID3 USLT、iTunes ©lyr、Vorbis/APE 的 LYRICS）
+        public var lyrics: String?
     }
 
     public static func read(url: URL) async -> Result {
@@ -40,6 +42,11 @@ public enum MetadataReader {
             default:
                 break
             }
+            if result.lyrics == nil, identifier.lowercased().contains("lyr") || ["USLT", "LYRICS", "UNSYNCEDLYRICS"].contains(key.uppercased()) {
+                if let text = try? await item.load(.stringValue), !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    result.lyrics = text
+                }
+            }
             if result.trackNumber == nil, identifier.lowercased().contains("track") {
                 if let n = try? await item.load(.numberValue) {
                     result.trackNumber = n.intValue
@@ -59,6 +66,7 @@ public enum MetadataReader {
         result.title = stream.tag("Title")
         result.artist = stream.tag("Artist") ?? stream.tag("Album Artist")
         result.album = stream.tag("Album")
+        result.lyrics = stream.tag("Lyrics", capacity: 256 * 1024) ?? stream.tag("UNSYNCEDLYRICS", capacity: 256 * 1024)
         result.trackNumber = stream.tag("Track").flatMap { Int($0.split(separator: "/").first ?? "") }
         return result
     }

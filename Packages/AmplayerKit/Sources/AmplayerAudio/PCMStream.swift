@@ -70,8 +70,8 @@ final class APEStream: PCMStream, @unchecked Sendable {
     }
 
     /// 读 APEv2 标签
-    func tag(_ field: String) -> String? {
-        var out = [CChar](repeating: 0, count: 1024)
+    func tag(_ field: String, capacity: Int = 1024) -> String? {
+        var out = [CChar](repeating: 0, count: capacity)
         let ok = lock.withLock { amp_ape_tag(handle, field, &out, Int32(out.count)) }
         guard ok == 0 else { return nil }
         let bytes = out.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }

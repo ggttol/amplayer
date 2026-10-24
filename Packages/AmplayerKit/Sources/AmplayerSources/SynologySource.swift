@@ -93,6 +93,15 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
         }
     }
 
+    public func lyrics(for track: Track) async -> String? {
+        if track.path.hasPrefix("fs:") { return await siblingLyrics(of: track.path) }
+        guard track.path.hasPrefix("song/") else { return nil }
+        let id = String(track.path.dropFirst("song/".count))
+        guard let data = try? await call("SYNO.AudioStation.Lyrics", method: "getlyrics", version: 2, params: [("id", id)]),
+              let text = data.string("lyrics"), Lyrics.parse(text) != nil else { return nil }
+        return text
+    }
+
     public func artworkRequest(ref: String) async throws -> URLRequest? {
         let url = try await endpoint("SYNO.AudioStation.Cover", method: "getsongcover", version: 3, params: [("id", ref), ("library", "shared")])
         return URLRequest(url: url.withSID(try await login()))
