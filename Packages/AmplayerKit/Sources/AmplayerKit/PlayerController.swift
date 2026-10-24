@@ -58,6 +58,8 @@ public final class PlayerController {
         var equalizer: EqualizerSettings
         /// 均衡器 AUTO：每首歌记住自己的均衡器（旧存档没有这个字段）
         var autoEqualizer: Bool?
+        /// 音效（旧存档没有）
+        var effects: SoundEffects?
     }
 
     public init(sources: SourceStore, cache: AudioCache = .shared) {
@@ -69,6 +71,7 @@ public final class PlayerController {
             audio.balance = saved.balance
             audio.equalizer = saved.equalizer
             autoEqualizer = saved.autoEqualizer ?? false
+            audio.effects = saved.effects ?? .off
         }
         perTrackEQ = Storage.load([String: EqualizerSettings].self, from: "eq-per-track.json") ?? [:]
         audio.onFinished = { [weak self] in self?.trackFinished() }
@@ -309,6 +312,20 @@ public final class PlayerController {
             }
             persist()
         }
+    }
+
+    /// 音效：改任何参数都算“自定义”，除非是直接套用预设
+    public var effects: SoundEffects {
+        get { audio.effects }
+        set {
+            audio.effects = newValue
+            updateNowPlaying()
+            persist()
+        }
+    }
+
+    public func applyEffectPreset(_ preset: SoundEffectPreset) {
+        effects = preset.effects
     }
 
     /// AUTO 换曲目时套用该曲目记下的均衡器；“开/关”状态保持全局，不跟着曲目变
@@ -588,7 +605,7 @@ public final class PlayerController {
         revalidateGapless()
         saver.schedule { [weak self] in
             guard let self else { return }
-            Storage.save(Saved(queue: self.queue, volume: self.audio.volume, balance: self.audio.balance, equalizer: self.audio.equalizer, autoEqualizer: self.autoEqualizer), to: "player.json")
+            Storage.save(Saved(queue: self.queue, volume: self.audio.volume, balance: self.audio.balance, equalizer: self.audio.equalizer, autoEqualizer: self.autoEqualizer, effects: self.audio.effects), to: "player.json")
             if self.perTrackEQDirty {
                 self.perTrackEQDirty = false
                 Storage.save(self.perTrackEQ, to: "eq-per-track.json")
@@ -648,7 +665,7 @@ public final class PlayerController {
         var info: [String: Any] = [
             MPMediaItemPropertyTitle: track.title,
             MPNowPlayingInfoPropertyElapsedPlaybackTime: audio.currentTime,
-            MPNowPlayingInfoPropertyPlaybackRate: audio.state == .playing ? 1.0 : 0.0,
+            MPNowPlayingInfoPropertyPlaybackRate: audio.state == .playing ? Double(audio.playbackRate) : 0.0,
         ]
         if let artist = track.artist { info[MPMediaItemPropertyArtist] = artist }
         if let album = track.album { info[MPMediaItemPropertyAlbumTitle] = album }

@@ -25,6 +25,11 @@ Give it a try, and issues and pull requests are very welcome!
 - Playlist editor: ADD / REM / SEL / MISC / LIST menus, sort, reverse, randomize, remove duplicates, M3U / PLS import and export. Tap a song to play it; long-press to move it, multi-select, see track info or download it for offline use.
 - Title bar: the top-left button opens a side menu with everything else, `_` toggles mini mode, and `□` cycles to the next skin.
 
+**Sound effects**
+- One-tap effects on top of the classic equalizer: Bass Boost, Clear Vocals, 3D Surround, 8D Orbit, Concert, KTV, Studio, Vinyl, Lo-Fi, EDM and Night.
+- Or fine-tune: bass, vocals and treble; reverb type and amount; echo; surround depth and speed; loudness leveling; vinyl crackle; speed (0.5–2×, pitch kept) and pitch (±12 semitones, speed kept).
+- Built only with Apple's audio units, measured by offline-render tests.
+
 **Skins**
 - Load any classic Winamp 2.x `.wsz` skin. Missing bitmaps fall back to the built-in skin.
 - Six original built-in skins, all drawn in code: Graphite, Nixie, Deep Ocean, Sakura, Synthwave and Ivory.

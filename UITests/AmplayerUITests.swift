@@ -232,4 +232,25 @@ final class AmplayerUITests: XCTestCase {
         let artist = app.staticTexts["测试艺术家"]
         XCTAssertTrue(artist.waitForExistence(timeout: 15), "扫描后艺术家页应有“测试艺术家”")
     }
+
+    /// 音效面板：选一个预设，侧边菜单里显示它的名字
+    func testSoundEffectsPreset() {
+        app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES"]
+        app.launch()
+        waitForState("播放中")
+        app.buttons["菜单"].tap()
+        tapWhenReady(app.buttons["menu.音效"])
+        let ktv = app.buttons["音效：KTV"]
+        tapWhenReady(ktv)
+        XCTAssertTrue(ktv.isSelected, "选中的音效卡片应标记为已选")
+        app.buttons["完成"].firstMatch.tap()
+        app.buttons["菜单"].tap()
+        let row = app.buttons["menu.音效"]
+        waitFor(row)
+        XCTAssertTrue(row.label.contains("KTV"), "侧边菜单应显示当前音效：\(row.label)")
+        // 恢复原声，免得影响其它测试
+        row.tap()
+        tapWhenReady(app.buttons["音效：原声"])
+        app.buttons["完成"].firstMatch.tap()
+    }
 }

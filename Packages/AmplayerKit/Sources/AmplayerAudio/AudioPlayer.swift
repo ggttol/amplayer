@@ -31,8 +31,19 @@ public final class AudioPlayer {
 
     /// -1（左）...1（右）
     public var balance: Float = 0 {
-        didSet { playerNode.pan = balance }
+        didSet { updatePan() }
     }
+
+    /// 音效（音色、混响、回声、环绕、响度、变速变调、黑胶底噪）
+    public var effects = SoundEffects.off {
+        didSet {
+            effectsChain.apply(effects)
+            updateSurround()
+        }
+    }
+
+    /// 当前的变速倍率（锁屏进度按这个走）
+    public var playbackRate: Float { effects.rate }
 
     public var equalizer = EqualizerSettings.flat {
         didSet { applyEqualizer() }
@@ -43,6 +54,9 @@ public final class AudioPlayer {
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private let playerNode = AVAudioPlayerNode()
     @ObservationIgnored private let eqNode = AVAudioUnitEQ(numberOfBands: 10)
+    @ObservationIgnored private let effectsChain = EffectsChain()
+    @ObservationIgnored private var surroundTimer: Timer?
+    @ObservationIgnored private var surroundPhase: Double = 0
     /// 当前音源：Core Audio 能直接读的文件，或逐块解码的流（APE）
     private enum Source {
         case file(AVAudioFile)
@@ -89,9 +103,10 @@ public final class AudioPlayer {
             band.gain = 0
             band.bypass = false
         }
+        effectsChain.attach(to: engine)
         let format = engine.mainMixerNode.outputFormat(forBus: 0)
-        engine.connect(playerNode, to: eqNode, format: format)
-        engine.connect(eqNode, to: engine.mainMixerNode, format: format)
+        effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        effectsChain.apply(effects)
         engine.mainMixerNode.outputVolume = volume
         eqNode.installTap(onBus: 0, bufferSize: 1024, format: nil, block: Self.makeTap(analyzer))
         observeSystemEvents()
@@ -111,10 +126,8 @@ public final class AudioPlayer {
         }
         self.source = source
         let format = source.format
-        engine.disconnectNodeOutput(playerNode)
-        engine.disconnectNodeOutput(eqNode)
-        engine.connect(playerNode, to: eqNode, format: format)
-        engine.connect(eqNode, to: engine.mainMixerNode, format: format)
+        effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        updatePan()
 
         info = Self.makeInfo(length: source.length, format: format, url: url)
         pausedTime = 0
@@ -295,6 +308,35 @@ public final class AudioPlayer {
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let kbps = duration > 0 ? Int(Double(size) * 8 / duration / 1000) : 0
         return FileInfo(duration: duration, sampleRate: format.sampleRate, channels: Int(format.channelCount), bitrate: kbps)
+    }
+
+    // MARK: 声像：平衡 + 环绕旋转
+
+    private func updatePan() {
+        let orbit = effects.surround > 0 ? Float(sin(surroundPhase)) * effects.surround : 0
+        playerNode.pan = (balance + orbit).clamped(to: -1...1)
+    }
+
+    /// 环绕/8D：每秒 30 次转动声像
+    private func updateSurround() {
+        if effects.surround > 0 {
+            guard surroundTimer == nil else { return }
+            surroundTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    if self.state == .playing {
+                        self.surroundPhase += 2 * .pi * Double(self.effects.surroundSpeed) / 30
+                        if self.surroundPhase > 2 * .pi { self.surroundPhase -= 2 * .pi }
+                    }
+                    self.updatePan()
+                }
+            }
+        } else {
+            surroundTimer?.invalidate()
+            surroundTimer = nil
+            surroundPhase = 0
+            updatePan()
+        }
     }
 
     private func applyEqualizer() {

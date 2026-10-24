@@ -74,6 +74,20 @@ struct SideMenuView: View {
                 row("来源", "externaldrive.connected.to.line.below") { open(.sources) }
                 row("曲库与播放列表", "music.note.list") { open(.library) }
             }
+            Section("声音") {
+                Button { open(.effects) } label: {
+                    HStack {
+                        Label("音效", systemImage: "sparkles")
+                        Spacer()
+                        Text(effectName).foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .foregroundStyle(.primary)
+                .accessibilityIdentifier("menu.音效")
+                Toggle(isOn: $app.showEqualizer) { Label("均衡器窗口", systemImage: "slider.vertical.3") }
+            }
             Section("播放顺序") {
                 Picker(selection: Binding(get: { app.player.repeatMode }, set: { app.player.repeatMode = $0 })) {
                     ForEach(RepeatMode.allCases, id: \.self) { Text($0.title).tag($0) }
@@ -91,7 +105,6 @@ struct SideMenuView: View {
                 }
             }
             Section("窗口") {
-                Toggle(isOn: $app.showEqualizer) { Label("均衡器", systemImage: "slider.vertical.3") }
                 Toggle(isOn: $app.showPlaylist) { Label("列表/歌词窗口", systemImage: "list.bullet.rectangle") }
                 Picker(selection: $app.showLyrics) {
                     Text("播放列表").tag(false)
@@ -154,6 +167,12 @@ struct SideMenuView: View {
             }
             Button("取消", role: .cancel) {}
         }
+    }
+
+    private var effectName: String {
+        let id = app.player.effects.presetID
+        if id == SoundEffectPreset.custom { return "自定义" }
+        return SoundEffectPreset.preset(id)?.name ?? "原声"
     }
 
     private func sleepStatus(at date: Date) -> String {

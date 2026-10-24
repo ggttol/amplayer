@@ -38,6 +38,7 @@ struct PlayerScreen: View {
             case .playlists: LibraryView(initialTab: .playlists)
             case .skins: SkinsView()
             case .settings: SettingsView()
+            case .effects: SoundEffectsView()
             }
         }
         .fileImporter(isPresented: $app.isImportingFiles, allowedContentTypes: [.audio], allowsMultipleSelection: true) { result in

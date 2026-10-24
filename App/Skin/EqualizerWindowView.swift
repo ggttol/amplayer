@@ -35,6 +35,8 @@ struct EqualizerWindowView: View {
                 .at(SkinLayout.eqAuto)
 
             Menu {
+                Button("音效…", systemImage: "sparkles") { app.sheet = .effects }
+                Divider()
                 ForEach(EqualizerPreset.builtIn) { preset in
                     Button(preset.name) { player.applyPreset(preset) }
                 }
