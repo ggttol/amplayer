@@ -17,6 +17,11 @@ https://github.com/captbaritone/webamp — Copyright (c) 2015 Jordan Eldredge
 
 AMSMB2 的 SwiftPM 产品声明为 `type: .dynamic`，以 `AMSMB2.framework` 动态库形式嵌入 App，用户可以替换该框架，满足 LGPL-2.1 第 6 节的要求。未修改其源码。
 
+## Monkey's Audio SDK 13.43 — BSD-3-Clause
+https://monkeysaudio.com — Copyright 2000-2026 Matthew T. Ashland
+
+`Packages/MP9Kit/Sources/MonkeysAudio/vendor/` 是 SDK 中解码所需的源码，未修改；完整许可见该目录下的 `License.txt`。Monkey's Audio 自 10.18 版（2023-08）起改为 3-Clause BSD。
+
 ## swift-atomics — Apache-2.0
 https://github.com/apple/swift-atomics — Copyright (c) Apple Inc.（AMSMB2 的依赖）
 

@@ -13,6 +13,7 @@ public enum MetadataReader {
     }
 
     public static func read(url: URL) async -> Result {
+        if url.pathExtension.lowercased() == "ape" { return readAPE(url: url) }
         let asset = AVURLAsset(url: url)
         var result = Result()
         if let duration = try? await asset.load(.duration), duration.isNumeric {
@@ -47,6 +48,18 @@ public enum MetadataReader {
                 }
             }
         }
+        return result
+    }
+
+    /// APE 用 APEv2 标签；时长来自解码器
+    static func readAPE(url: URL) -> Result {
+        var result = Result()
+        guard let stream = try? APEStream(url: url) else { return result }
+        result.duration = Double(stream.length) / stream.format.sampleRate
+        result.title = stream.tag("Title")
+        result.artist = stream.tag("Artist") ?? stream.tag("Album Artist")
+        result.album = stream.tag("Album")
+        result.trackNumber = stream.tag("Track").flatMap { Int($0.split(separator: "/").first ?? "") }
         return result
     }
 

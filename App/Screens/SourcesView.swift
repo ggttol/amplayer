@@ -207,7 +207,7 @@ struct SourceEditorView: View {
         case .subsonic: "Navidrome、Airsonic、Gonic、Ampache 等，填服务器根地址。"
         case .jellyfin: "填 Jellyfin 服务器地址，例如 http://IP:8096。"
         case .emby: "填 Emby 服务器地址，部分安装需要带 /emby 后缀。"
-        case .synology: "填 DSM 地址（例如 https://IP:5001），需要安装 Audio Station；不支持开启了两步验证的账号。"
+        case .synology: "填 DSM 地址（例如 https://IP:5001、DDNS 域名），或直接填 QuickConnect ID，会自动选择局域网或外网线路。可浏览所有共享文件夹；装了 Audio Station 并建好索引时，还会显示专辑与播放列表。不支持开启了两步验证的账号。"
         case .dlna: "填媒体服务器的设备描述地址；一般在上方“局域网”里自动发现即可。"
         case .aliyun, .baidu: "通过官方开放平台授权，只读取文件。"
         case .local: ""
@@ -233,6 +233,9 @@ struct SourceEditorView: View {
             let items = try await source.list(path: source.rootPath)
             testOK = true
             testResult = "连接成功，根目录有 \(items.count) 项"
+            if let syno = source as? SynologySource, syno.quickConnectID != nil, let address = try? await syno.connectedAddress() {
+                testResult! += "\n经 QuickConnect 连接到 \(address.host ?? "")"
+            }
         } catch {
             testOK = false
             testResult = error.localizedDescription

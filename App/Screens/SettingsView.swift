@@ -43,7 +43,7 @@ struct SettingsView: View {
                 }
 
                 Section("支持的格式") {
-                    Text("MP3、AAC/M4A、ALAC、FLAC、WAV、AIFF、CAF、Opus（CAF 封装）")
+                    Text("MP3、AAC/M4A、ALAC、FLAC、APE（Monkey's Audio）、WAV、AIFF、CAF、Opus（CAF 封装）")
                         .font(.footnote)
                 }
 
@@ -93,6 +93,11 @@ struct LicensesView: View {
     libsmb2
     https://github.com/sahlberg/libsmb2
     GNU Lesser General Public License v2.1 — Copyright (c) Ronnie Sahlberg
+
+    Monkey's Audio SDK 13.43（APE 解码）
+    https://monkeysaudio.com
+    3-Clause BSD License — Copyright 2000-2026 Matthew T. Ashland. All rights reserved.
+    Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met: (1) Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer. (2) Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution. (3) Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES ARE DISCLAIMED.
 
     swift-atomics
     https://github.com/apple/swift-atomics

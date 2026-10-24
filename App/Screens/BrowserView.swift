@@ -26,7 +26,10 @@ struct BrowserView: View {
             ForEach(filtered) { item in
                 switch item.kind {
                 case .directory:
-                    NavigationLink(value: BrowseTarget(sourceID: target.sourceID, path: item.path, title: item.name)) {
+                    // 子目录直接给出目标视图，不依赖外层 navigationDestination（多级推入时不可靠）
+                    NavigationLink {
+                        BrowserView(target: BrowseTarget(sourceID: target.sourceID, path: item.path, title: item.name))
+                    } label: {
                         Label(item.name, systemImage: "folder")
                     }
                     .contextMenu { folderMenu(item) }

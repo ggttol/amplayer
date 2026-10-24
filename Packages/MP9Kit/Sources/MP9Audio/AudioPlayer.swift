@@ -41,7 +41,27 @@ public final class AudioPlayer {
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private let playerNode = AVAudioPlayerNode()
     @ObservationIgnored private let eqNode = AVAudioUnitEQ(numberOfBands: 10)
-    @ObservationIgnored private var file: AVAudioFile?
+    /// 当前音源：Core Audio 能直接读的文件，或逐块解码的流（APE）
+    private enum Source {
+        case file(AVAudioFile)
+        case stream(PCMStream, BufferScheduler)
+
+        var format: AVAudioFormat {
+            switch self {
+            case .file(let f): f.processingFormat
+            case .stream(let s, _): s.format
+            }
+        }
+
+        var length: AVAudioFramePosition {
+            switch self {
+            case .file(let f): f.length
+            case .stream(let s, _): s.length
+            }
+        }
+    }
+
+    @ObservationIgnored private var source: Source?
     @ObservationIgnored private var segmentStart: AVAudioFramePosition = 0
     @ObservationIgnored private var pausedTime: TimeInterval = 0
     /// 每次重新调度递增，用来忽略旧调度的完成回调
@@ -71,15 +91,21 @@ public final class AudioPlayer {
     /// 打开本地文件，准备从头播放（不自动开始）
     public func load(url: URL) throws {
         stopNode()
-        let file = try AVAudioFile(forReading: url)
-        self.file = file
-        let format = file.processingFormat
+        let source: Source
+        if url.pathExtension.lowercased() == "ape" {
+            let stream = try APEStream(url: url)
+            source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
+        } else {
+            source = .file(try AVAudioFile(forReading: url))
+        }
+        self.source = source
+        let format = source.format
         engine.disconnectNodeOutput(playerNode)
         engine.disconnectNodeOutput(eqNode)
         engine.connect(playerNode, to: eqNode, format: format)
         engine.connect(eqNode, to: engine.mainMixerNode, format: format)
 
-        let duration = Double(file.length) / format.sampleRate
+        let duration = Double(source.length) / format.sampleRate
         let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let kbps = duration > 0 ? Int(Double(size) * 8 / duration / 1000) : 0
         info = FileInfo(duration: duration, sampleRate: format.sampleRate, channels: Int(format.channelCount), bitrate: kbps)
@@ -89,7 +115,7 @@ public final class AudioPlayer {
     }
 
     public func play() {
-        guard file != nil else { return }
+        guard source != nil else { return }
         activateSession()
         do {
             if !engine.isRunning { try engine.start() }
@@ -109,7 +135,7 @@ public final class AudioPlayer {
 
     public func stop() {
         stopNode()
-        if file != nil { schedule(from: 0) }
+        if source != nil { schedule(from: 0) }
         pausedTime = 0
         state = .stopped
         analyzer.decay()
@@ -118,16 +144,16 @@ public final class AudioPlayer {
     /// 释放文件（播放列表清空时）
     public func unload() {
         stopNode()
-        file = nil
+        source = nil
         info = nil
         pausedTime = 0
         state = .stopped
     }
 
     public func seek(to time: TimeInterval) {
-        guard let file, let info else { return }
+        guard let source, let info else { return }
         let clamped = time.clamped(to: 0...max(0, info.duration - 0.05))
-        let frame = AVAudioFramePosition(clamped * file.processingFormat.sampleRate)
+        let frame = AVAudioFramePosition(clamped * source.format.sampleRate)
         let wasPlaying = state == .playing
         stopNode()
         schedule(from: frame)
@@ -137,11 +163,11 @@ public final class AudioPlayer {
 
     /// 当前播放位置（秒）。UI 定时读取，不参与 Observation。
     public var currentTime: TimeInterval {
-        guard let file, state == .playing,
+        guard let source, state == .playing,
               let nodeTime = playerNode.lastRenderTime,
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime)
         else { return pausedTime }
-        let seconds = Double(segmentStart + playerTime.sampleTime) / file.processingFormat.sampleRate
+        let seconds = Double(segmentStart + playerTime.sampleTime) / source.format.sampleRate
         return min(max(0, seconds), info?.duration ?? seconds)
     }
 
@@ -149,21 +175,33 @@ public final class AudioPlayer {
 
     private func stopNode() {
         generation += 1
+        if case .stream(_, let scheduler) = source { scheduler.invalidate() }
         playerNode.stop()
     }
 
     private func schedule(from frame: AVAudioFramePosition) {
-        guard let file else { return }
-        let remaining = file.length - frame
+        guard let source else { return }
+        let remaining = source.length - frame
         guard remaining > 0 else { return }
         segmentStart = frame
         generation += 1
         let token = generation
-        playerNode.scheduleSegment(
-            file, startingFrame: frame, frameCount: AVAudioFrameCount(remaining), at: nil,
-            completionCallbackType: .dataPlayedBack,
-            completionHandler: Self.makeCompletion(self, token: token)
-        )
+        switch source {
+        case .file(let file):
+            playerNode.scheduleSegment(
+                file, startingFrame: frame, frameCount: AVAudioFrameCount(remaining), at: nil,
+                completionCallbackType: .dataPlayedBack,
+                completionHandler: Self.makeCompletion(self, token: token)
+            )
+        case .stream(_, let scheduler):
+            scheduler.start(from: frame, token: token, onFinished: Self.makeStreamCompletion(self))
+        }
+    }
+
+    private nonisolated static func makeStreamCompletion(_ player: AudioPlayer) -> @Sendable (Int) -> Void {
+        { [weak player] token in
+            Task { @MainActor in player?.segmentFinished(token) }
+        }
     }
 
     // 这两个回调在音频线程上执行，必须在 nonisolated 上下文里创建，
@@ -181,7 +219,7 @@ public final class AudioPlayer {
     private func segmentFinished(_ token: Int) {
         guard token == generation, state == .playing else { return }
         stopNode()
-        if file != nil { schedule(from: 0) }
+        if source != nil { schedule(from: 0) }
         pausedTime = 0
         state = .stopped
         onFinished?()
@@ -248,9 +286,9 @@ public final class AudioPlayer {
     private func handleConfigurationChange() {
         let time = currentTime
         let wasPlaying = state == .playing
-        guard file != nil else { return }
+        guard let source else { return }
         stopNode()
-        schedule(from: AVAudioFramePosition(time * (file?.processingFormat.sampleRate ?? 44100)))
+        schedule(from: AVAudioFramePosition(time * source.format.sampleRate))
         pausedTime = time
         if wasPlaying {
             try? engine.start()

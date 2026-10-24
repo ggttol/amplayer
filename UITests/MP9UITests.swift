@@ -13,6 +13,15 @@ final class MP9UITests: XCTestCase {
 
     private var time: XCUIElement { app.otherElements["time"].firstMatch }
 
+    /// 等元素出现且可点（导航动画结束）后再点
+    private func tapWhenReady(_ element: XCUIElement, timeout: TimeInterval = 10, file: StaticString = #filePath, line: UInt = #line) {
+        waitFor(element, timeout: timeout, file: file, line: line)
+        let deadline = Date().addingTimeInterval(timeout)
+        while !element.isHittable && Date() < deadline { Thread.sleep(forTimeInterval: 0.2) }
+        Thread.sleep(forTimeInterval: 0.6)
+        element.tap()
+    }
+
     /// 等待元素出现；超时时打印界面层级方便排查
     private func waitFor(_ element: XCUIElement, timeout: TimeInterval = 10, file: StaticString = #filePath, line: UInt = #line) {
         if !element.waitForExistence(timeout: timeout) {
@@ -89,23 +98,27 @@ final class MP9UITests: XCTestCase {
         // 等编辑表单完全收起，否则点到的是被遮住的行
         let editorGone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: app.buttons["测试连接"])
         wait(for: [editorGone], timeout: 5)
-        // 系统“保存密码？”提示（密码 App），选“以后”
-        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        for owner in [app!, springboard] where owner.buttons["以后"].waitForExistence(timeout: 2) {
-            owner.buttons["以后"].tap()
-            break
-        }
-
+        // 系统“保存密码？”提示（密码 App）出现时间不固定：轮询，看到就点“以后”，直到来源行可点
         let cell = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Test DAV")).firstMatch
-        waitFor(cell)
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deadline = Date().addingTimeInterval(8)
+        while Date() < deadline && !(cell.exists && cell.isHittable) {
+            for owner in [app!, springboard] where owner.buttons["以后"].exists {
+                owner.buttons["以后"].tap()
+            }
+            Thread.sleep(forTimeInterval: 0.3)
+        }
+        if !cell.isHittable {
+            let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            shot.lifetime = .keepAlways
+            add(shot)
+        }
         XCTAssertTrue(cell.isHittable)
         cell.tap()
         let folder = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Album One")).firstMatch
-        waitFor(folder)
-        folder.tap()
+        tapWhenReady(folder)
         let song = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Wave Check")).firstMatch
-        waitFor(song)
-        song.tap()
+        tapWhenReady(song)
         waitForState("播放中", timeout: 20)
         XCTAssertTrue((time.value as? String ?? "").contains("Wave Check"))
     }

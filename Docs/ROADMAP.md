@@ -116,13 +116,15 @@
 | M3 网络来源 | ✅ WebDAV、SMB、Subsonic、Jellyfin/Emby、群晖 Audio Station、DLNA、局域网发现、下载缓存与预取 | `Tools/test-servers.sh` 起真实服务器，`MP9_LIVE=1 swift test` 逐个列目录、下载、解码；群晖用模拟 DSM 接口测试；UI 测试走完“添加 WebDAV → 浏览 → 播放” |
 | M4 曲库 | ✅ 扫描、歌曲/艺术家/专辑、搜索、离线下载、M3U/PLS 保存与打开 | 单元测试 + 手动 |
 | M5 扩展 | 🟡 阿里云盘、百度网盘 OpenAPI 已实现（OAuth + PKCE） | **未实测**：需要先申请开放平台 AppKey |
+| 群晖增强（10-24） | ✅ QuickConnect ID 连接（区域跳转、局域网/DDNS/外网/中继候选并发探测，只用证书有效的官方域名）；File Station 浏览共享文件夹；会话过期自动重登 | 用户自己的 DS（DSM 7）实测：直连与 QuickConnect 都能列目录、下载、解码 |
+| APE 支持（10-24） | ✅ 集成 Monkey's Audio SDK（BSD），后台队列流式解码 + 缓冲调度，读 APEv2 标签 | WAV→APE→解码逐样本无损比对；NAS 上真实 APE 解码（50 倍实时）；模拟器经 QuickConnect 播放 |
 
 与计划的差异：
-- **音频内核用 AVAudioEngine 原生解码，没有引入 SFBAudioEngine**。原因：SFBAudioEngine 的部分依赖（如 mpg123、TagLib）是 LGPL，以静态库形式集成，不便满足上架要求；原生解码已覆盖 MP3/AAC/ALAC/FLAC/WAV/AIFF。代价：暂不支持 APE、DSD、OGG Vorbis、WMA。
+- **音频内核用 AVAudioEngine 原生解码，没有引入 SFBAudioEngine**。原因：SFBAudioEngine 的部分依赖（如 mpg123、TagLib）是 LGPL，以静态库形式集成，不便满足上架要求；原生解码已覆盖 MP3/AAC/ALAC/FLAC/WAV/AIFF，APE 另外集成了 BSD 许可的 Monkey's Audio SDK。仍不支持：DSD、OGG Vorbis、WMA。
 - **边下边播**目前是“整首缓存后播放 + 预缓存下一首”，局域网下几乎无感，慢速网盘首曲会等几秒。
 
 尚未完成 / 已知限制：
-1. **群晖真机未测**：只按文档与社区资料实现并用模拟接口测试；QuickConnect 未实现，需要填 IP 或 DDNS 地址；不支持开启了两步验证的账号。
+1. **群晖**：已在 DSM 7 真机测试直连与 QuickConnect（直连线路）；QuickConnect **中继**线路没测到（该 NAS 的 request_tunnel 返回 errno 19）；不支持开启了两步验证的账号。
 2. **SSDP 发现 DLNA** 在 iOS 真机上需要 `com.apple.developer.networking.multicast` 权限（要向 Apple 申请）；没有权限时只能手填设备描述地址，Bonjour 发现不受影响。
 3. **CarPlay** 需要 Apple 单独批准的音频类 CarPlay 权限，未做。
 4. **FTP/SFTP、115、夸克**未做（115、夸克没有可用于上架 App 的官方 API）。

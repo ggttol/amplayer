@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import Testing
+@testable import MP9Audio
 @testable import MP9Core
 @testable import MP9Sources
 
@@ -83,4 +84,90 @@ struct LiveSourceTests {
         let config = SourceConfig(kind: .dlna, name: "rclone dlna", url: "http://\(host):17879/rootDesc.xml")
         _ = try await exercise(DLNASource(config: config))
     }
+}
+
+/// 真实群晖 NAS：MP9_SYNO_URL、MP9_SYNO_USER、MP9_SYNO_PASS，可选 MP9_SYNO_QC（QuickConnect ID）
+/// 凭据只从环境变量读取，不要写进代码。
+private let env = ProcessInfo.processInfo.environment
+private let synoEnabled = env["MP9_SYNO_URL"] != nil && env["MP9_SYNO_PASS"] != nil
+
+@Suite(.enabled(if: synoEnabled), .serialized)
+struct LiveSynologyTests {
+    private func source(url: String) -> SynologySource {
+        SynologySource(config: SourceConfig(kind: .synology, name: "NAS", url: url, username: env["MP9_SYNO_USER"] ?? ""), password: env["MP9_SYNO_PASS"])
+    }
+
+    /// 在共享文件夹里找第一首较小的可播放曲目
+    private func firstPlayable(_ s: SynologySource) async throws -> SourceItem {
+        var queue = try await s.list(path: "/").filter { $0.path.hasPrefix("fs:") }
+        var visited = 0
+        while !queue.isEmpty, visited < 40 {
+            let dir = queue.removeFirst()
+            visited += 1
+            let items = try await s.list(path: dir.path).sortedForBrowsing()
+            if let song = items.first(where: { $0.kind == .audio && ($0.size ?? 0) < 15_000_000 && ["mp3", "m4a", "flac"].contains(($0.name as NSString).pathExtension.lowercased()) }) {
+                return song
+            }
+            queue += items.filter { $0.kind == .directory }
+        }
+        throw SourceError.protocolError("没找到可播放曲目")
+    }
+
+    private func downloadAndDecode(_ s: SynologySource, _ song: SourceItem) async throws {
+        let dest = FileManager.default.temporaryDirectory.appendingPathComponent("mp9-syno-\(UUID().uuidString).\((song.name as NSString).pathExtension)")
+        defer { try? FileManager.default.removeItem(at: dest) }
+        try await s.download(path: song.path, to: dest)
+        let file = try AVAudioFile(forReading: dest)
+        #expect(file.length > 44_100 * 10, "\(song.name) 太短")
+    }
+
+    @Test func directURL() async throws {
+        let s = source(url: env["MP9_SYNO_URL"]!)
+        try await s.testConnection()
+        let root = try await s.list(path: "/")
+        print("SYNO root:", root.map(\.name))
+        #expect(root.contains { $0.path.hasPrefix("fs:") })
+        let song = try await firstPlayable(s)
+        print("SYNO song:", song.path, song.size ?? 0)
+        try await downloadAndDecode(s, song)
+    }
+
+    @Test(.enabled(if: env["MP9_SYNO_QC"] != nil)) func quickConnect() async throws {
+        let id = env["MP9_SYNO_QC"]!
+        let resolved = try await QuickConnectResolver.shared.resolve(id)
+        print("QuickConnect \(id) →", resolved)
+        let s = source(url: id)
+        try await s.testConnection()
+        #expect(try await s.connectedAddress() == resolved)
+        let song = try await firstPlayable(s)
+        try await downloadAndDecode(s, song)
+    }
+}
+
+/// 用 NAS 上真实的 APE 验证解码：MP9_SYNO_APE 指定 File Station 路径
+@Test(.enabled(if: synoEnabled && env["MP9_SYNO_APE"] != nil))
+func liveSynologyAPE() async throws {
+    let s = SynologySource(config: SourceConfig(kind: .synology, name: "NAS", url: env["MP9_SYNO_URL"]!, username: env["MP9_SYNO_USER"] ?? ""), password: env["MP9_SYNO_PASS"])
+    let dest = FileManager.default.temporaryDirectory.appendingPathComponent("mp9-live-\(UUID().uuidString).ape")
+    defer { try? FileManager.default.removeItem(at: dest) }
+    try await s.download(path: "fs:" + env["MP9_SYNO_APE"]!, to: dest)
+    let stream = try APEStream(url: dest)
+    let seconds = Double(stream.length) / stream.format.sampleRate
+    let meta = MetadataReader.readAPE(url: dest)
+    print("APE:", stream.format, "时长", seconds, "位深", stream.bitsPerSample, "标签", meta.title ?? "-", meta.artist ?? "-", meta.album ?? "-")
+    #expect(seconds > 60)
+    // 解码整首并测时间，确认手机上实时解码绰绰有余
+    let buffer = try #require(AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: 16384))
+    let start = Date()
+    var total = 0, peak: Float = 0
+    while true {
+        let n = try stream.read(into: buffer)
+        if n == 0 { break }
+        total += n
+        for i in stride(from: 0, to: n, by: 64) { peak = max(peak, abs(buffer.floatChannelData![0][i])) }
+    }
+    let elapsed = Date().timeIntervalSince(start)
+    print("解码 \(total) 帧用时 \(String(format: "%.2f", elapsed))s，实时倍数 \(String(format: "%.0f", seconds / elapsed))x，峰值 \(peak)")
+    #expect(total == Int(stream.length))
+    #expect(peak > 0.05, "解码结果几乎是静音")
 }

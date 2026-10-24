@@ -85,7 +85,7 @@ public struct Track: Identifiable, Hashable, Sendable, Codable {
 /// 播放器能解码的文件扩展名（AVAudioFile / Core Audio 原生支持）
 public enum AudioFormats {
     public static let playable: Set<String> = [
-        "mp3", "m4a", "m4b", "aac", "alac", "flac", "wav", "wave", "aif", "aiff", "aifc", "caf", "mp4", "opus", "ac3", "eac3",
+        "mp3", "m4a", "m4b", "aac", "alac", "flac", "ape", "wav", "wave", "aif", "aiff", "aifc", "caf", "mp4", "opus", "ac3", "eac3",
     ]
 
     public static func isPlayable(_ fileName: String) -> Bool {

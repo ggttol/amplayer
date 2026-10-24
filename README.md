@@ -19,7 +19,7 @@ iOS 音乐播放器，界面像素级复刻经典 Winamp 2.x，可加载 `.wsz` 
   | SMB 2/3 | Windows 共享、各类 NAS |
   | Subsonic / OpenSubsonic | Navidrome、Airsonic、Gonic、Ampache |
   | Jellyfin / Emby | 媒体库、专辑、艺术家、文件夹浏览 |
-  | 群晖 Audio Station | 文件夹、专辑、播放列表，直接使用 NAS 的标签和封面 |
+  | 群晖 DSM | 支持 IP / 域名 / **QuickConnect ID**；File Station 浏览全部共享文件夹（不依赖索引），Audio Station 有索引时另有专辑、播放列表 |
   | UPnP / DLNA | 几乎所有 NAS 自带的媒体服务器 |
   | 阿里云盘 / 百度网盘 | 走官方开放平台 OAuth，需要先配置 AppKey（见下） |
 - **局域网发现**：Bonjour（SMB、WebDAV）+ SSDP（DLNA）
@@ -27,7 +27,7 @@ iOS 音乐播放器，界面像素级复刻经典 Winamp 2.x，可加载 `.wsz` 
 - **曲库**：扫描来源进曲库，按歌曲、艺术家、专辑浏览和搜索
 - **系统集成**：后台播放、锁屏与控制中心、耳机线控、来电打断后恢复、AirPlay
 
-支持的格式：MP3、AAC/M4A、ALAC、FLAC、WAV、AIFF、CAF、Opus（CAF 封装），也就是 Core Audio 原生能解码的格式。
+支持的格式：MP3、AAC/M4A、ALAC、FLAC、**APE**、WAV、AIFF、CAF、Opus（CAF 封装）。APE 用内置的 Monkey's Audio 解码器，其余走 Core Audio。
 
 ## 工程结构
 
@@ -37,7 +37,8 @@ App/                     SwiftUI 界面
   Screens/               来源、浏览、曲库、皮肤、设置
 Packages/MP9Kit/
   MP9Core                曲目、播放队列、M3U/PLS、均衡器
-  MP9Audio               AVAudioEngine 播放器、10 段 EQ、vDSP 频谱、标签读取
+  MP9Audio               AVAudioEngine 播放器、10 段 EQ、vDSP 频谱、标签读取、APE 流式解码
+  MonkeysAudio           Monkey's Audio SDK（C++）+ C 接口
   MP9Sources             各协议来源、Keychain、局域网发现
   MP9Cache               下载缓存、LRU、离线
   MP9Skin                .wsz 解析（自带 ZIP 读取器）、精灵图表、默认皮肤绘制
@@ -64,6 +65,9 @@ xcodebuild -project MP9.xcodeproj -scheme MP9 -destination "platform=iOS Simulat
 
 # 用真实皮肤验证解析：指向 Webamp 仓库里的 base-2.91.wsz（不入库）
 (cd Packages/MP9Kit && MP9_TEST_WSZ=/path/to/base-2.91.wsz swift test)
+
+# 真实群晖（凭据只走环境变量，不要写进文件）
+(cd Packages/MP9Kit && MP9_SYNO_URL=https://nas:5001 MP9_SYNO_USER=xxx MP9_SYNO_PASS=xxx MP9_SYNO_QC=<QuickConnect ID> swift test --filter Synology)
 
 # 端到端：启动 WebDAV、DLNA、SMB、Navidrome、Jellyfin 容器，再跑在线测试
 Tools/test-servers.sh

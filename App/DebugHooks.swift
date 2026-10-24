@@ -8,7 +8,7 @@ import MP9Kit
 /// -MP9Sheet <name>      打开 sources / library / skins / settings / menu
 /// -MP9Skin <name>       切换到指定名称的皮肤
 /// -MP9AddSource <base64>  添加一个来源（base64 编码的 SourceConfig JSON，可带 "password"；参数域会把 { 开头的值当 plist 解析，所以用 base64）
-/// -MP9PlaySource <name> 递归收集该来源的曲目并播放
+/// -MP9PlaySource <name> 递归收集该来源的曲目并播放（-MP9PlayPath 指定起始目录）
 @MainActor
 enum DebugHooks {
     static func run(_ app: AppModel) {
@@ -40,7 +40,8 @@ enum DebugHooks {
            let source = app.sources.source(config.id) {
             Task {
                 do {
-                    let tracks = try await source.collectTracks(path: source.rootPath)
+                    let start = defaults.string(forKey: "MP9PlayPath") ?? source.rootPath
+                    let tracks = try await source.collectTracks(path: start, maxDepth: 2, limit: 200)
                     app.player.setQueue(tracks, startAt: 0, autoplay: true)
                 } catch {
                     app.show("调试：\(error.localizedDescription)")

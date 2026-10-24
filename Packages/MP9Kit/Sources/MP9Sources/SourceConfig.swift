@@ -45,7 +45,7 @@ public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
         case .subsonic: "https://music.example.com"
         case .jellyfin: "http://192.168.1.10:8096"
         case .emby: "http://192.168.1.10:8096/emby"
-        case .synology: "https://192.168.1.10:5001"
+        case .synology: "https://192.168.1.10:5001 或 QuickConnect ID"
         case .dlna: "http://192.168.1.10:8200/rootDesc.xml"
         default: ""
         }
