@@ -6,6 +6,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("amplayer.cacheLimit") private var cacheLimit: Int = 2 * 1024 * 1024 * 1024
     @State private var usage: (cache: Int64, offline: Int64) = (0, 0)
+    /// 和 PlayerController.onlineLyricsEnabled 是同一个键
+    @AppStorage("amplayer.onlineLyrics") private var onlineLyrics = true
+    @AppStorage("amplayer.simplifyLyrics") private var simplifyLyrics = true
 
     private let limits: [(String, Int)] = [
         ("500 MB", 500 * 1024 * 1024), ("1 GB", 1 << 30), ("2 GB", 2 << 30), ("5 GB", 5 << 30), ("10 GB", 10 << 30), ("20 GB", 20 << 30),
@@ -40,6 +43,16 @@ struct SettingsView: View {
                         Text("示波器").tag(AppModel.VisualizerMode.oscilloscope)
                         Text("关闭").tag(AppModel.VisualizerMode.off)
                     }
+                }
+
+                Section {
+                    Toggle("在线查找歌词", isOn: $onlineLyrics)
+                    Toggle("繁体歌词显示为简体", isOn: $simplifyLyrics)
+                        .onChange(of: simplifyLyrics) { _, _ in app.player.refreshLyricsDisplay() }
+                } header: {
+                    Text("歌词")
+                } footer: {
+                    Text("本地没有带时间轴的歌词时，把歌名、歌手、专辑和时长发给 LRCLIB（lrclib.net）查找。找到的歌词保存在本机。")
                 }
 
                 Section("支持的格式") {

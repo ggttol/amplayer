@@ -115,7 +115,7 @@
 | M2 经典皮肤 | ✅ .wsz 解析（自带 ZIP 读取器）、主窗/EQ/播放列表三窗、原创默认皮肤、导入与“用 Amplayer 打开” | 用 Webamp 附带的 base-2.91.wsz 快照对比；模拟器截图 |
 | M3 网络来源 | ✅ WebDAV、SMB、Subsonic、Jellyfin/Emby、群晖 Audio Station、DLNA、局域网发现、下载缓存与预取 | `Tools/test-servers.sh` 起真实服务器，`AMP_LIVE=1 swift test` 逐个列目录、下载、解码；群晖用模拟 DSM 接口测试；UI 测试走完“添加 WebDAV → 浏览 → 播放” |
 | M4 曲库 | ✅ 扫描、歌曲/艺术家/专辑、搜索、离线下载、M3U/PLS 保存与打开 | 单元测试 + 手动 |
-| 歌词 | ✅ 同名 .lrc、群晖 Audio Station / Navidrome 歌词接口、内嵌歌词；滚动高亮、点行跳转、导入 | `LyricsTests` + 模拟器截图 |
+| 歌词 | ✅ 同名 .lrc、群晖 Audio Station / Navidrome 歌词接口、内嵌歌词、在线 LRCLIB（自动匹配 + 手动搜索）、繁转简；滚动高亮、点行跳转、导入 | `LyricsTests` + 模拟器截图 |
 | M5 扩展 | 🟡 阿里云盘、百度网盘 OpenAPI 已实现（OAuth + PKCE） | **未实测**：需要先申请开放平台 AppKey |
 | 群晖增强（10-24） | ✅ QuickConnect ID 连接（区域跳转、局域网/DDNS/外网/中继候选并发探测，只用证书有效的官方域名）；File Station 浏览共享文件夹；会话过期自动重登 | 用户自己的 DS（DSM 7）实测：直连与 QuickConnect 都能列目录、下载、解码 |
 | APE 支持（10-24） | ✅ 集成 Monkey's Audio SDK（BSD），后台队列流式解码 + 缓冲调度，读 APEv2 标签 | WAV→APE→解码逐样本无损比对；NAS 上真实 APE 解码（50 倍实时）；模拟器经 QuickConnect 播放 |

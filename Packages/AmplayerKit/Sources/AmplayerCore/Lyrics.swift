@@ -73,6 +73,15 @@ public struct Lyrics: Sendable, Equatable {
         return Lyrics(lines: plain.enumerated().map { Line(id: $0.offset, time: nil, text: $0.element) })
     }
 
+    /// 繁体转简体（系统自带的 ICU 转换）
+    public func simplified() -> Lyrics {
+        Lyrics(lines: lines.map { line in
+            var l = line
+            l.text = line.text.applyingTransform(StringTransform("Hant-Hans"), reverse: false) ?? line.text
+            return l
+        })
+    }
+
     /// 当前时间对应的行（最后一个开始时间 <= time 的行）
     public func index(at time: TimeInterval) -> Int? {
         guard isSynced else { return nil }

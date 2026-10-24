@@ -69,3 +69,8 @@ import Testing
     #expect(LocalSource.removingExtension("fs:/music/a.b/song.ape") == "fs:/music/a.b/song")
     #expect(LocalSource.removingExtension("/music/a.b/noext") == nil)
 }
+
+@Test func simplifiesTraditionalChinese() throws {
+    let lyrics = try #require(Lyrics.parse("[00:01.00]故事的小黃花\n[00:02.00]從出生那年就飄著\n[00:03.00]Hello"))
+    #expect(lyrics.simplified().lines.map(\.text) == ["故事的小黄花", "从出生那年就飘着", "Hello"])
+}

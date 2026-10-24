@@ -226,7 +226,7 @@ public final class PlayerController {
         lastError = nil
         artwork = nil
         lyricsTask?.cancel()
-        lyrics = lyricsStore.cached(track)
+        lyrics = Self.forDisplay(lyricsStore.cached(track))
         lyricsLoading = lyrics == nil
         loadingTrackID = track.id
         updateNowPlaying()
@@ -299,26 +299,45 @@ public final class PlayerController {
 
     // MARK: 歌词
 
-    /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌；有时间轴的优先
+    /// 歌词繁体转简体（设置里可关，默认开）
+    public static var simplifyLyrics: Bool {
+        get { UserDefaults.standard.object(forKey: "amplayer.simplifyLyrics") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "amplayer.simplifyLyrics") }
+    }
+
+    private static func forDisplay(_ lyrics: Lyrics?) -> Lyrics? {
+        simplifyLyrics ? lyrics?.simplified() : lyrics
+    }
+
+    /// 是否联网查歌词（设置里可关，默认开）
+    public static var onlineLyricsEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: "amplayer.onlineLyrics") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "amplayer.onlineLyrics") }
+    }
+
+    /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌 → 在线（LRCLIB）。
+    /// 带时间轴的优先：本地只有纯文本时也会去在线找一份同步歌词。
     private func findLyrics(for track: Track, source: any MediaSource, embedded: String?) {
         guard lyrics == nil else { lyricsLoading = false; return }
         let store = lyricsStore
+        let online = Self.onlineLyricsEnabled
         lyricsTask = Task { [weak self] in
-            let remote: String? = await store.isKnownMissing(track) ? nil : await source.lyrics(for: track)
-            guard !Task.isCancelled else { return }
-            let remoteLyrics = remote.flatMap(Lyrics.parse)
-            let embeddedLyrics = embedded.flatMap(Lyrics.parse)
-            let pick: (String, Lyrics)?
-            if let remote, let r = remoteLyrics, r.isSynced || embeddedLyrics?.isSynced != true {
-                pick = (remote, r)
-            } else if let embedded, let e = embeddedLyrics {
-                pick = (embedded, e)
-            } else {
-                pick = nil
+            guard !(await store.isKnownMissing(track)) else {
+                self?.lyricsLoading = false
+                return
             }
+            var found: [(String, Lyrics)] = []
+            if let text = await source.lyrics(for: track), let parsed = Lyrics.parse(text) { found.append((text, parsed)) }
+            if let text = embedded, let parsed = Lyrics.parse(text) { found.append((text, parsed)) }
+            if online, !found.contains(where: { $0.1.isSynced }), !Task.isCancelled,
+               let text = await OnlineLyrics.shared.lyrics(for: track), let parsed = Lyrics.parse(text) {
+                found.append((text, parsed))
+            }
+            guard !Task.isCancelled else { return }
+            let pick = found.first { $0.1.isSynced } ?? found.first
             if let pick { await store.save(pick.0, for: track) } else { await store.markMissing(track) }
             guard let self, !Task.isCancelled, self.current?.id == track.id else { return }
-            self.lyrics = pick?.1
+            self.lyrics = Self.forDisplay(pick?.1)
             self.lyricsLoading = false
         }
     }
@@ -326,11 +345,17 @@ public final class PlayerController {
     /// 手动指定歌词文本（例如从“文件”导入 .lrc）
     public func setLyrics(_ text: String) -> Bool {
         guard let track = current, let parsed = Lyrics.parse(text) else { return false }
-        lyrics = parsed
+        lyrics = Self.forDisplay(parsed)
         lyricsLoading = false
         let store = lyricsStore
         Task { await store.save(text, for: track) }
         return true
+    }
+
+    /// 设置变化后按新设置重新显示当前歌词（从缓存读原文）
+    public func refreshLyricsDisplay() {
+        guard let track = current, let cached = lyricsStore.cached(track) else { return }
+        lyrics = Self.forDisplay(cached)
     }
 
     /// 清掉当前曲目的歌词缓存并重新查找

@@ -10,6 +10,7 @@ struct LyricsPanelView: View {
     let style: PlaylistStyle
 
     @State private var importing = false
+    @State private var searching = false
     private var player: PlayerController { app.player }
 
     var body: some View {
@@ -29,12 +30,15 @@ struct LyricsPanelView: View {
             }
         }
         .contextMenu {
+            Button("在线搜索歌词…", systemImage: "magnifyingglass") { searching = true }
+                .disabled(player.current == nil)
             Button("从“文件”导入 .lrc", systemImage: "doc.badge.plus") { importing = true }
                 .disabled(player.current == nil)
             Button("重新查找歌词", systemImage: "arrow.clockwise") { player.reloadLyrics() }
                 .disabled(player.current == nil)
             Button("显示播放列表", systemImage: "list.bullet") { app.showLyrics = false }
         }
+        .sheet(isPresented: $searching) { LyricsSearchView() }
         .fileImporter(isPresented: $importing, allowedContentTypes: [UTType(filenameExtension: "lrc") ?? .plainText, .plainText]) { result in
             guard case let .success(url) = result else { return }
             let scoped = url.startAccessingSecurityScopedResource()
@@ -56,7 +60,7 @@ struct LyricsPanelView: View {
                 Text("正在查找歌词…")
             } else {
                 Text("没有找到歌词")
-                Text("把同名 .lrc 放在歌曲旁边，或长按这里导入")
+                Text("长按这里可在线搜索或导入 .lrc")
                     .opacity(0.6)
             }
         }
