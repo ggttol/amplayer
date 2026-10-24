@@ -25,8 +25,14 @@ struct EqualizerWindowView: View {
                 .buttonStyle(ToggleSpriteStyle { S.eqOnButton(on: eq.enabled, down: $0) })
                 .accessibilityLabel(eq.enabled ? "均衡器：开" : "均衡器：关")
                 .at(SkinLayout.eqOn)
-            // AUTO 在经典播放器里是“按曲目自动载入预设”，这里不提供该功能，只保留外观
-            SpriteView(S.eqAutoButton(on: false, down: false)).at(SkinLayout.eqAuto)
+            // AUTO：每首歌记住自己的均衡器，下次播放时自动换回来
+            Button {
+                player.autoEqualizer.toggle()
+                app.show(player.autoEqualizer ? "AUTO：每首歌记住自己的均衡器" : "AUTO：关")
+            } label: { EmptyView() }
+                .buttonStyle(ToggleSpriteStyle { S.eqAutoButton(on: player.autoEqualizer, down: $0) })
+                .accessibilityLabel(player.autoEqualizer ? "均衡器自动：开" : "均衡器自动：关")
+                .at(SkinLayout.eqAuto)
 
             Menu {
                 ForEach(EqualizerPreset.builtIn) { preset in
@@ -72,6 +78,8 @@ struct EQSlider: View {
     let label: String
     let onChange: (Double) -> Void
     @State private var dragging = false
+    @State private var lastTap: Date?
+    @State private var dragMoved = false
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -81,18 +89,29 @@ struct EQSlider: View {
         }
         .frame(width: 14 * scale, height: 63 * scale, alignment: .topLeading)
         .contentShape(Rectangle().inset(by: -2 * scale))
+        // 拖动手势从按下就开始识别，会吞掉双击手势：在拖动里自己判断“两次轻点”来归零
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { g in
                     dragging = true
-                    onChange(valueFor(g.location.y))
+                    if abs(g.translation.height) > 3 { dragMoved = true }
+                    if dragMoved { onChange(valueFor(g.location.y)) }
                 }
                 .onEnded { g in
                     dragging = false
-                    onChange(valueFor(g.location.y))
+                    defer { dragMoved = false }
+                    if dragMoved {
+                        onChange(valueFor(g.location.y))
+                        lastTap = nil
+                    } else if let last = lastTap, Date().timeIntervalSince(last) < 0.35 {
+                        onChange(0.5)
+                        lastTap = nil
+                    } else {
+                        lastTap = Date()
+                        onChange(valueFor(g.location.y))
+                    }
                 }
         )
-        .onTapGesture(count: 2) { onChange(0.5) }
         .accessibilityElement()
         .accessibilityLabel(label)
         .accessibilityValue(String(format: "%+.1f dB", EqualizerSettings.decibels(fromNormalized: Float(value))))

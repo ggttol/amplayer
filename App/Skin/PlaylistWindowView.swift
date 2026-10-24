@@ -212,6 +212,16 @@ struct PlaylistWindowView: View {
                 app.isSelecting = true
                 app.selection = [index]
             }
+            Menu("移动", systemImage: "arrow.up.arrow.down") {
+                Button("移到最前", systemImage: "arrow.up.to.line") { player.moveTrack(at: index, to: 0); app.endSelection() }
+                    .disabled(index == 0)
+                Button("上移", systemImage: "arrow.up") { player.moveTrack(at: index, to: index - 1); app.endSelection() }
+                    .disabled(index == 0)
+                Button("下移", systemImage: "arrow.down") { player.moveTrack(at: index, to: index + 1); app.endSelection() }
+                    .disabled(index == player.queue.tracks.count - 1)
+                Button("移到最后", systemImage: "arrow.down.to.line") { player.moveTrack(at: index, to: player.queue.tracks.count - 1); app.endSelection() }
+                    .disabled(index == player.queue.tracks.count - 1)
+            }
             Button("下一首播放", systemImage: "text.line.first.and.arrowtriangle.forward") {
                 // 先插入副本到当前曲目之后，再删掉原位置的那一条
                 let current = player.queue.currentIndex
@@ -221,6 +231,8 @@ struct PlaylistWindowView: View {
                 }
                 app.endSelection()
             }
+            // 正在播的这首没有“下一首”可言，点了只会多出一条重复
+            .disabled(isCurrent)
             Button("离线下载", systemImage: "arrow.down.circle") { makeOffline([track]) }
             Button("曲目信息", systemImage: "info.circle") { infoTrack = track }
             Button("从列表删除", systemImage: "trash", role: .destructive) {
@@ -327,7 +339,7 @@ struct PlaylistWindowView: View {
                     isSaving = true
                 }
                 .disabled(player.queue.isEmpty)
-                Button("打开播放列表…", systemImage: "folder") { app.sheet = .library }
+                Button("打开播放列表…", systemImage: "folder") { app.sheet = .playlists }
                 Button("新建（清空）", systemImage: "doc") { player.clear(); app.endSelection() }
             } label: { hitArea }
                 .accessibilityLabel("播放列表文件")

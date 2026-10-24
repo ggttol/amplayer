@@ -33,6 +33,21 @@ public final class PlayerController {
     @ObservationIgnored private var lyricsTask: Task<Void, Never>?
     /// 已经无缝排在当前曲目后面的那首
     @ObservationIgnored private var armedTrackID: String?
+    @ObservationIgnored private var perTrackEQ: [String: EqualizerSettings] = [:]
+    @ObservationIgnored private var perTrackEQDirty = false
+    @ObservationIgnored private var sleepTask: Task<Void, Never>?
+
+    /// 均衡器 AUTO（经典播放器的含义）：开着时调均衡器会记到当前这首歌上，下次播它自动换回来
+    public var autoEqualizer = false {
+        didSet {
+            if autoEqualizer, let id = current?.id, let saved = perTrackEQ[id] { applyPerTrackEQ(saved) }
+            persist()
+        }
+    }
+
+    /// 定时关闭：到这个时间淡出并暂停；或者播完当前这首就停
+    public private(set) var sleepDeadline: Date?
+    public private(set) var sleepAfterCurrent = false
     /// 读到新标签时通知（曲库据此更新）
     @ObservationIgnored public var onTrackUpdated: ((Track) -> Void)?
 
@@ -41,6 +56,8 @@ public final class PlayerController {
         var volume: Float
         var balance: Float
         var equalizer: EqualizerSettings
+        /// 均衡器 AUTO：每首歌记住自己的均衡器（旧存档没有这个字段）
+        var autoEqualizer: Bool?
     }
 
     public init(sources: SourceStore, cache: AudioCache = .shared) {
@@ -51,7 +68,9 @@ public final class PlayerController {
             audio.volume = saved.volume
             audio.balance = saved.balance
             audio.equalizer = saved.equalizer
+            autoEqualizer = saved.autoEqualizer ?? false
         }
+        perTrackEQ = Storage.load([String: EqualizerSettings].self, from: "eq-per-track.json") ?? [:]
         audio.onFinished = { [weak self] in self?.trackFinished() }
         audio.onAdvancedToNext = { [weak self] url in self?.advancedGaplessly(to: url) }
         audio.onStateChangedExternally = { [weak self] in self?.updateNowPlaying() }
@@ -155,7 +174,11 @@ public final class PlayerController {
     public func remove(at offsets: IndexSet) {
         let removingCurrent = queue.currentIndex.map { offsets.contains($0) } ?? false
         queue.remove(at: offsets)
-        if removingCurrent { stop(); audio.unload() }
+        if removingCurrent {
+            stop()
+            audio.unload()
+            clearPerTrackState()
+        }
         persist()
     }
 
@@ -168,8 +191,77 @@ public final class PlayerController {
         stop()
         audio.unload()
         queue.removeAll()
-        artwork = nil
+        clearPerTrackState()
         persist()
+    }
+
+    /// 没有当前曲目了：清掉封面、歌词、错误
+    private func clearPerTrackState() {
+        artwork = nil
+        lyricsTask?.cancel()
+        lyrics = nil
+        lyricsLoading = false
+        lastError = nil
+        updateNowPlaying()
+    }
+
+    /// 删掉某个来源的所有曲目（来源被删除时）
+    public func removeTracks(fromSource sourceID: String) {
+        let offsets = IndexSet(queue.tracks.indices.filter { queue.tracks[$0].sourceID == sourceID })
+        guard !offsets.isEmpty else { return }
+        remove(at: offsets)
+    }
+
+    /// 移动一首（播放列表里上移、下移、移到最前或最后）
+    public func moveTrack(at index: Int, to destination: Int) {
+        guard queue.tracks.indices.contains(index) else { return }
+        let target = min(max(destination, 0), queue.tracks.count - 1)
+        guard target != index else { return }
+        queue.move(from: IndexSet([index]), to: target > index ? target + 1 : target)
+        persist()
+    }
+
+    // MARK: 定时关闭
+
+    /// 若干分钟后淡出并暂停；nil 取消
+    public func setSleepTimer(minutes: Int?) {
+        sleepTask?.cancel()
+        sleepAfterCurrent = false
+        guard let minutes, minutes > 0 else {
+            sleepDeadline = nil
+            return
+        }
+        let deadline = Date().addingTimeInterval(TimeInterval(minutes * 60))
+        sleepDeadline = deadline
+        PlaybackLog.add("定时关闭：\(minutes) 分钟后")
+        sleepTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(deadline.timeIntervalSinceNow))
+            guard !Task.isCancelled else { return }
+            await self?.fadeOutAndPause()
+        }
+    }
+
+    /// 播完当前这首就停
+    public func setSleepAfterCurrentTrack() {
+        sleepTask?.cancel()
+        sleepDeadline = nil
+        sleepAfterCurrent = true
+        PlaybackLog.add("定时关闭：播完当前这首")
+        // 已经无缝排上的下一首要撤掉
+        if audio.hasQueuedNext { audio.seek(to: audio.currentTime) }
+        armedTrackID = nil
+    }
+
+    private func fadeOutAndPause() async {
+        let original = audio.volume
+        for step in stride(from: 1.0, through: 0.0, by: -0.05) {
+            audio.volume = original * Float(step)
+            try? await Task.sleep(for: .milliseconds(250))
+        }
+        pause()
+        audio.volume = original
+        sleepDeadline = nil
+        PlaybackLog.add("定时关闭：已暂停")
     }
 
     public enum SortKey { case title, artist, album, path }
@@ -209,7 +301,21 @@ public final class PlayerController {
 
     public var equalizer: EqualizerSettings {
         get { audio.equalizer }
-        set { audio.equalizer = newValue; persist() }
+        set {
+            audio.equalizer = newValue
+            if autoEqualizer, let id = current?.id {
+                perTrackEQ[id] = newValue
+                perTrackEQDirty = true
+            }
+            persist()
+        }
+    }
+
+    /// AUTO 换曲目时套用该曲目记下的均衡器；“开/关”状态保持全局，不跟着曲目变
+    private func applyPerTrackEQ(_ saved: EqualizerSettings) {
+        var eq = saved
+        eq.enabled = audio.equalizer.enabled
+        audio.equalizer = eq
     }
 
     public func applyPreset(_ preset: EqualizerPreset) {
@@ -266,6 +372,7 @@ public final class PlayerController {
 
     /// 换曲目时清掉上一首的封面、错误、歌词
     private func resetPerTrackState(for track: Track) {
+        if autoEqualizer, let saved = perTrackEQ[track.id] { applyPerTrackEQ(saved) }
         lastError = nil
         artwork = nil
         lyricsTask?.cancel()
@@ -277,7 +384,7 @@ public final class PlayerController {
 
     /// 下一首已经在本地（本机或缓存）时，排到当前这首后面
     private func armGapless() {
-        guard armedTrackID == nil, !audio.hasQueuedNext, audio.info != nil, loadingTrackID == nil,
+        guard armedTrackID == nil, !sleepAfterCurrent, !audio.hasQueuedNext, audio.info != nil, loadingTrackID == nil,
               let i = queue.nextIndex(auto: true) else { return }
         let next = queue.tracks[i]
         guard let source = sources.source(next.sourceID) else { return }
@@ -326,6 +433,12 @@ public final class PlayerController {
     }
 
     private func trackFinished() {
+        if sleepAfterCurrent {
+            sleepAfterCurrent = false
+            PlaybackLog.add("定时关闭：当前这首播完，停止")
+            updateNowPlaying()
+            return
+        }
         guard let next = queue.advance(auto: true) else {
             PlaybackLog.add("播完：已是列表最后一首（共 \(queue.tracks.count) 首，循环：\(queue.repeatMode)，随机：\(queue.shuffle)），停止")
             updateNowPlaying()
@@ -475,7 +588,11 @@ public final class PlayerController {
         revalidateGapless()
         saver.schedule { [weak self] in
             guard let self else { return }
-            Storage.save(Saved(queue: self.queue, volume: self.audio.volume, balance: self.audio.balance, equalizer: self.audio.equalizer), to: "player.json")
+            Storage.save(Saved(queue: self.queue, volume: self.audio.volume, balance: self.audio.balance, equalizer: self.audio.equalizer, autoEqualizer: self.autoEqualizer), to: "player.json")
+            if self.perTrackEQDirty {
+                self.perTrackEQDirty = false
+                Storage.save(self.perTrackEQ, to: "eq-per-track.json")
+            }
         }
     }
 

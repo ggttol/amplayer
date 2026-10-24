@@ -162,4 +162,74 @@ final class AmplayerUITests: XCTestCase {
         app.buttons["完成"].tap()
         XCTAssertFalse(app.staticTexts["已选 2 首"].waitForExistence(timeout: 1))
     }
+
+    private func row(_ prefix: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
+    }
+
+    /// 长按菜单“移动 › 移到最前”；清空列表后歌词面板不再显示旧歌词
+    func testPlaylistMoveAndClear() {
+        app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES", "-amplayer.showPL", "YES", "-amplayer.showLyrics", "NO"]
+        app.launch()
+        waitForState("播放中")
+        let third = row("3. ")
+        waitFor(third)
+        let title = (third.label.components(separatedBy: ", ").first ?? third.label).replacingOccurrences(of: "3. ", with: "")
+        third.press(forDuration: 1.0)
+        tapWhenReady(app.buttons["移动"])
+        tapWhenReady(app.buttons["移到最前"])
+        let firstNow = row("1. " + title)
+        XCTAssertTrue(firstNow.waitForExistence(timeout: 5), "移到最前后第一行应是 \(title)")
+
+        // 切到歌词（第 1 首示例曲旁边有 .lrc 的那首正在播放时才有歌词；这里只验证清空后的状态）
+        app.buttons["切换到歌词"].tap()
+        tapWhenReady(app.buttons["删除曲目"])
+        tapWhenReady(app.buttons["清空列表"])
+        XCTAssertTrue(app.staticTexts["没有正在播放的歌曲"].waitForExistence(timeout: 5), "清空后歌词面板应提示没有正在播放的歌曲")
+    }
+
+    /// 侧边菜单：定时关闭显示倒计时，取消后恢复“关”
+    func testSleepTimer() {
+        app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES"]
+        app.launch()
+        waitForState("播放中")
+        app.buttons["菜单"].tap()
+        let timer = app.buttons["menu.定时关闭"]
+        tapWhenReady(timer)
+        tapWhenReady(app.buttons["15 分钟"])
+        let countdown = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "14:")).firstMatch
+        XCTAssertTrue(countdown.waitForExistence(timeout: 5) || app.staticTexts["15:00"].exists, "应显示倒计时")
+        tapWhenReady(timer)
+        tapWhenReady(app.buttons["取消定时"])
+        XCTAssertTrue(app.staticTexts["关"].waitForExistence(timeout: 5))
+    }
+
+    /// 均衡器 AUTO 能打开和关闭
+    func testEqualizerAuto() {
+        app.launchArguments = ["-AmplayerReset", "YES", "-amplayer.showEQ", "YES"]
+        app.launch()
+        let auto = app.buttons["均衡器自动：关"]
+        tapWhenReady(auto)
+        XCTAssertTrue(app.buttons["均衡器自动：开"].waitForExistence(timeout: 3))
+        app.buttons["均衡器自动：开"].tap()
+        XCTAssertTrue(app.buttons["均衡器自动：关"].waitForExistence(timeout: 3))
+    }
+
+    /// 扫描本机文件进曲库时读标签：艺术家页能看到 m4a 标签里的“测试艺术家”
+    func testLibraryScanReadsTags() {
+        app.launchArguments = ["-AmplayerReset", "YES"]
+        app.launch()
+        app.buttons["菜单"].tap()
+        tapWhenReady(app.buttons["menu.来源"])
+        let local = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "本机文件")).firstMatch
+        waitFor(local)
+        local.press(forDuration: 1.0)
+        tapWhenReady(app.buttons["扫描到曲库"])
+        app.buttons["完成"].firstMatch.tap()
+        app.buttons["菜单"].tap()
+        tapWhenReady(app.buttons["menu.曲库与播放列表"])
+        tapWhenReady(app.buttons["艺术家"])
+        let artist = app.staticTexts["测试艺术家"]
+        XCTAssertTrue(artist.waitForExistence(timeout: 15), "扫描后艺术家页应有“测试艺术家”")
+    }
 }

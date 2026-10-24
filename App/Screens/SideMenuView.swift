@@ -1,9 +1,11 @@
+import AVKit
 import AmplayerKit
 import SwiftUI
 
 /// 总控侧边菜单：左上角按钮打开，从左边滑出。所有功能入口和设置都在这里。
 struct SideMenuView: View {
     @Environment(AppModel.self) private var app
+    @State private var showSleepOptions = false
 
     var body: some View {
         GeometryReader { geo in
@@ -81,6 +83,12 @@ struct SideMenuView: View {
                 Toggle(isOn: Binding(get: { app.player.shuffle }, set: { app.player.shuffle = $0 })) {
                     Label("随机播放", systemImage: "shuffle")
                 }
+                sleepTimer
+                HStack {
+                    Label("输出设备", systemImage: "airplayaudio")
+                    Spacer()
+                    RoutePicker().frame(width: 32, height: 32)
+                }
             }
             Section("窗口") {
                 Toggle(isOn: $app.showEqualizer) { Label("均衡器", systemImage: "slider.vertical.3") }
@@ -118,6 +126,43 @@ struct SideMenuView: View {
         .tint(.orange)
     }
 
+    /// 定时关闭：到点淡出并暂停，或播完当前这首就停。
+    /// 倒计时每秒刷新，不能放进 Menu 的标签里（标签一变菜单就会自己关掉），所以用按钮 + 选项框
+    private var sleepTimer: some View {
+        Button { showSleepOptions = true } label: {
+            HStack {
+                Label("定时关闭", systemImage: "moon.zzz")
+                Spacer()
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    Text(sleepStatus(at: context.date))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .foregroundStyle(.primary)
+        .accessibilityIdentifier("menu.定时关闭")
+        .confirmationDialog("定时关闭", isPresented: $showSleepOptions, titleVisibility: .visible) {
+            let player = app.player
+            ForEach([15, 30, 45, 60, 90], id: \.self) { m in
+                Button("\(m) 分钟") { player.setSleepTimer(minutes: m); app.show("\(m) 分钟后停止播放") }
+            }
+            Button("播完当前这首") { player.setSleepAfterCurrentTrack(); app.show("播完当前这首后停止") }
+            if player.sleepDeadline != nil || player.sleepAfterCurrent {
+                Button("取消定时", role: .destructive) { player.setSleepTimer(minutes: nil); app.show("已取消定时关闭") }
+            }
+            Button("取消", role: .cancel) {}
+        }
+    }
+
+    private func sleepStatus(at date: Date) -> String {
+        if app.player.sleepAfterCurrent { return "播完这首" }
+        guard let deadline = app.player.sleepDeadline else { return "关" }
+        let left = max(0, Int(deadline.timeIntervalSince(date)))
+        return String(format: "%d:%02d", left / 60, left % 60)
+    }
+
     private func row(_ title: String, _ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack {
@@ -130,4 +175,17 @@ struct SideMenuView: View {
         .foregroundStyle(.primary)
         .accessibilityIdentifier("menu.\(title)")
     }
+}
+
+/// 系统的 AirPlay / 蓝牙输出选择按钮
+private struct RoutePicker: UIViewRepresentable {
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let view = AVRoutePickerView()
+        view.tintColor = .systemOrange
+        view.activeTintColor = .systemOrange
+        view.prioritizesVideoDevices = false
+        return view
+    }
+
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {}
 }

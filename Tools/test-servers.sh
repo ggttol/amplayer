@@ -33,12 +33,15 @@ curl -s -X POST http://127.0.0.1:14533/auth/createAdmin -H "Content-Type: applic
 echo "初始化 Jellyfin…"
 J=http://127.0.0.1:18096
 until curl -sf $J/System/Info/Public >/dev/null; do sleep 2; done
+# 刚启动时 Jellyfin 会重置连接几次：等它稳定下来再做初始化
+until curl -sf $J/Startup/Configuration >/dev/null 2>&1 || curl -sf $J/System/Info/Public | grep -q "\"StartupWizardCompleted\":true"; do sleep 2; done
+sleep 3
 curl -s -X POST $J/Startup/Configuration -H "Content-Type: application/json" -d '{"UICulture":"en-US","MetadataCountryCode":"US","PreferredMetadataLanguage":"en"}' >/dev/null
 curl -s $J/Startup/User >/dev/null
 curl -s -X POST $J/Startup/User -H "Content-Type: application/json" -d '{"Name":"amplayer","Password":"amplayerpass"}' >/dev/null
 curl -s -X POST $J/Startup/Complete >/dev/null
 A='MediaBrowser Client="setup", Device="script", DeviceId="amplayer-setup", Version="1"'
-TOKEN=$(curl -s -X POST $J/Users/AuthenticateByName -H "Content-Type: application/json" -H "Authorization: $A" -d '{"Username":"amplayer","Pw":"amplayerpass"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["AccessToken"])')
+TOKEN=$(curl -s --retry 5 --retry-all-errors -X POST $J/Users/AuthenticateByName -H "Content-Type: application/json" -H "Authorization: $A" -d '{"Username":"amplayer","Pw":"amplayerpass"}' | python3 -c 'import json,sys;print(json.load(sys.stdin)["AccessToken"])')
 curl -s -X POST "$J/Library/VirtualFolders?name=Music&collectionType=music&paths=%2Fmedia%2Fmusic&refreshLibrary=true" \
   -H "Authorization: $A, Token=\"$TOKEN\"" -H "Content-Type: application/json" -d '{"LibraryOptions":{}}' >/dev/null
 echo "等待媒体库扫描…"; sleep 20

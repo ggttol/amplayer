@@ -1,4 +1,5 @@
 import Foundation
+import AmplayerAudio
 import AmplayerCore
 import AmplayerSources
 import Observation
@@ -105,7 +106,15 @@ public final class LibraryStore {
         scanning[id] = 0
         scanTasks[id] = Task { [weak self] in
             do {
-                let found = try await source.collectTracks(path: path, maxDepth: 12, limit: 50_000)
+                var found = try await source.collectTracks(path: path, maxDepth: 12, limit: 50_000)
+                self?.scanning[id] = found.count
+                // 本机文件读标签很快：扫描时就补上艺术家、专辑、音轨号和时长（网络曲目等播放或缓存后再补）
+                for i in found.indices {
+                    try Task.checkCancellation()
+                    guard let url = source.localURL(path: found[i].path) else { continue }
+                    let tags = await MetadataReader.read(url: url)
+                    found[i] = MetadataReader.merge(tags, into: found[i], preferFileTags: true)
+                }
                 self?.add(found)
                 self?.scanning[id] = nil
             } catch is CancellationError {

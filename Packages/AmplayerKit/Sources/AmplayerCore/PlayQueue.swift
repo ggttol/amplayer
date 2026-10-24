@@ -21,6 +21,8 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     public private(set) var shuffle = false
     /// 随机模式下的播放顺序（tracks 下标的排列）
     private var order: [Int] = []
+    /// 正在播的曲目被删掉后，“下一首”从这个位置接着往下（而不是回到开头）
+    private var resumeIndex: Int?
 
     public init(tracks: [Track] = []) {
         self.tracks = tracks
@@ -49,6 +51,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
 
     public mutating func replace(with newTracks: [Track], startAt index: Int? = 0) {
         tracks = newTracks
+        resumeIndex = nil
         currentIndex = newTracks.isEmpty ? nil : index.map { min(max($0, 0), newTracks.count - 1) }
         rebuildOrder(keepCurrentFirst: true)
     }
@@ -59,8 +62,11 @@ public struct PlayQueue: Codable, Sendable, Equatable {
         var kept: [Track] = []
         for (i, t) in tracks.enumerated() where !offsets.contains(i) { kept.append(t) }
         tracks = kept
-        if currentRemoved {
+        if currentRemoved, let old = currentIndex {
             currentIndex = nil
+            // 原位置之前被删掉几首，就往前挪几位；指向原来排在它后面的那首
+            let shift = offsets.filter { $0 < old }.count
+            resumeIndex = tracks.isEmpty ? nil : min(old - shift, tracks.count - 1)
         } else if let currentID {
             currentIndex = tracks.firstIndex { $0.id == currentID }
         }
@@ -88,6 +94,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     public mutating func removeAll() {
         tracks = []
         currentIndex = nil
+        resumeIndex = nil
         order = []
     }
 
@@ -123,6 +130,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     public mutating func select(index: Int) {
         guard tracks.indices.contains(index) else { return }
         currentIndex = index
+        resumeIndex = nil
     }
 
     public mutating func setShuffle(_ on: Bool) {
@@ -133,7 +141,10 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     /// 下一首的下标；auto 为 true 表示当前曲目自然播完（单曲循环时重复当前）
     public func nextIndex(auto: Bool) -> Int? {
         guard !tracks.isEmpty else { return nil }
-        guard let currentIndex else { return order.first }
+        guard let currentIndex else {
+            if !shuffle, let r = resumeIndex, tracks.indices.contains(r) { return r }
+            return order.first
+        }
         if auto && repeatMode == .one { return currentIndex }
         guard let pos = order.firstIndex(of: currentIndex) else { return order.first }
         if pos + 1 < order.count { return order[pos + 1] }
@@ -151,6 +162,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     public mutating func advance(auto: Bool) -> Track? {
         guard let next = nextIndex(auto: auto) else { return nil }
         currentIndex = next
+        resumeIndex = nil
         return tracks[next]
     }
 
@@ -158,6 +170,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     public mutating func goBack() -> Track? {
         guard let prev = previousIndex() else { return nil }
         currentIndex = prev
+        resumeIndex = nil
         return tracks[prev]
     }
 

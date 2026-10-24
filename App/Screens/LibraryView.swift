@@ -5,7 +5,11 @@ import SwiftUI
 struct LibraryView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
-    @State private var tab = Tab.songs
+    @State private var tab: Tab
+
+    init(initialTab: Tab = .songs) {
+        _tab = State(initialValue: initialTab)
+    }
     @State private var query = ""
     @State private var playlists: [URL] = []
 

@@ -18,6 +18,8 @@ if ! xcodebuild build-for-testing -project Amplayer.xcodeproj -scheme Amplayer -
 fi
 rm -f "$BLOG"
 xcrun simctl install "$UDID" build/sim/Build/Products/Debug-iphonesimulator/Amplayer.app
+# 带标签的测试曲目（曲库扫描读标签的测试要用）
+[ -f "$M/Album One/04 - Tagged.m4a" ] || swift Tools/make-tagged-fixture.swift "$M/Album One/02 - 测试艺术家 - 中文标题.m4a" "$M/Album One/04 - Tagged.m4a" >/dev/null 2>&1
 DOCS="$(xcrun simctl get_app_container "$UDID" dev.gaotao.amplayer data)/Documents"
 mkdir -p "$DOCS" && cp "$M/Album One/"* "$DOCS/"
 

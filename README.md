@@ -21,8 +21,8 @@ Give it a try, and issues and pull requests are very welcome!
 
 **Classic windows**
 - Main window with the seven-segment clock (tap for remaining time), scrolling title, kbps/kHz, spectrum / oscilloscope, seek, volume, balance, shuffle and repeat (repeat-one shows a small “1”).
-- 10-band equalizer with preamp, 19 presets and the response curve.
-- Playlist editor: ADD / REM / SEL / MISC / LIST menus, sort, reverse, randomize, remove duplicates, M3U / PLS import and export. Tap a song to play it; long-press for multi-select, track info and offline download.
+- 10-band equalizer with preamp, 19 presets and the response curve. Double-tap a slider to reset it. AUTO remembers the equalizer for each song.
+- Playlist editor: ADD / REM / SEL / MISC / LIST menus, sort, reverse, randomize, remove duplicates, M3U / PLS import and export. Tap a song to play it; long-press to move it, multi-select, see track info or download it for offline use.
 - Title bar: the top-left button opens a side menu with everything else, `_` toggles mini mode, and `□` cycles to the next skin.
 
 **Skins**
@@ -48,7 +48,8 @@ Bonjour and SSDP find SMB, WebDAV and DLNA servers on your local network automat
 - MP3, AAC/M4A, ALAC, FLAC, **APE** (built-in Monkey's Audio decoder), WAV, AIFF, CAF and Opus (in CAF).
 - Gapless playback when the next track is already cached and has the same format.
 - Network tracks are cached with a download progress indicator, and the next track is prefetched. Offline downloads are supported.
-- Background audio, Lock Screen and Control Center, headset controls, AirPlay, and resume after interruptions.
+- Background audio, Lock Screen and Control Center, headset controls, and resume after interruptions.
+- Sleep timer (15–90 minutes, or stop after the current song) and an AirPlay / Bluetooth output picker in the side menu.
 
 **Lyrics**
 - Tap the playlist title bar to switch between the playlist and synced lyrics. The current line is highlighted and auto-scrolls, and tapping a line seeks to it.

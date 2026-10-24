@@ -35,6 +35,7 @@ struct PlayerScreen: View {
             switch sheet {
             case .sources: SourcesView()
             case .library: LibraryView()
+            case .playlists: LibraryView(initialTab: .playlists)
             case .skins: SkinsView()
             case .settings: SettingsView()
             }

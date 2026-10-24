@@ -14,7 +14,7 @@ final class AppModel {
     let player: PlayerController
 
     enum Sheet: String, Identifiable {
-        case sources, library, skins, settings
+        case sources, library, playlists, skins, settings
         var id: String { rawValue }
     }
 

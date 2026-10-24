@@ -7,6 +7,17 @@ struct SourcesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var editing: SourceConfig?
     @State private var newPassword: String?
+    @State private var searchTimedOut = false
+
+    /// 已经添加过的不再出现在“局域网”里
+    private var discovered: [LANDiscovery.Found] {
+        let added = Set(app.sources.configs.map { normalized($0.url) })
+        return app.discovery.found.filter { !added.contains(normalized($0.url)) }
+    }
+
+    private func normalized(_ url: String) -> String {
+        url.lowercased().trimmingCharacters(in: CharacterSet(charactersIn: "/ "))
+    }
 
     var body: some View {
         NavigationStack {
@@ -29,6 +40,7 @@ struct SourcesView: View {
                                 Button("删除", role: .destructive) {
                                     app.sources.remove(config.id)
                                     app.library.remove(sourceID: config.id)
+                                    app.player.removeTracks(fromSource: config.id)
                                 }
                                 Button("编辑") { editing = config }.tint(.blue)
                             }
@@ -48,13 +60,18 @@ struct SourcesView: View {
                 }
 
                 Section {
-                    if app.discovery.found.isEmpty {
-                        HStack {
-                            ProgressView()
-                            Text("正在搜索局域网中的 SMB、WebDAV、DLNA 设备…").font(.footnote).foregroundStyle(.secondary)
+                    if discovered.isEmpty {
+                        if searchTimedOut {
+                            Text(app.discovery.found.isEmpty ? "没有发现局域网设备。可以点右上角 + 手动添加。" : "发现的设备都已经添加过了。")
+                                .font(.footnote).foregroundStyle(.secondary)
+                        } else {
+                            HStack {
+                                ProgressView()
+                                Text("正在搜索局域网中的 SMB、WebDAV、DLNA 设备…").font(.footnote).foregroundStyle(.secondary)
+                            }
                         }
                     }
-                    ForEach(app.discovery.found) { found in
+                    ForEach(discovered) { found in
                         Button {
                             editing = SourceConfig(kind: found.kind, name: found.name, url: found.url)
                         } label: {
@@ -102,6 +119,10 @@ struct SourcesView: View {
                 }
             }
             .onAppear { app.discovery.start() }
+            .task {
+                try? await Task.sleep(for: .seconds(8))
+                searchTimedOut = true
+            }
             .onDisappear { app.discovery.stop() }
         }
     }
