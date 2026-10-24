@@ -1,95 +1,114 @@
 # Amplayer
 
-<img src="App/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png" width="128" alt="图标">
+**English** · [简体中文](README.zh-CN.md)
 
-图标是一支辉光管（Nixie tube），灯丝弯成八分音符，呼应经典播放器那块亮着的数码屏。
+<img src="App/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png" width="112" align="right" alt="Amplayer icon">
 
-iOS 音乐播放器，界面像素级复刻经典 Winamp 2.x，可加载 `.wsz` 皮肤。可以播放本机、NAS、媒体服务器和网盘里的音乐。
+**A nostalgic, open-source iOS music player — a tribute to Winamp 2.x.**
 
-调研结论与路线图见 [Docs/ROADMAP.md](Docs/ROADMAP.md)。
+Pixel-perfect classic windows (main window, 10-band equalizer, playlist), real `.wsz` skins, a bouncing spectrum analyzer — and it plays your music straight from your NAS, media server or network shares. Built for everyone who still remembers dragging a skin onto that little window.
 
-## 功能
+Give it a try, and issues and pull requests are very welcome!
 
-- **经典三窗口**：主窗口、10 段均衡器、播放列表，按屏幕宽度等比放大，最近邻插值保证像素清晰
-  - 主窗口：时间（点按切换剩余时间，暂停时闪烁）、滚动标题（中文自动改用系统字体）、kbps/kHz/声道、频谱与示波器（viscolor.txt 配色）、进度、音量、平衡、随机/循环（关→全部→单曲）
-  - 均衡器：10 段 + 前级放大、开关、19 个预设、曲线图；双击滑块归零
-  - 播放列表：ADD / REM / SEL / MISC / LIST 菜单，排序、反转、打乱、去重、裁剪，保存与打开 M3U/PLS，点歌名直接播放，长按可多选、查看信息或离线下载
-  - 标题栏：左上角打开侧边总控菜单；右上角 `_` 迷你模式（只留主窗口），`□` 换下一套皮肤
-  - 下一首已缓存且格式相同时无缝衔接；网络曲目下载时显示进度
-  - 侧边总控菜单：来源、曲库、窗口开关、可视化、皮肤、设置
-  - 歌词：点播放列表窗口的标题栏在列表和歌词之间切换（侧边菜单里也有）；自动读取同名 .lrc（GBK/UTF-8 都行）、群晖和 Navidrome 的歌词、文件内嵌歌词，都没有时在线查 LRCLIB（可手动搜索挑选），繁体可自动转简体，滚动高亮，点一行跳过去，长按可导入 .lrc
-- **皮肤**：内置 6 套原创皮肤（Graphite、Nixie 辉光、Deep Ocean 深海、Sakura 樱、Synthwave 霓虹、Ivory 象牙），全部代码绘制；支持导入任意 Winamp 2.x `.wsz` 皮肤，缺少的位图用内置皮肤补齐。皮肤页有 Winamp Skin Museum 入口，下载的 `.wsz` 可在“文件”App 中直接用 Amplayer 打开
-- **来源**
-  | 类型 | 说明 |
-  |---|---|
-  | 本机文件 | “文件”App › Amplayer，或从“文件”导入 |
-  | WebDAV | 含 Alist / OpenList（可把各种网盘转成 WebDAV）、群晖 WebDAV Server、Nextcloud |
-  | SMB 2/3 | Windows 共享、各类 NAS |
-  | Subsonic / OpenSubsonic | Navidrome、Airsonic、Gonic、Ampache |
-  | Jellyfin / Emby | 媒体库、专辑、艺术家、文件夹浏览 |
-  | 群晖 DSM | 支持 IP / 域名 / **QuickConnect ID**；File Station 浏览全部共享文件夹（不依赖索引），Audio Station 有索引时另有专辑、播放列表 |
-  | UPnP / DLNA | 几乎所有 NAS 自带的媒体服务器 |
-- **局域网发现**：Bonjour（SMB、WebDAV）+ SSDP（DLNA）
-- **缓存**：网络曲目完整缓存后播放，并预缓存下一首；LRU 上限可调；支持离线下载
-- **曲库**：扫描来源进曲库，按歌曲、艺术家、专辑浏览和搜索
-- **系统集成**：后台播放、锁屏与控制中心、耳机线控、来电打断后恢复、AirPlay
+<p>
+  <img src="Docs/screenshots/main.png" width="200" alt="Main window, equalizer and playlist">
+  <img src="Docs/screenshots/lyrics.png" width="200" alt="Synced lyrics in the Nixie skin">
+  <img src="Docs/screenshots/ivory.png" width="200" alt="Ivory skin">
+  <img src="Docs/screenshots/skins.png" width="200" alt="Built-in skins">
+</p>
 
-支持的格式：MP3、AAC/M4A、ALAC、FLAC、**APE**、WAV、AIFF、CAF、Opus（CAF 封装）。APE 用内置的 Monkey's Audio 解码器，其余走 Core Audio。
+## Features
 
-## 工程结构
+**Classic windows**
+- Main window with the seven-segment clock (tap for remaining time), scrolling title, kbps/kHz, spectrum / oscilloscope, seek, volume, balance, shuffle and repeat (repeat-one shows a small “1”).
+- 10-band equalizer with preamp, 19 presets and the response curve.
+- Playlist editor: ADD / REM / SEL / MISC / LIST menus, sort, reverse, randomize, remove duplicates, M3U / PLS import and export. Tap a song to play it; long-press for multi-select, track info and offline download.
+- Title bar: the top-left button opens a side menu with everything else, `_` toggles mini mode, and `□` cycles to the next skin.
+
+**Skins**
+- Load any classic Winamp 2.x `.wsz` skin. Missing bitmaps fall back to the built-in skin.
+- Six original built-in skins, all drawn in code: Graphite, Nixie, Deep Ocean, Sakura, Synthwave and Ivory.
+- A link to the [Winamp Skin Museum](https://skins.webamp.org), which has 70,000+ skins. Open a downloaded `.wsz` from the Files app to import it.
+
+**Sources**
+
+| Source | Notes |
+|---|---|
+| Local files | Files app › Amplayer, or import from Files |
+| WebDAV | Including Alist / OpenList (turns most cloud drives into WebDAV), Synology WebDAV Server and Nextcloud |
+| SMB 2/3 | Windows shares and most NAS devices |
+| Subsonic / OpenSubsonic | Navidrome, Airsonic, Gonic, Ampache |
+| Jellyfin / Emby | Libraries, albums, artists and folders |
+| Synology DSM | IP, domain or **QuickConnect ID**. File Station browses every shared folder without needing an index; Audio Station adds albums and playlists |
+| UPnP / DLNA | The media server built into almost every NAS |
+
+Bonjour and SSDP find SMB, WebDAV and DLNA servers on your local network automatically.
+
+**Playback**
+- MP3, AAC/M4A, ALAC, FLAC, **APE** (built-in Monkey's Audio decoder), WAV, AIFF, CAF and Opus (in CAF).
+- Gapless playback when the next track is already cached and has the same format.
+- Network tracks are cached with a download progress indicator, and the next track is prefetched. Offline downloads are supported.
+- Background audio, Lock Screen and Control Center, headset controls, AirPlay, and resume after interruptions.
+
+**Lyrics**
+- Tap the playlist title bar to switch between the playlist and synced lyrics. The current line is highlighted and auto-scrolls, and tapping a line seeks to it.
+- Lyrics come from, in order: a `.lrc` file next to the song (UTF-8 or GBK), the Synology / Navidrome lyrics APIs, embedded tags, and finally [LRCLIB](https://lrclib.net) online. You can also search LRCLIB manually and pick a result.
+- Traditional Chinese lyrics can be shown as Simplified Chinese.
+
+**Library**
+- Scan sources into a searchable library, organized by songs, artists and albums.
+
+## Try it
+
+Amplayer isn't on the App Store or TestFlight yet, so for now you build it yourself:
+
+1. You need a Mac with **Xcode 16 or later** (tested with Xcode 27) and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`). The app runs on iOS 17 or later.
+2. Clone the repo and set your signing team:
+   ```sh
+   git clone https://github.com/ggttol/amplayer.git && cd amplayer
+   cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig   # fill in DEVELOPMENT_TEAM
+   xcodegen generate
+   open Amplayer.xcodeproj
+   ```
+3. Choose your iPhone or a simulator and press Run. A free Apple ID works too, but the app has to be reinstalled every 7 days.
+
+To play music from cloud drives (Aliyun, Baidu, 115, Quark…), run [Alist / OpenList](https://github.com/OpenListTeam/OpenList) and add it as a WebDAV source.
+
+## Project layout
 
 ```
-App/                     SwiftUI 界面
-  Skin/                  经典三窗口（精灵图渲染、滑块、可视化）
-  Screens/               来源、浏览、曲库、皮肤、设置
+App/                      SwiftUI app
+  Skin/                   Classic windows: sprite rendering, sliders, visualizer, lyrics panel
+  Screens/                Sources, browser, library, skins, settings, side menu
 Packages/AmplayerKit/
-  AmplayerCore                曲目、播放队列、M3U/PLS、均衡器
-  AmplayerAudio               AVAudioEngine 播放器、10 段 EQ、vDSP 频谱、标签读取、APE 流式解码
-  MonkeysAudio           Monkey's Audio SDK（C++）+ C 接口
-  AmplayerSources             各协议来源、Keychain、局域网发现
-  AmplayerCache               下载缓存、LRU、离线
-  AmplayerSkin                .wsz 解析（自带 ZIP 读取器）、精灵图表、默认皮肤绘制
-  AmplayerKit                 播放总控、曲库、来源与皮肤管理
-UITests/                 XCUITest 端到端测试
-Tools/                   测试服务器脚本、图标生成
+  AmplayerCore            Tracks, play queue, M3U/PLS, equalizer, LRC parser
+  AmplayerAudio           AVAudioEngine player, 10-band EQ, vDSP spectrum, tag reader, APE streaming, gapless
+  MonkeysAudio            Monkey's Audio SDK (C++) with a small C API
+  AmplayerSources         Source protocols, Keychain, LAN discovery, online lyrics
+  AmplayerCache           Download cache, LRU, offline files, progress
+  AmplayerSkin            .wsz parser (own ZIP reader), sprite tables, built-in skins
+  AmplayerKit             Playback controller, library, source and skin management
+UITests/                  XCUITest end-to-end tests
+Tools/                    Test servers, UI test runner, icon generator
 ```
 
-## 构建（在 Mac 上）
+## Tests
 
 ```sh
-cp Config/Signing.local.xcconfig.example Config/Signing.local.xcconfig   # 填入 Team ID
-xcodegen generate
-xcodebuild -project Amplayer.xcodeproj -scheme Amplayer -destination "platform=iOS Simulator,name=Amplayer iPhone" build
+(cd Packages/AmplayerKit && swift test)    # unit tests on macOS
+Tools/ui-test.sh                           # UI tests in the simulator (starts a WebDAV test server in Docker)
+Tools/test-servers.sh && (cd Packages/AmplayerKit && AMP_LIVE=1 swift test)   # WebDAV, DLNA, SMB, Navidrome, Jellyfin in Docker
 ```
 
-网盘：用 Alist / OpenList 把网盘转成 WebDAV 后添加。
+Some tests also run against real services, with credentials passed in environment variables:
+- **A real Synology NAS**: `AMP_SYNO_URL`, `AMP_SYNO_USER`, `AMP_SYNO_PASS`, `AMP_SYNO_QC`.
+- **LRCLIB**: `AMP_LIVE_LYRICS=1`.
+- **A real `.wsz` skin**: `AMP_TEST_WSZ`.
 
-## 测试
+In debug builds, the UI can be driven with launch arguments; see `App/DebugHooks.swift`. In-app, **Settings › Playback log** records track changes, errors and audio interruptions. Including it in a bug report helps a lot.
 
-```sh
-# 单元测试（macOS 上运行 Swift 包测试）
-(cd Packages/AmplayerKit && swift test)
+## License
 
-# 用真实皮肤验证解析：指向 Webamp 仓库里的 base-2.91.wsz（不入库）
-(cd Packages/AmplayerKit && AMP_TEST_WSZ=/path/to/base-2.91.wsz swift test)
+The code is released under the [MIT License](LICENSE). Third-party components keep their own licenses: the Monkey's Audio SDK is BSD, and AMSMB2 / libsmb2 are LGPL and dynamically linked. See [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
 
-# 真实群晖（凭据只走环境变量，不要写进文件）
-(cd Packages/AmplayerKit && AMP_SYNO_URL=https://nas:5001 AMP_SYNO_USER=xxx AMP_SYNO_PASS=xxx AMP_SYNO_QC=<QuickConnect ID> swift test --filter Synology)
-
-# 端到端：启动 WebDAV、DLNA、SMB、Navidrome、Jellyfin 容器，再跑在线测试
-Tools/test-servers.sh
-(cd Packages/AmplayerKit && AMP_LIVE=1 swift test)
-
-# 界面测试（需要上面的 WebDAV 容器，模拟器 Documents 里放几首测试音频）
-xcodebuild test -project Amplayer.xcodeproj -scheme Amplayer -destination "platform=iOS Simulator,name=Amplayer iPhone"
-```
-
-调试版支持用启动参数驱动界面，见 `App/DebugHooks.swift`。
-
-## 许可
-
-依赖只使用 MIT / Apache / LGPL（AMSMB2 以动态库链接）。详见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。Amplayer 与 Winamp / Nullsoft / Llama Group 无关。
-
-## 许可证
-
-本项目代码以 [MIT](LICENSE) 许可发布。第三方组件（Monkey's Audio SDK、AMSMB2/libsmb2 等）沿用各自许可，见 [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md)。
+Amplayer is a fan-made tribute. It is not affiliated with Winamp, Nullsoft or Llama Group. The built-in skins and the icon are original work. Imported `.wsz` skins belong to their authors.
