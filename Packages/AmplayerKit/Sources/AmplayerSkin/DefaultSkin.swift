@@ -402,9 +402,9 @@ struct DefaultSkin {
         p.fill(11, 42, 1, 29, frameDark)
         // 纵向平铺，槽只画左右边，避免出现横向接缝
         p.fill(31, 42, 20, 29, frame)
-        p.fill(31 + 7, 42, 10, 29, frameDark)
-        p.fill(31 + 7, 42, 1, 29, frameDark)
-        p.fill(31 + 16, 42, 1, 29, frameLight.with(alpha: 0.6))
+        // 槽在平铺块的 4…14 列，滑块（宽 8）画在第 5 列，即窗口右边往左 15 像素
+        p.fill(31 + 4, 42, 10, 29, frameDark)
+        p.fill(31 + 14, 42, 1, 29, frameLight.with(alpha: 0.6))
         p.fill(50, 42, 1, 29, frameDark)
         // 滚动条滑块
         for (x, selected) in [(52, false), (61, true)] {

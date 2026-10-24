@@ -12,6 +12,9 @@ struct PlaylistWindowView: View {
     @State private var isSaving = false
     @State private var playlistName = ""
     @State private var infoTrack: Track?
+    /// 列表顶部那一行（双向绑定：滚动时更新，拖滑块时设置）
+    @State private var topRow: Int?
+    @State private var draggingScroll = false
 
     private var player: PlayerController { app.player }
     private let width: CGFloat = 275
@@ -30,6 +33,7 @@ struct PlaylistWindowView: View {
                 .frame(width: (width - 12 - 20) * scale, height: (height - 20 - 38) * scale)
                 .background(style.normalBackground.color)
                 .at(12, 20)
+            scrollbar.at(width - 15, 20)
             bottomControls
         }
         .alert("保存播放列表", isPresented: $isSaving) {
@@ -102,6 +106,34 @@ struct PlaylistWindowView: View {
         .at(x0, y)
     }
 
+    // MARK: 滚动条（经典皮肤的滑块）
+
+    private var scrollbar: some View {
+        let trackHeight = height - 20 - 38
+        let count = player.queue.tracks.count
+        let visibleRows = Int(trackHeight / 13)
+        let maxTop = max(0, count - visibleRows)
+        let ratio = app.showLyrics || maxTop == 0 ? 0 : CGFloat(min(topRow ?? 0, maxTop)) / CGFloat(maxTop)
+        return ZStack(alignment: .topLeading) {
+            Color.clear
+            SpriteView(draggingScroll ? S.plScrollHandleSelected : S.plScrollHandle)
+                .offset(y: (ratio * (trackHeight - 18)).rounded() * scale)
+        }
+        .frame(width: 8 * scale, height: trackHeight * scale, alignment: .topLeading)
+        .contentShape(Rectangle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { value in
+                    guard maxTop > 0, !app.showLyrics else { return }
+                    draggingScroll = true
+                    let r = min(max((value.location.y / scale - 9) / (trackHeight - 18), 0), 1)
+                    topRow = Int((r * CGFloat(maxTop)).rounded())
+                }
+                .onEnded { _ in draggingScroll = false }
+        )
+        .accessibilityHidden(true)
+    }
+
     // MARK: 曲目列表
 
     private func trackList(_ style: PlaylistStyle) -> some View {
@@ -114,8 +146,11 @@ struct PlaylistWindowView: View {
                             .id(index)
                     }
                 }
+                .scrollTargetLayout()
             }
-            .scrollIndicators(.visible)
+            .scrollPosition(id: $topRow, anchor: .top)
+            // 用皮肤里的滑块代替系统滚动条
+            .scrollIndicators(.hidden)
             .onChange(of: player.queue.currentIndex) { _, new in
                 if let new { withAnimation { proxy.scrollTo(new, anchor: .center) } }
             }
