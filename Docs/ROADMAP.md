@@ -1,7 +1,7 @@
-# mp9：支持网盘和网络协议、仿 Winamp 界面的 iOS 音乐播放器
+# amplayer：支持网盘和网络协议、仿 Winamp 界面的 iOS 音乐播放器
 
 ## Context
-用户在 Mac 的 `~/code/mp9` 新建了空仓库（`db258ee Initial commit`，只有 README 和 .gitignore）。
+用户在 Mac 的 `~/code/amplayer` 新建了空仓库（`db258ee Initial commit`，只有 README 和 .gitignore）。
 目标是做一款 iOS 音乐播放器：
 1. 能播放常见网盘和网络协议里的音乐；
 2. 界面和功能参考 Winamp 经典版。
@@ -62,11 +62,11 @@
 
 - **平台**：iOS 17+，Swift 6，**SwiftUI 管页面框架，Winamp 皮肤区用 UIKit/CALayer 精确绘制**（像素级精灵图，整数倍缩放并关闭插值）。
 - **工程**：XcodeGen（`project.yml`）生成 Xcode 工程，避免 pbxproj 冲突；模块用本地 Swift Package 拆分：
-  - `MP9Core`：数据模型、播放队列、媒体库（SwiftData 或 GRDB）
-  - `MP9Audio`：封装 SFBAudioEngine；10 段 EQ 用 AVAudioUnitEQ；频谱用 vDSP FFT 喂给可视化；无缝播放、ReplayGain
-  - `MP9Sources`：统一的 `MediaSource` 协议（`list(path)`、`open(item) -> 可 Range 读取的流`、`metadata`）。实现：Local/Files、WebDAV、SMB、Subsonic、Jellyfin/Emby、Synology Audio Station、UPnP/DLNA（自己实现 SSDP + ContentDirectory SOAP Browse，不引入 GPL 库），之后加阿里云盘和百度网盘。凭据存在 Keychain
-  - `MP9Cache`：边下边播。用 Range 分块下载到磁盘缓存，凑够头部后交给解码器；配置 LRU 容量
-  - `MP9Skin`：解析 .wsz（zip → BMP → CGImage），精灵图坐标表移植自 Webamp；渲染主窗、EQ、播放列表三个窗口
+  - `AmplayerCore`：数据模型、播放队列、媒体库（SwiftData 或 GRDB）
+  - `AmplayerAudio`：封装 SFBAudioEngine；10 段 EQ 用 AVAudioUnitEQ；频谱用 vDSP FFT 喂给可视化；无缝播放、ReplayGain
+  - `AmplayerSources`：统一的 `MediaSource` 协议（`list(path)`、`open(item) -> 可 Range 读取的流`、`metadata`）。实现：Local/Files、WebDAV、SMB、Subsonic、Jellyfin/Emby、Synology Audio Station、UPnP/DLNA（自己实现 SSDP + ContentDirectory SOAP Browse，不引入 GPL 库），之后加阿里云盘和百度网盘。凭据存在 Keychain
+  - `AmplayerCache`：边下边播。用 Range 分块下载到磁盘缓存，凑够头部后交给解码器；配置 LRU 容量
+  - `AmplayerSkin`：解析 .wsz（zip → BMP → CGImage），精灵图坐标表移植自 Webamp；渲染主窗、EQ、播放列表三个窗口
 - **Winamp 功能对照**：主窗（时间、滚动标题、kbps/kHz、频谱/示波器、进度、音量、平衡、上一首/播放/暂停/停止/下一首/弹出、随机/循环）、10 段 EQ + 预设、播放列表编辑器（M3U/PLS 导入导出）、皮肤切换。iPhone 上三个窗口竖向堆叠或分页显示，按比例放大到屏宽。
 - **iOS 系统集成**：后台播放、锁屏和控制中心（MPNowPlayingInfoCenter、MPRemoteCommandCenter）、AirPlay、CarPlay（后期）。
 - **许可证**：全部采用 MIT/LGPL 依赖，App 本身可以闭源上架；GPL 项目只看不抄。
@@ -75,7 +75,7 @@
 
 ## 三、分阶段实施
 
-1. **M0 骨架**：在 `~/code/mp9` 写 XcodeGen 工程和本地 Package，App 能在模拟器启动；配好后台音频 entitlement。
+1. **M0 骨架**：在 `~/code/amplayer` 写 XcodeGen 工程和本地 Package，App 能在模拟器启动；配好后台音频 entitlement。
 2. **M1 播放内核**：接入 SFBAudioEngine，能播放本地文件（Files 导入）；做队列、锁屏控制、EQ 和 FFT。
 3. **M2 Winamp 皮肤**：完成 .wsz 解析和主窗、EQ、播放列表三窗渲染与交互；附带一套原创默认皮肤；支持导入 .wsz。
 4. **M3 网络来源**：
@@ -89,7 +89,7 @@
 > 注：用户导入的 .wsz 由用户自行负责；内置皮肤必须原创。App Store 审核要特别注意本地网络权限（NSLocalNetworkUsageDescription、Bonjour 服务列表）和后台音频声明。
 
 ## 验证
-- 每个阶段都在 **Mac 上编译**（`xcodebuild -scheme MP9 -destination 'platform=iOS Simulator,name=iPhone 17'`），不在 relay 本机编译；`MP9Skin`、`MP9Sources` 跑单元测试（用 Webamp 自带的 base skin 做皮肤快照对比，WebDAV 用本地 rclone serve webdav 测试）。
+- 每个阶段都在 **Mac 上编译**（`xcodebuild -scheme Amplayer -destination 'platform=iOS Simulator,name=iPhone 17'`），不在 relay 本机编译；`AmplayerSkin`、`AmplayerSources` 跑单元测试（用 Webamp 自带的 base skin 做皮肤快照对比，WebDAV 用本地 rclone serve webdav 测试）。
 - M3 在 Mac 上用 OrbStack 起 Navidrome、Jellyfin、OpenList、MiniDLNA 和 Samba 容器做端到端测试；群晖 Audio Station 需要一台真实 NAS（用户若有，提供测试账号；否则用 Virtual DSM 或抓包样例做 mock）；真机装机按记忆里的方法，在 Mac 桌面会话中用 Xcode 运行。
 
 ## 参考来源
@@ -112,8 +112,8 @@
 |---|---|---|
 | M0 骨架 | ✅ | 模拟器启动 |
 | M1 播放内核 | ✅ AVAudioEngine 播放、10 段 EQ、平衡、vDSP 频谱/示波器、锁屏与远程控制、打断恢复 | 模拟器播放 FLAC/AAC/WAV；UI 测试覆盖播放/暂停/下一首/停止 |
-| M2 经典皮肤 | ✅ .wsz 解析（自带 ZIP 读取器）、主窗/EQ/播放列表三窗、原创默认皮肤、导入与“用 MP9 打开” | 用 Webamp 附带的 base-2.91.wsz 快照对比；模拟器截图 |
-| M3 网络来源 | ✅ WebDAV、SMB、Subsonic、Jellyfin/Emby、群晖 Audio Station、DLNA、局域网发现、下载缓存与预取 | `Tools/test-servers.sh` 起真实服务器，`MP9_LIVE=1 swift test` 逐个列目录、下载、解码；群晖用模拟 DSM 接口测试；UI 测试走完“添加 WebDAV → 浏览 → 播放” |
+| M2 经典皮肤 | ✅ .wsz 解析（自带 ZIP 读取器）、主窗/EQ/播放列表三窗、原创默认皮肤、导入与“用 Amplayer 打开” | 用 Webamp 附带的 base-2.91.wsz 快照对比；模拟器截图 |
+| M3 网络来源 | ✅ WebDAV、SMB、Subsonic、Jellyfin/Emby、群晖 Audio Station、DLNA、局域网发现、下载缓存与预取 | `Tools/test-servers.sh` 起真实服务器，`AMP_LIVE=1 swift test` 逐个列目录、下载、解码；群晖用模拟 DSM 接口测试；UI 测试走完“添加 WebDAV → 浏览 → 播放” |
 | M4 曲库 | ✅ 扫描、歌曲/艺术家/专辑、搜索、离线下载、M3U/PLS 保存与打开 | 单元测试 + 手动 |
 | M5 扩展 | 🟡 阿里云盘、百度网盘 OpenAPI 已实现（OAuth + PKCE） | **未实测**：需要先申请开放平台 AppKey |
 | 群晖增强（10-24） | ✅ QuickConnect ID 连接（区域跳转、局域网/DDNS/外网/中继候选并发探测，只用证书有效的官方域名）；File Station 浏览共享文件夹；会话过期自动重登 | 用户自己的 DS（DSM 7）实测：直连与 QuickConnect 都能列目录、下载、解码 |

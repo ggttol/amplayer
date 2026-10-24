@@ -1,5 +1,5 @@
 import AuthenticationServices
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 来源列表 + 局域网发现
@@ -18,7 +18,7 @@ struct SourcesView: View {
                             Label {
                                 VStack(alignment: .leading) {
                                     Text(config.name)
-                                    Text(config.kind == .local ? "“文件”App › MP9" : (config.url.isEmpty ? config.kind.title : config.url))
+                                    Text(config.kind == .local ? "“文件”App › Amplayer" : (config.url.isEmpty ? config.kind.title : config.url))
                                         .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                 }
                             } icon: {
@@ -257,7 +257,7 @@ struct SourceEditorView: View {
         default:
             return
         }
-        let scheme = URL(string: redirect)?.scheme ?? "mp9"
+        let scheme = URL(string: redirect)?.scheme ?? "amplayer"
         do {
             let callback = try await webAuth.authenticate(using: url, callbackURLScheme: scheme)
             let items = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems ?? []

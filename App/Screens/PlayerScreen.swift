@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -119,7 +119,7 @@ struct MainMenuView: View {
                     Button("设置", systemImage: "gearshape") { app.sheet = .settings }
                 }
             }
-            .navigationTitle("MP9")
+            .navigationTitle("Amplayer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
         }

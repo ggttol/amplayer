@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 经典主窗口（275x116）
@@ -60,7 +60,7 @@ struct MainWindowView: View {
 
     private var marqueeText: String {
         if let error = player.lastError { return error }
-        guard let track = player.current, let index = player.queue.currentIndex else { return "MP9 - 点 ADD 或右上角按钮添加音乐" }
+        guard let track = player.current, let index = player.queue.currentIndex else { return "Amplayer - 点 ADD 或右上角按钮添加音乐" }
         let duration = (player.audio.info?.duration ?? track.duration).map { " (\(TimeFormat.clock($0)))" } ?? ""
         let prefix = player.isLoading ? "[缓冲中] " : ""
         return "\(prefix)\(index + 1). \(track.displayName)\(duration)"

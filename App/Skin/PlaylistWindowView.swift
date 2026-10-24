@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 经典播放列表窗口：宽 275，高度随屏幕
@@ -31,7 +31,7 @@ struct PlaylistWindowView: View {
             Button("保存") {
                 do {
                     try app.library.savePlaylist(player.queue.tracks, name: playlistName)
-                    app.show("已保存到 文件 › MP9 › Playlists")
+                    app.show("已保存到 文件 › Amplayer › Playlists")
                 } catch {
                     app.show("保存失败：\(error.localizedDescription)")
                 }

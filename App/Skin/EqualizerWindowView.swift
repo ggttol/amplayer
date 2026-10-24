@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 经典均衡器窗口（275x116）

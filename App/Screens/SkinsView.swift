@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -8,7 +8,7 @@ struct SkinsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var importing = false
 
-    static let skinTypes: [UTType] = [UTType("dev.gaotao.mp9.wsz") ?? .zip, .zip]
+    static let skinTypes: [UTType] = [UTType("dev.gaotao.amplayer.wsz") ?? .zip, .zip]
 
     var body: some View {
         NavigationStack {
@@ -37,7 +37,7 @@ struct SkinsView: View {
                         }
                     }
                 } footer: {
-                    Text("支持经典 .wsz 皮肤（Winamp 2.x 格式）。可在 Winamp Skin Museum（skins.webamp.org）下载，然后在“文件”App 里用 MP9 打开，或点右上角导入。皮肤版权归原作者所有。")
+                    Text("支持经典 .wsz 皮肤（Winamp 2.x 格式）。可在 Winamp Skin Museum（skins.webamp.org）下载，然后在“文件”App 里用 Amplayer 打开，或点右上角导入。皮肤版权归原作者所有。")
                 }
             }
             .navigationTitle("皮肤")

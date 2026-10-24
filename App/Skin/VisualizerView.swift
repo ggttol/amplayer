@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 经典频谱 / 示波器（76x16 像素），颜色来自皮肤 viscolor.txt

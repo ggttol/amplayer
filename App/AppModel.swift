@@ -1,5 +1,5 @@
 import Foundation
-import MP9Kit
+import AmplayerKit
 import Observation
 import SwiftUI
 
@@ -21,9 +21,9 @@ final class AppModel {
     enum VisualizerMode: Int { case spectrum, oscilloscope, off }
 
     var sheet: Sheet?
-    var showEqualizer: Bool { didSet { UserDefaults.standard.set(showEqualizer, forKey: "mp9.showEQ") } }
-    var showPlaylist: Bool { didSet { UserDefaults.standard.set(showPlaylist, forKey: "mp9.showPL") } }
-    var visualizerMode: VisualizerMode { didSet { UserDefaults.standard.set(visualizerMode.rawValue, forKey: "mp9.vis") } }
+    var showEqualizer: Bool { didSet { UserDefaults.standard.set(showEqualizer, forKey: "amplayer.showEQ") } }
+    var showPlaylist: Bool { didSet { UserDefaults.standard.set(showPlaylist, forKey: "amplayer.showPL") } }
+    var visualizerMode: VisualizerMode { didSet { UserDefaults.standard.set(visualizerMode.rawValue, forKey: "amplayer.vis") } }
     var showRemainingTime = false
     /// 播放列表里选中的行（tracks 下标）
     var selection: Set<Int> = []
@@ -32,13 +32,13 @@ final class AppModel {
 
     init() {
         let defaults = UserDefaults.standard
-        defaults.register(defaults: ["mp9.showEQ": true, "mp9.showPL": true])
-        showEqualizer = defaults.bool(forKey: "mp9.showEQ")
-        showPlaylist = defaults.bool(forKey: "mp9.showPL")
-        visualizerMode = VisualizerMode(rawValue: defaults.integer(forKey: "mp9.vis")) ?? .spectrum
+        defaults.register(defaults: ["amplayer.showEQ": true, "amplayer.showPL": true])
+        showEqualizer = defaults.bool(forKey: "amplayer.showEQ")
+        showPlaylist = defaults.bool(forKey: "amplayer.showPL")
+        visualizerMode = VisualizerMode(rawValue: defaults.integer(forKey: "amplayer.vis")) ?? .spectrum
         player = PlayerController(sources: sources)
         player.onTrackUpdated = { [weak library] track in library?.update(track) }
-        let limit = defaults.object(forKey: "mp9.cacheLimit") as? Int64 ?? 2 * 1024 * 1024 * 1024
+        let limit = defaults.object(forKey: "amplayer.cacheLimit") as? Int64 ?? 2 * 1024 * 1024 * 1024
         Task { await AudioCache.shared.setLimit(limit) }
     }
 
@@ -78,7 +78,7 @@ final class AppModel {
         show("已添加 \(tracks.count) 首")
     }
 
-    /// 处理“用 MP9 打开”的文件：皮肤或播放列表
+    /// 处理“用 Amplayer 打开”的文件：皮肤或播放列表
     func open(url: URL) {
         let ext = url.pathExtension.lowercased()
         if ext == "wsz" || ext == "zip" {

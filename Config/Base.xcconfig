@@ -2,10 +2,10 @@
 #include? "Signing.local.xcconfig"
 
 // 网盘开放平台的 AppKey（申请后写进 Secrets.local.xcconfig，不入库；见 Secrets.xcconfig.example）
-MP9_ALIYUN_CLIENT_ID =
-MP9_ALIYUN_CLIENT_SECRET =
-MP9_ALIYUN_REDIRECT_URI = mp9:/$()/oauth/aliyun
-MP9_BAIDU_CLIENT_ID =
-MP9_BAIDU_CLIENT_SECRET =
-MP9_BAIDU_REDIRECT_URI = mp9:/$()/oauth/baidu
+AMP_ALIYUN_CLIENT_ID =
+AMP_ALIYUN_CLIENT_SECRET =
+AMP_ALIYUN_REDIRECT_URI = amplayer:/$()/oauth/aliyun
+AMP_BAIDU_CLIENT_ID =
+AMP_BAIDU_CLIENT_SECRET =
+AMP_BAIDU_REDIRECT_URI = amplayer:/$()/oauth/baidu
 #include? "Secrets.local.xcconfig"

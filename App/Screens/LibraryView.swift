@@ -1,4 +1,4 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 /// 曲库：歌曲 / 艺术家 / 专辑 / 播放列表
@@ -83,7 +83,7 @@ struct LibraryView: View {
                             }
                         }
                     } footer: {
-                        Text("播放列表保存为 M3U，位于“文件”App › MP9 › Playlists，可与其他播放器互通。")
+                        Text("播放列表保存为 M3U，位于“文件”App › Amplayer › Playlists，可与其他播放器互通。")
                     }
                 }
             }

@@ -5,98 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>MP9</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
-	<key>CFBundlePackageType</key>
-	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-	<key>CFBundleShortVersionString</key>
-	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<false/>
-	</dict>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleLightContent</string>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>NSLocalNetworkUsageDescription</key>
-	<string>MP9 需要访问局域网，以便发现并播放 NAS、SMB、WebDAV 和 DLNA 上的音乐。</string>
-	<key>NSBonjourServices</key>
-	<array>
-		<string>_smb._tcp</string>
-		<string>_webdav._tcp</string>
-		<string>_webdavs._tcp</string>
-	</array>
-	<key>MP9AliyunClientID</key>
-	<string>$(MP9_ALIYUN_CLIENT_ID)</string>
-	<key>MP9AliyunClientSecret</key>
-	<string>$(MP9_ALIYUN_CLIENT_SECRET)</string>
-	<key>MP9AliyunRedirectURI</key>
-	<string>$(MP9_ALIYUN_REDIRECT_URI)</string>
-	<key>MP9BaiduClientID</key>
-	<string>$(MP9_BAIDU_CLIENT_ID)</string>
-	<key>MP9BaiduClientSecret</key>
-	<string>$(MP9_BAIDU_CLIENT_SECRET)</string>
-	<key>MP9BaiduRedirectURI</key>
-	<string>$(MP9_BAIDU_REDIRECT_URI)</string>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>dev.gaotao.mp9</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>mp9</string>
-			</array>
-		</dict>
-	</array>
-	<key>UTImportedTypeDeclarations</key>
-	<array>
-		<dict>
-			<key>UTTypeIdentifier</key>
-			<string>dev.gaotao.mp9.wsz</string>
-			<key>UTTypeDescription</key>
-			<string>Classic Skin</string>
-			<key>UTTypeConformsTo</key>
-			<array>
-				<string>public.zip-archive</string>
-			</array>
-			<key>UTTypeTagSpecification</key>
-			<dict>
-				<key>public.filename-extension</key>
-				<array>
-					<string>wsz</string>
-				</array>
-			</dict>
-		</dict>
-	</array>
+	<string>Amplayer</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -108,7 +17,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>dev.gaotao.mp9.wsz</string>
+				<string>dev.gaotao.amplayer.wsz</string>
 			</array>
 		</dict>
 		<dict>
@@ -137,11 +46,102 @@
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dev.gaotao.amplayer</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>amplayer</string>
+			</array>
+		</dict>
+	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
-	<key>UIFileSharingEnabled</key>
+	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<false/>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_smb._tcp</string>
+		<string>_webdav._tcp</string>
+		<string>_webdavs._tcp</string>
+	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Amplayer 需要访问局域网，以便发现并播放 NAS、SMB、WebDAV 和 DLNA 上的音乐。</string>
+	<key>AmplayerAliyunClientID</key>
+	<string>$(AMP_ALIYUN_CLIENT_ID)</string>
+	<key>AmplayerAliyunClientSecret</key>
+	<string>$(AMP_ALIYUN_CLIENT_SECRET)</string>
+	<key>AmplayerAliyunRedirectURI</key>
+	<string>$(AMP_ALIYUN_REDIRECT_URI)</string>
+	<key>AmplayerBaiduClientID</key>
+	<string>$(AMP_BAIDU_CLIENT_ID)</string>
+	<key>AmplayerBaiduClientSecret</key>
+	<string>$(AMP_BAIDU_CLIENT_SECRET)</string>
+	<key>AmplayerBaiduRedirectURI</key>
+	<string>$(AMP_BAIDU_REDIRECT_URI)</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.zip-archive</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Classic Skin</string>
+			<key>UTTypeIdentifier</key>
+			<string>dev.gaotao.amplayer.wsz</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>wsz</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>

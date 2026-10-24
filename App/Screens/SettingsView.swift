@@ -1,10 +1,10 @@
-import MP9Kit
+import AmplayerKit
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(AppModel.self) private var app
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("mp9.cacheLimit") private var cacheLimit: Int = 2 * 1024 * 1024 * 1024
+    @AppStorage("amplayer.cacheLimit") private var cacheLimit: Int = 2 * 1024 * 1024 * 1024
     @State private var usage: (cache: Int64, offline: Int64) = (0, 0)
 
     private let limits: [(String, Int)] = [
@@ -78,7 +78,7 @@ struct LicensesView: View {
     }
 
     static let text = """
-    MP9 使用了以下开源软件：
+    Amplayer 使用了以下开源软件：
 
     Webamp（皮肤精灵图坐标与字体映射）
     https://github.com/captbaritone/webamp
@@ -103,8 +103,8 @@ struct LicensesView: View {
     https://github.com/apple/swift-atomics
     Apache License 2.0 — Copyright (c) Apple Inc.
 
-    按照 LGPL 的要求，你可以替换 AMSMB2.framework 为自行编译的版本；MP9 的源码修改与目标文件可应要求提供。
+    按照 LGPL 的要求，你可以替换 AMSMB2.framework 为自行编译的版本；Amplayer 的源码修改与目标文件可应要求提供。
 
-    MP9 与 Winamp、Nullsoft、Llama Group 无关。经典皮肤的版权归各自作者所有。
+    Amplayer 与 Winamp、Nullsoft、Llama Group 无关。经典皮肤的版权归各自作者所有。
     """
 }

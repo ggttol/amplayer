@@ -1,0 +1,2 @@
+"CFBundleDisplayName" = "Amplayer";
+"NSLocalNetworkUsageDescription" = "Amplayer needs local network access to find and play music on your NAS, SMB, WebDAV and DLNA servers.";
