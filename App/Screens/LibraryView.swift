@@ -148,7 +148,7 @@ struct LibraryView: View {
 
     private func play(_ tracks: [Track], at index: Int) {
         app.player.setQueue(tracks, startAt: index)
-        app.selection = []
+        app.endSelection()
         dismiss()
     }
 

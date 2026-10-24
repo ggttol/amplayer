@@ -134,13 +134,13 @@ struct BrowserView: View {
         let tracks = audio.map { $0.makeTrack(sourceID: target.sourceID) }
         let index = audio.firstIndex(of: item) ?? 0
         app.player.setQueue(tracks, startAt: index)
-        app.selection = []
+        app.endSelection()
         app.sheet = nil
     }
 
     private func playAll() {
         app.player.setQueue(audioItems.map { $0.makeTrack(sourceID: target.sourceID) }, startAt: 0)
-        app.selection = []
+        app.endSelection()
         app.sheet = nil
     }
 
@@ -158,7 +158,7 @@ struct BrowserView: View {
             guard !tracks.isEmpty else { app.show("没有找到音乐"); return }
             if play {
                 app.player.setQueue(tracks, startAt: 0)
-                app.selection = []
+                app.endSelection()
                 app.sheet = nil
             } else {
                 app.player.enqueue(tracks)

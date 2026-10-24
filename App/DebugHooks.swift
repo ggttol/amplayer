@@ -48,7 +48,9 @@ enum DebugHooks {
                 }
             }
         }
-        if let sheet = defaults.string(forKey: "AmplayerSheet").flatMap(AppModel.Sheet.init(rawValue:)) {
+        if defaults.string(forKey: "AmplayerSheet") == "menu" {
+            app.showSideMenu = true
+        } else if let sheet = defaults.string(forKey: "AmplayerSheet").flatMap(AppModel.Sheet.init(rawValue:)) {
             app.sheet = sheet
         }
     }

@@ -21,7 +21,11 @@ struct PlaylistWindowView: View {
         SkinCanvas(size: CGSize(width: width, height: height)) {
             frame
             Group {
-                if app.showLyrics { LyricsPanelView(style: style) } else { trackList(style) }
+                if app.showLyrics {
+                    LyricsPanelView(style: style)
+                } else {
+                    trackList(style).overlay(alignment: .top) { if app.isSelecting { selectionBar } }
+                }
             }
                 .frame(width: (width - 12 - 20) * scale, height: (height - 20 - 38) * scale)
                 .background(style.normalBackground.color)
@@ -127,12 +131,19 @@ struct PlaylistWindowView: View {
         .frame(height: 13 * scale)
         .background(selected ? style.selectedBackground.color : Color.clear)
         .contentShape(Rectangle())
-        .onTapGesture(count: 2) { player.play(index: index) }
         .onTapGesture {
-            if selected { app.selection.remove(index) } else { app.selection.insert(index) }
+            if app.isSelecting {
+                if selected { app.selection.remove(index) } else { app.selection.insert(index) }
+            } else {
+                player.play(index: index)
+            }
         }
         .contextMenu {
             Button("播放", systemImage: "play.fill") { player.play(index: index) }
+            Button("多选", systemImage: "checkmark.circle") {
+                app.isSelecting = true
+                app.selection = [index]
+            }
             Button("下一首播放", systemImage: "text.line.first.and.arrowtriangle.forward") {
                 // 先插入副本到当前曲目之后，再删掉原位置的那一条
                 let current = player.queue.currentIndex
@@ -140,17 +151,35 @@ struct PlaylistWindowView: View {
                 if let c = current {
                     if index > c { player.remove(at: IndexSet([index + 1])) } else if index < c { player.remove(at: IndexSet([index])) }
                 }
-                app.selection = []
+                app.endSelection()
             }
             Button("离线下载", systemImage: "arrow.down.circle") { makeOffline([track]) }
             Button("曲目信息", systemImage: "info.circle") { infoTrack = track }
             Button("从列表删除", systemImage: "trash", role: .destructive) {
                 player.remove(at: IndexSet([index]))
-                app.selection = []
+                app.endSelection()
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityHint("轻点两下播放")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var selectionBar: some View {
+        HStack(spacing: 12) {
+            Text("已选 \(app.selection.count) 首").monospacedDigit()
+            Spacer()
+            Button("全选") { app.selection = Set(player.queue.tracks.indices) }
+            Button("删除") { removeSelected() }
+                .disabled(app.selection.isEmpty)
+            Button("完成") { app.endSelection() }
+                .fontWeight(.semibold)
+        }
+        .font(.system(size: 14))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.ultraThinMaterial, in: Capsule())
+        .padding(6)
+        .tint(.orange)
     }
 
     // MARK: 底部按钮
@@ -174,15 +203,19 @@ struct PlaylistWindowView: View {
                 Button("删除重复项", systemImage: "square.on.square") { removeDuplicates() }
                 Button("清空列表", systemImage: "trash", role: .destructive) {
                     player.clear()
-                    app.selection = []
+                    app.endSelection()
                 }
             } label: { hitArea }
                 .accessibilityLabel("删除曲目")
                 .at(43, y)
             Menu {
-                Button("全选") { app.selection = Set(player.queue.tracks.indices) }
+                Button(app.isSelecting ? "退出多选" : "多选", systemImage: "checkmark.circle") {
+                    if app.isSelecting { app.endSelection() } else { app.isSelecting = true }
+                }
+                Button("全选") { app.isSelecting = true; app.selection = Set(player.queue.tracks.indices) }
                 Button("全不选") { app.selection = [] }
-                Button("反选") { app.selection = Set(player.queue.tracks.indices).subtracting(app.selection) }
+                    .disabled(!app.isSelecting)
+                Button("反选") { app.isSelecting = true; app.selection = Set(player.queue.tracks.indices).subtracting(app.selection) }
             } label: { hitArea }
                 .accessibilityLabel("选择曲目")
                 .at(72, y)
@@ -193,8 +226,8 @@ struct PlaylistWindowView: View {
                     Button("按专辑") { sort(.album) }
                     Button("按路径") { sort(.path) }
                 }
-                Button("反转顺序") { player.reverse(); app.selection = [] }
-                Button("随机打乱") { player.randomize(); app.selection = [] }
+                Button("反转顺序") { player.reverse(); app.endSelection() }
+                Button("随机打乱") { player.randomize(); app.endSelection() }
                 Button("离线下载所选") {
                     makeOffline(app.selection.sorted().map { player.queue.tracks[$0] })
                 }
@@ -212,7 +245,7 @@ struct PlaylistWindowView: View {
                 }
                 .disabled(player.queue.isEmpty)
                 Button("打开播放列表…", systemImage: "folder") { app.sheet = .library }
-                Button("新建（清空）", systemImage: "doc") { player.clear(); app.selection = [] }
+                Button("新建（清空）", systemImage: "doc") { player.clear(); app.endSelection() }
             } label: { hitArea }
                 .accessibilityLabel("播放列表文件")
                 .at(width - 44, y)
@@ -263,13 +296,13 @@ struct PlaylistWindowView: View {
 
     private func removeSelected() {
         player.remove(at: IndexSet(app.selection))
-        app.selection = []
+        app.endSelection()
     }
 
     private func cropToSelection() {
         let keep = app.selection
         player.remove(at: IndexSet(player.queue.tracks.indices.filter { !keep.contains($0) }))
-        app.selection = []
+        app.endSelection()
     }
 
     private func removeDuplicates() {
@@ -279,13 +312,13 @@ struct PlaylistWindowView: View {
             if !seen.insert(t.id).inserted { dupes.insert(i) }
         }
         player.remove(at: dupes)
-        app.selection = []
+        app.endSelection()
         app.show(dupes.isEmpty ? "没有重复项" : "已删除 \(dupes.count) 个重复项")
     }
 
     private func sort(_ key: PlayerController.SortKey) {
         player.sort(by: key)
-        app.selection = []
+        app.endSelection()
     }
 
     private func makeOffline(_ tracks: [Track]) {

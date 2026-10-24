@@ -35,7 +35,7 @@ struct MainWindowView: View {
     private var titleBar: some View {
         Group {
             SpriteView(S.titleBarSelected)
-            SpriteButton(normal: S.optionsButton, pressed: S.optionsButtonDown, label: "菜单") { app.sheet = .menu }
+            SpriteButton(normal: S.optionsButton, pressed: S.optionsButtonDown, label: "菜单") { app.showSideMenu = true }
                 .at(SkinLayout.options)
             SpriteButton(normal: S.minimizeButton, pressed: S.minimizeButtonDown, label: "皮肤") { app.sheet = .skins }
                 .at(SkinLayout.minimize)

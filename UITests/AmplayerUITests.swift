@@ -71,8 +71,9 @@ final class AmplayerUITests: XCTestCase {
     func testAddWebDAVSourceAndPlay() {
         app.launchArguments = ["-AmplayerReset", "YES"]
         app.launch()
-        app.buttons["来源"].firstMatch.tap()
-        app.buttons["添加"].tap()
+        app.buttons["菜单"].tap()
+        tapWhenReady(app.buttons["menu.来源"])
+        tapWhenReady(app.buttons["添加"])
         app.buttons["WebDAV / Alist / OpenList"].tap()
 
         let name = app.textFields["名称"]
@@ -127,11 +128,35 @@ final class AmplayerUITests: XCTestCase {
     func testSkinsSheet() {
         app.launchArguments = ["-AmplayerReset", "YES"]
         app.launch()
-        app.buttons["皮肤"].firstMatch.tap()
+        app.buttons["菜单"].tap()
+        tapWhenReady(app.buttons["menu.皮肤"])
         let builtIn = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Amplayer Graphite")).firstMatch
         XCTAssertTrue(builtIn.waitForExistence(timeout: 5))
         builtIn.tap()
         app.buttons["完成"].tap()
         XCTAssertTrue(app.buttons["播放"].waitForExistence(timeout: 5))
+    }
+
+    /// 点歌名直接播放；长按进入多选后点歌名是勾选
+    func testPlaylistTapPlaysAndMultiSelect() {
+        app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES", "-amplayer.showPL", "YES", "-amplayer.showLyrics", "NO"]
+        app.launch()
+        waitForState("播放中")
+        let row3 = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "3. ")).firstMatch
+        tapWhenReady(row3)
+        let playing3 = expectation(for: NSPredicate(format: "value CONTAINS %@", "Wave Check"), evaluatedWith: time)
+        wait(for: [playing3], timeout: 15)
+
+        let row1 = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "1. ")).firstMatch
+        row1.press(forDuration: 1.0)
+        tapWhenReady(app.buttons["多选"])
+        let bar = app.staticTexts["已选 1 首"]
+        waitFor(bar)
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "2. ")).firstMatch.tap()
+        waitFor(app.staticTexts["已选 2 首"])
+        // 多选时点行不切歌
+        XCTAssertTrue((time.value as? String ?? "").contains("Wave Check"))
+        app.buttons["完成"].tap()
+        XCTAssertFalse(app.staticTexts["已选 2 首"].waitForExistence(timeout: 1))
     }
 }

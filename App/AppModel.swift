@@ -14,7 +14,7 @@ final class AppModel {
     let player: PlayerController
 
     enum Sheet: String, Identifiable {
-        case sources, library, skins, settings, menu
+        case sources, library, skins, settings
         var id: String { rawValue }
     }
 
@@ -29,6 +29,15 @@ final class AppModel {
     var showLyrics: Bool { didSet { UserDefaults.standard.set(showLyrics, forKey: "amplayer.showLyrics") } }
     /// 播放列表里选中的行（tracks 下标）
     var selection: Set<Int> = []
+    /// 播放列表多选模式：开着时点行是勾选，否则点行直接播放
+    var isSelecting = false
+    var showSideMenu = false
+
+    /// 退出多选并清空选择
+    func endSelection() {
+        selection = []
+        isSelecting = false
+    }
     var isImportingFiles = false
     var toast: String?
 

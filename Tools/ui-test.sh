@@ -12,7 +12,11 @@ docker run -d --name amplayertest-webdav -p 18080:8080 -v "$M":/data:ro rclone/r
 UDID=$(xcrun simctl list devices available | grep -F "$SIM (" | head -1 | grep -oE "[0-9A-F-]{36}")
 xcrun simctl boot "$UDID" 2>/dev/null
 xcodegen generate >/dev/null
-xcodebuild build-for-testing -project Amplayer.xcodeproj -scheme Amplayer -destination "id=$UDID" -derivedDataPath build/sim -quiet 2>&1 | grep -E "error:" && exit 1
+BLOG=$(mktemp)
+if ! xcodebuild build-for-testing -project Amplayer.xcodeproj -scheme Amplayer -destination "id=$UDID" -derivedDataPath build/sim >"$BLOG" 2>&1; then
+  grep -E "error:" "$BLOG" | head -20; echo "编译失败，日志：$BLOG"; exit 1
+fi
+rm -f "$BLOG"
 xcrun simctl install "$UDID" build/sim/Build/Products/Debug-iphonesimulator/Amplayer.app
 DOCS="$(xcrun simctl get_app_container "$UDID" dev.gaotao.amplayer data)/Documents"
 mkdir -p "$DOCS" && cp "$M/Album One/"* "$DOCS/"
