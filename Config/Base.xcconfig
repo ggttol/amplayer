@@ -1,0 +1,2 @@
+// 本地签名配置（DEVELOPMENT_TEAM）放在 Signing.local.xcconfig，不入库
+#include? "Signing.local.xcconfig"

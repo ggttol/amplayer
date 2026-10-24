@@ -6,3 +6,10 @@ node_modules/
 __pycache__/
 dist/
 build/
+# Xcode
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+.build/
+.swiftpm/
+Config/Signing.local.xcconfig
