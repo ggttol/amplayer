@@ -75,6 +75,9 @@ public final class AudioPlayer {
     /// 已经排在当前段后面的下一首
     @ObservationIgnored private var pending: (file: AVAudioFile, url: URL, token: Int)?
     @ObservationIgnored private var observers: [NSObjectProtocol] = []
+    /// 最近一次算出的播放位置：系统先停掉引擎再通知配置变化，那时已经读不到位置了
+    @ObservationIgnored private var lastObservedTime: TimeInterval = 0
+    @ObservationIgnored private var positionTimer: Timer?
 
     public init() {
         engine.attach(playerNode)
@@ -150,6 +153,18 @@ public final class AudioPlayer {
         }
         playerNode.play()
         state = .playing
+        startPositionTimer()
+    }
+
+    /// 播放时每秒记一次位置（后台也跑），输出设备变化后据此从原位置继续
+    private func startPositionTimer() {
+        guard positionTimer == nil else { return }
+        positionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                if self.state == .playing { _ = self.currentTime } else { self.positionTimer?.invalidate(); self.positionTimer = nil }
+            }
+        }
     }
 
     public func pause() {
@@ -194,7 +209,9 @@ public final class AudioPlayer {
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime)
         else { return pausedTime }
         let seconds = Double(segmentStart + playerTime.sampleTime - nodeOffset) / source.format.sampleRate
-        return min(max(0, seconds), info?.duration ?? seconds)
+        let time = min(max(0, seconds), info?.duration ?? seconds)
+        lastObservedTime = time
+        return time
     }
 
     // MARK: 内部
@@ -248,7 +265,11 @@ public final class AudioPlayer {
     }
 
     private func segmentFinished(_ token: Int) {
-        guard token == currentToken, state == .playing else { return }
+        guard token == currentToken else { return }
+        guard state == .playing else {
+            PlaybackLog.add("曲目播完但当前不是播放状态（\(state)），不自动下一首")
+            return
+        }
         if let next = pending {
             // 下一首已经在节点上接着播了：只切换记账，不停节点
             pending = nil
@@ -307,6 +328,7 @@ public final class AudioPlayer {
             let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap(AVAudioSession.RouteChangeReason.init)
             MainActor.assumeIsolated {
                 if reason == .oldDeviceUnavailable {
+                    PlaybackLog.add("耳机或蓝牙断开，暂停")
                     self?.pause()
                     self?.onStateChangedExternally?()
                 }
@@ -321,9 +343,11 @@ public final class AudioPlayer {
     private func handleInterruption(type: AVAudioSession.InterruptionType?, shouldResume: Bool) {
         switch type {
         case .began:
+            PlaybackLog.add("被系统打断（来电、闹钟或其他 App）")
             resumeAfterInterruption = state == .playing
             pause()
         case .ended:
+            PlaybackLog.add("打断结束，\(shouldResume && resumeAfterInterruption ? "继续播放" : "保持暂停")")
             if shouldResume && resumeAfterInterruption { play() }
             resumeAfterInterruption = false
         default:
@@ -335,15 +359,24 @@ public final class AudioPlayer {
 
     /// 输出设备变化（如 AirPlay 切换）后引擎会停止，需要重新启动并从原位置继续
     private func handleConfigurationChange() {
-        let time = currentTime
         let wasPlaying = state == .playing
+        // 引擎此时多半已被系统停掉，读不到渲染时间：用最近记下的位置，而不是退回到 0 从头播
+        let time = (engine.isRunning && playerNode.lastRenderTime != nil) ? currentTime : (wasPlaying ? lastObservedTime : pausedTime)
+        PlaybackLog.add("输出设备变化，从 \(Int(time)) 秒继续（播放中：\(wasPlaying)）")
         guard let source else { return }
         stopNode()
         schedule(from: AVAudioFramePosition(time * source.format.sampleRate))
         pausedTime = time
+        lastObservedTime = time
         if wasPlaying {
-            try? engine.start()
-            playerNode.play()
+            do {
+                try engine.start()
+                playerNode.play()
+            } catch {
+                state = .paused
+                PlaybackLog.add("输出设备变化后无法启动音频引擎：\(error.localizedDescription)")
+                onStateChangedExternally?()
+            }
         }
     }
 }

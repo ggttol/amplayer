@@ -129,7 +129,10 @@ final class AmplayerUITests: XCTestCase {
         app.launchArguments = ["-AmplayerReset", "YES"]
         app.launch()
         app.buttons["菜单"].tap()
-        tapWhenReady(app.buttons["menu.皮肤"])
+        // 侧边菜单较长，“皮肤”可能在第一屏以外
+        let skinsItem = app.buttons["menu.皮肤"]
+        for _ in 0..<4 where !skinsItem.waitForExistence(timeout: 1) { app.swipeUp() }
+        tapWhenReady(skinsItem)
         let builtIn = app.buttons.containing(NSPredicate(format: "label CONTAINS %@", "Amplayer Graphite")).firstMatch
         XCTAssertTrue(builtIn.waitForExistence(timeout: 5))
         builtIn.tap()

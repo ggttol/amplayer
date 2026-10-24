@@ -2,6 +2,14 @@ import Foundation
 
 public enum RepeatMode: String, Codable, Sendable, CaseIterable {
     case off, all, one
+
+    public var title: String {
+        switch self {
+        case .off: "顺序播放（播完停止）"
+        case .all: "列表循环"
+        case .one: "单曲循环"
+        }
+    }
 }
 
 /// 播放列表与播放顺序（随机、循环）。纯值类型，便于测试和持久化。

@@ -72,6 +72,16 @@ struct SideMenuView: View {
                 row("来源", "externaldrive.connected.to.line.below") { open(.sources) }
                 row("曲库与播放列表", "music.note.list") { open(.library) }
             }
+            Section("播放顺序") {
+                Picker(selection: Binding(get: { app.player.repeatMode }, set: { app.player.repeatMode = $0 })) {
+                    ForEach(RepeatMode.allCases, id: \.self) { Text($0.title).tag($0) }
+                } label: {
+                    Label("循环", systemImage: app.player.repeatMode == .one ? "repeat.1" : "repeat")
+                }
+                Toggle(isOn: Binding(get: { app.player.shuffle }, set: { app.player.shuffle = $0 })) {
+                    Label("随机播放", systemImage: "shuffle")
+                }
+            }
             Section("窗口") {
                 Toggle(isOn: $app.showEqualizer) { Label("均衡器", systemImage: "slider.vertical.3") }
                 Toggle(isOn: $app.showPlaylist) { Label("列表/歌词窗口", systemImage: "list.bullet.rectangle") }

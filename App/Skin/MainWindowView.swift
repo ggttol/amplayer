@@ -138,22 +138,31 @@ struct MainWindowView: View {
             SpriteButton(normal: S.next, pressed: S.nextDown, label: "下一首") { player.next() }.at(SkinLayout.next)
             SpriteButton(normal: S.eject, pressed: S.ejectDown, label: "打开文件") { app.isImportingFiles = true }.at(SkinLayout.eject)
 
-            Button { player.shuffle.toggle() } label: { EmptyView() }
+            Button {
+                player.shuffle.toggle()
+                app.show(player.shuffle ? "随机播放：开" : "随机播放：关")
+            } label: { EmptyView() }
                 .buttonStyle(ToggleSpriteStyle { pressed in S.shuffleButton(on: player.shuffle, down: pressed) })
                 .accessibilityLabel(player.shuffle ? "随机播放：开" : "随机播放：关")
                 .at(SkinLayout.shuffle)
             Button {
                 player.repeatMode = switch player.repeatMode { case .off: .all; case .all: .one; case .one: .off }
-                let message = switch player.repeatMode {
-                case .off: "循环：关"
-                case .all: "循环：全部"
-                case .one: "循环：单曲"
-                }
-                app.show(message)
+                app.show(player.repeatMode.title)
             } label: { EmptyView() }
                 .buttonStyle(ToggleSpriteStyle { pressed in S.repeatButton(on: player.repeatMode != .off, down: pressed) })
                 .accessibilityLabel("循环")
+                .accessibilityValue(player.repeatMode.title)
                 .at(SkinLayout.repeatButton)
+            // 单曲循环：按钮右上角标个 1（经典皮肤只有开/关两种灯，看不出是全部还是单曲）
+            if player.repeatMode == .one {
+                let one = Skin.pixelText("1", color: skin.playlistStyle.normal)
+                Image(decorative: one, scale: 1)
+                    .resizable()
+                    .interpolation(.none)
+                    .frame(width: CGFloat(one.width) * scale, height: CGFloat(one.height) * scale)
+                    .allowsHitTesting(false)
+                    .at(CGPoint(x: SkinLayout.repeatButton.x + 22, y: SkinLayout.repeatButton.y + 2))
+            }
             Color.clear
                 .frame(width: SkinLayout.about.width * scale, height: SkinLayout.about.height * scale)
                 .contentShape(Rectangle())

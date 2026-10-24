@@ -236,6 +236,7 @@ public final class PlayerController {
         resetPerTrackState(for: track)
         loadingTrackID = track.id
         updateNowPlaying()
+        PlaybackLog.add("加载：\(track.displayName)")
         loadTask = Task { [weak self] in
             guard let self else { return }
             do {
@@ -257,6 +258,7 @@ public final class PlayerController {
                 self.loadingTrackID = nil
                 self.lyricsLoading = false
                 self.lastError = "\(track.displayName)：\(error.localizedDescription)"
+                PlaybackLog.add("加载失败：\(self.lastError!)")
                 self.updateNowPlaying()
             }
         }
@@ -294,6 +296,7 @@ public final class PlayerController {
         let expected = armedTrackID
         armedTrackID = nil
         guard let next = queue.advance(auto: true) else { return }
+        PlaybackLog.add("无缝衔接到：\(next.displayName)\(next.id == expected ? "" : "（列表已变，改为普通切歌）")")
         guard next.id == expected, let source = sources.source(next.sourceID) else {
             // 播放列表在这期间变了：按普通方式切到正确的那首
             load(next, autoplay: true)
@@ -324,9 +327,11 @@ public final class PlayerController {
 
     private func trackFinished() {
         guard let next = queue.advance(auto: true) else {
+            PlaybackLog.add("播完：已是列表最后一首（共 \(queue.tracks.count) 首，循环：\(queue.repeatMode)，随机：\(queue.shuffle)），停止")
             updateNowPlaying()
             return
         }
+        PlaybackLog.add("播完，自动下一首：\(next.displayName)")
         load(next, autoplay: true)
         persist()
     }

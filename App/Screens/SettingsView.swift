@@ -62,6 +62,7 @@ struct SettingsView: View {
 
                 Section("关于") {
                     LabeledContent("版本", value: "\(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
+                    NavigationLink("播放日志") { PlaybackLogView() }
                     NavigationLink("开源许可") { LicensesView() }
                 }
             }
@@ -120,4 +121,35 @@ struct LicensesView: View {
 
     Amplayer 与 Winamp、Nullsoft、Llama Group 无关。经典皮肤的版权归各自作者所有。
     """
+}
+
+/// 播放日志：遇到“不自动下一首”之类的问题时复制给开发者
+struct PlaybackLogView: View {
+    @State private var text = PlaybackLog.text
+    @Environment(AppModel.self) private var app
+
+    var body: some View {
+        ScrollView {
+            Text(text.isEmpty ? "还没有记录" : text)
+                .font(.system(.caption, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+        }
+        .defaultScrollAnchor(.bottom)
+        .navigationTitle("播放日志")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
+                Button("复制", systemImage: "doc.on.doc") {
+                    UIPasteboard.general.string = text
+                    app.show("已复制播放日志")
+                }
+                Button("清空", systemImage: "trash") {
+                    PlaybackLog.clear()
+                    text = ""
+                }
+            }
+        }
+    }
 }
