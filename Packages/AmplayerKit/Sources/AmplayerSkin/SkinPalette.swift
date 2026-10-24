@@ -78,3 +78,12 @@ extension Skin {
         return SkinPalette.all.first { $0.id == id }.map { DefaultSkin(palette: $0).make() }
     }
 }
+
+extension Skin {
+    /// 用内置 3x5 像素字体画一行字（皮肤位图里没有的标题，比如歌词窗口的 “LYRICS”）
+    public static func pixelText(_ text: String, color: SkinColor) -> CGImage {
+        let p = Painter(CGSize(width: max(1, text.count * 4 - 1), height: 5))
+        p.text(text, 0, 0, color)
+        return p.image()
+    }
+}

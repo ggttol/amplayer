@@ -65,7 +65,11 @@ struct PlaylistWindowView: View {
             tiles(S.plTopTile, from: 25, to: titleX, y: 0)
             tiles(S.plTopTile, from: titleX + 100, to: width - 25, y: 0)
             SpriteView(S.plTopLeft)
-            SpriteView(S.plTitle).at(titleX, 0)
+            if app.showLyrics {
+                lyricsTitle.at(titleX, 0)
+            } else {
+                SpriteView(S.plTitle).at(titleX, 0)
+            }
             SpriteView(S.plTopRight).at(width - 25, 0)
             // 两侧
             ForEach(0..<Int((midH / 29).rounded(.up)), id: \.self) { i in
@@ -92,6 +96,20 @@ struct PlaylistWindowView: View {
                 .at(width - 11, 3)
                 .accessibilityLabel("关闭播放列表")
         }
+    }
+
+    /// 歌词模式的标题：皮肤里只画了 “PLAYLIST”，这里用标题块左边没字的那一列铺底，再写上 LYRICS
+    private var lyricsTitle: some View {
+        let text = Skin.pixelText("lyrics", color: skin.playlistStyle.normal)
+        return ZStack {
+            tiles(Sprite(.pledit, 26, 0, 3, 20), from: 0, to: 100, y: 0)
+            Image(decorative: text, scale: 1)
+                .resizable()
+                .interpolation(.none)
+                .frame(width: CGFloat(text.width) * scale, height: CGFloat(text.height) * scale)
+                .offset(y: -0.5 * scale)
+        }
+        .frame(width: 100 * scale, height: 20 * scale)
     }
 
     private func tiles(_ sprite: Sprite, from x0: CGFloat, to x1: CGFloat, y: CGFloat) -> some View {
