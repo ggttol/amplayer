@@ -522,12 +522,25 @@ public final class PlayerController {
         set { UserDefaults.standard.set(newValue, forKey: "amplayer.onlineLyrics") }
     }
 
-    /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌 → 在线（LRCLIB）。
+    /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌 → 在线（LRCLIB、网易云、QQ 音乐、酷狗）。
     /// 带时间轴的优先：本地只有纯文本时也会去在线找一份同步歌词。
     private func findLyrics(for track: Track, source: any MediaSource, embedded: String?) {
-        guard lyrics == nil else { lyricsLoading = false; return }
         let store = lyricsStore
         let online = Self.onlineLyricsEnabled
+        if let lyrics {
+            lyricsLoading = false
+            // 缓存的是纯文本（以前只查到这种）：在线再找一次带时间轴的，找到就换上
+            guard online, !lyrics.isSynced else { return }
+            lyricsTask = Task { [weak self] in
+                guard await store.shouldTryUpgrade(track),
+                      let text = await OnlineLyrics.shared.lyrics(for: track), let parsed = Lyrics.parse(text), parsed.isSynced,
+                      !Task.isCancelled else { return }
+                await store.save(text, for: track)
+                guard let self, !Task.isCancelled, self.current?.id == track.id else { return }
+                self.lyrics = Self.forDisplay(parsed)
+            }
+            return
+        }
         lyricsTask = Task { [weak self] in
             guard !(await store.isKnownMissing(track)) else {
                 self?.lyricsLoading = false

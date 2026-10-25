@@ -52,7 +52,7 @@ struct SettingsView: View {
                 } header: {
                     Text("歌词")
                 } footer: {
-                    Text("本地没有带时间轴的歌词时，把歌名、歌手、专辑和时长发给 LRCLIB（lrclib.net）查找。找到的歌词保存在本机。")
+                    Text("本地没有带时间轴的歌词时，把歌名、歌手和时长发给 LRCLIB、网易云音乐、QQ 音乐和酷狗查找。找到的歌词保存在本机。")
                 }
 
                 Section("支持的格式") {

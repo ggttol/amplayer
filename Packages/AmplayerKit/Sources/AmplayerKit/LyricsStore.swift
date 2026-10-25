@@ -6,6 +6,7 @@ import AmplayerCore
 /// 没找到的只在本次运行内记住，之后补了 .lrc 还能找到。
 actor LyricsStore {
     private var missing = Set<String>()
+    private var upgradeTried = Set<String>()
 
     private nonisolated var directory: URL {
         let url = Storage.supportDirectory.appendingPathComponent("Lyrics", isDirectory: true)
@@ -31,6 +32,9 @@ actor LyricsStore {
     }
 
     func markMissing(_ track: Track) { missing.insert(track.id) }
+
+    /// 缓存里只有纯文本时，每次运行最多在线找一次带时间轴的
+    func shouldTryUpgrade(_ track: Track) -> Bool { upgradeTried.insert(track.id).inserted }
 
     func remove(_ track: Track) {
         missing.remove(track.id)

@@ -58,7 +58,7 @@
 
 **歌词**
 - 点播放列表的标题栏，在列表和同步歌词之间切换。当前句高亮并自动滚动，点某一句就跳到那里。
-- 歌词来源依次是：歌曲旁边的同名 `.lrc`（UTF-8 和 GBK 都行）、群晖和 Navidrome 的歌词接口、文件内嵌歌词，都没有时在线查 [LRCLIB](https://lrclib.net)。也可以手动搜索，自己挑一条。
+- 歌词来源依次是：歌曲旁边的同名 `.lrc`（UTF-8 和 GBK 都行）、群晖和 Navidrome 的歌词接口、文件内嵌歌词，都没有时在线查：[LRCLIB](https://lrclib.net)、网易云音乐、QQ 音乐和酷狗一起搜，挑最接近的同步歌词。也可以手动搜索，自己挑一条。纯文本歌词会跟着播放进度滚动。
 - 繁体歌词可以显示成简体。
 
 **曲库**
@@ -110,7 +110,7 @@ Tools/test-servers.sh && (cd Packages/AmplayerKit && AMP_LIVE=1 swift test)   # 
 
 有些测试会连真实服务，凭据通过环境变量传入：
 - **真实群晖**：`AMP_SYNO_URL`、`AMP_SYNO_USER`、`AMP_SYNO_PASS`、`AMP_SYNO_QC`。
-- **LRCLIB**：`AMP_LIVE_LYRICS=1`。
+- **在线歌词**（LRCLIB、网易云、QQ 音乐、酷狗）：`AMP_LIVE_LYRICS=1`。
 - **真实 `.wsz` 皮肤**：`AMP_TEST_WSZ`。
 
 调试版可以用启动参数驱动界面，见 `App/DebugHooks.swift`。App 里的 **设置 › 播放日志** 会记录切歌、出错和音频打断，反馈问题时附上它会很有帮助。

@@ -58,7 +58,7 @@ Bonjour and SSDP find SMB, WebDAV and DLNA servers on your local network automat
 
 **Lyrics**
 - Tap the playlist title bar to switch between the playlist and synced lyrics. The current line is highlighted and auto-scrolls, and tapping a line seeks to it.
-- Lyrics come from, in order: a `.lrc` file next to the song (UTF-8 or GBK), the Synology / Navidrome lyrics APIs, embedded tags, and finally [LRCLIB](https://lrclib.net) online. You can also search LRCLIB manually and pick a result.
+- Lyrics come from, in order: a `.lrc` file next to the song (UTF-8 or GBK), the Synology / Navidrome lyrics APIs, embedded tags, and finally online: [LRCLIB](https://lrclib.net), NetEase Cloud Music, QQ Music and Kugou are searched together and the closest synced match wins. You can also search manually and pick a result. Plain-text lyrics scroll along with playback.
 - Traditional Chinese lyrics can be shown as Simplified Chinese.
 
 **Library**
@@ -110,7 +110,7 @@ Tools/test-servers.sh && (cd Packages/AmplayerKit && AMP_LIVE=1 swift test)   # 
 
 Some tests also run against real services, with credentials passed in environment variables:
 - **A real Synology NAS**: `AMP_SYNO_URL`, `AMP_SYNO_USER`, `AMP_SYNO_PASS`, `AMP_SYNO_QC`.
-- **LRCLIB**: `AMP_LIVE_LYRICS=1`.
+- **Online lyrics** (LRCLIB, NetEase, QQ Music, Kugou): `AMP_LIVE_LYRICS=1`.
 - **A real `.wsz` skin**: `AMP_TEST_WSZ`.
 
 In debug builds, the UI can be driven with launch arguments; see `App/DebugHooks.swift`. In-app, **Settings › Playback log** records track changes, errors and audio interruptions. Including it in a bug report helps a lot.

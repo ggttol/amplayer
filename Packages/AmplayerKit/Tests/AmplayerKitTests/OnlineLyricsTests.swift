@@ -50,7 +50,7 @@ final class MockLRCLib: URLProtocol, @unchecked Sendable {
     let client: OnlineLyrics = {
         let config = URLSessionConfiguration.ephemeral
         config.protocolClasses = [MockLRCLib.self]
-        return OnlineLyrics(session: URLSession(configuration: config))
+        return OnlineLyrics(session: URLSession(configuration: config), providers: [.lrclib])
     }()
 
     @Test func exactMatchRetriesWhenBusy() async {
@@ -78,10 +78,84 @@ final class MockLRCLib: URLProtocol, @unchecked Sendable {
         // 歌名本身带“ - ”且和歌手不一致时不拆
         #expect(clean("Part 1 - Intro", "Band") == ("Part 1 - Intro", "Band"))
         #expect(OnlineLyrics.normalize("Ｈｅｌｌｏ， World!") == "helloworld")
+        #expect(OnlineLyrics.decodeEntities("[00&#58;01.00]Don&apos;t &#x41;&amp;B") == "[00:01.00]Don't A&B")
     }
 }
 
-/// 连真实 lrclib.net：AMP_LIVE_LYRICS=1 swift test --filter liveLRCLib
+/// 模拟网易云、QQ 音乐、酷狗：搜索只给歌曲信息，歌词要再请求一次
+final class MockChineseLyrics: URLProtocol, @unchecked Sendable {
+    nonisolated(unsafe) static var lyricRequests: [String] = []
+    static let hosts: Set<String> = ["music.163.com", "u.y.qq.com", "c.y.qq.com", "lyrics.kugou.com"]
+
+    override class func canInit(with request: URLRequest) -> Bool { hosts.contains(request.url?.host ?? "") }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func stopLoading() {}
+
+    override func startLoading() {
+        let url = request.url!
+        let q = Dictionary((URLComponents(url: url, resolvingAgainstBaseURL: false)!.queryItems ?? []).map { ($0.name, $0.value ?? "") }, uniquingKeysWith: { a, _ in a })
+        var body: Any = [:]
+        switch (url.host!, url.path) {
+        case ("music.163.com", "/api/search/get"):
+            body = ["result": ["songs": [
+                ["id": 11, "name": "晴天 (原唱 周杰伦)", "artists": [["name": "翻唱歌手"]], "album": ["name": "翻唱"], "duration": 290_000],
+                ["id": 12, "name": "纯音乐版", "artists": [["name": "周杰伦"]], "album": ["name": "x"], "duration": 269_000],
+            ]]]
+        case ("music.163.com", "/api/song/lyric"):
+            Self.lyricRequests.append("netease:" + q["id"]!)
+            body = ["lrc": ["lyric": "[00:00.00]翻唱版"]]
+        case ("u.y.qq.com", _):
+            body = ["req": ["code": 0, "data": ["body": ["song": ["list": [
+                ["mid": "QQ1", "name": "晴天", "singer": [["name": "周杰伦"]], "album": ["name": "叶惠美"], "interval": 269],
+            ]]]]]]
+        case ("c.y.qq.com", _):
+            Self.lyricRequests.append("qq:" + q["songmid"]!)
+            body = ["retcode": 0, "lyric": "[ti&#58;晴天]\n[00&#58;29.00]故事的小黄花\n[00&#58;32.00]从出生那年就飘着"]
+        case ("lyrics.kugou.com", "/search"):
+            body = ["candidates": [["id": "77", "accesskey": "AK", "song": "晴天", "singer": "周杰伦", "duration": 269_000]]]
+        case ("lyrics.kugou.com", "/download"):
+            Self.lyricRequests.append("kugou:" + q["id"]! + "|" + q["accesskey"]!)
+            body = ["content": Data("[00:00.00]纯音乐，请欣赏".utf8).base64EncodedString()]
+        default:
+            break
+        }
+        let data = try! JSONSerialization.data(withJSONObject: body)
+        client?.urlProtocol(self, didReceive: HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)!, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: data)
+        client?.urlProtocolDidFinishLoading(self)
+    }
+}
+
+@Suite(.serialized) struct ChineseLyricsTests {
+    let client: OnlineLyrics = {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [MockChineseLyrics.self]
+        return OnlineLyrics(session: URLSession(configuration: config), providers: [.netease, .qq, .kugou])
+    }()
+
+    @Test func picksBestMatchAcrossProviders() async {
+        MockChineseLyrics.lyricRequests = []
+        let track = Track(sourceID: "x", path: "/a.flac", title: "晴天", artist: "周杰伦", duration: 269.4)
+        let text = await client.lyrics(for: track)
+        #expect(text?.hasPrefix("[ti:晴天]") == true)
+        #expect(text?.contains("[00:29.00]故事的小黄花") == true)
+        // QQ 音乐歌名、歌手、时长都对上，先拿它的，拿到同步歌词就不再请求别家
+        #expect(MockChineseLyrics.lyricRequests == ["qq:QQ1"])
+    }
+
+    @Test func searchInterleavesAndLoads() async throws {
+        let found = try await client.search(query: "周杰伦 晴天")
+        #expect(found.map(\.id) == ["netease:11", "qq:QQ1", "kugou:77|AK", "netease:12"])
+        #expect(found.allSatisfy { !$0.isLoaded })
+        let kugou = try await client.load(found[2])
+        #expect(kugou.isInstrumental)
+        #expect(kugou.text == nil)
+        let qq = try await client.load(found[1])
+        #expect(qq.synced?.contains("故事的小黄花") == true)
+    }
+}
+
+/// 连真实接口：AMP_LIVE_LYRICS=1 swift test --filter live
 @Test(.enabled(if: ProcessInfo.processInfo.environment["AMP_LIVE_LYRICS"] == "1"))
 func liveLRCLib() async throws {
     let track = Track(sourceID: "x", path: "/a.ape", title: "水手怕水", artist: "周杰伦", album: "惊叹号", duration: 160)
@@ -89,4 +163,14 @@ func liveLRCLib() async throws {
     let lyrics = try #require(Lyrics.parse(text))
     #expect(lyrics.isSynced)
     #expect(text.contains("水手"))
+}
+
+/// 网易云、QQ 音乐、酷狗各自能搜到并下载到中文同步歌词
+@Test(.enabled(if: ProcessInfo.processInfo.environment["AMP_LIVE_LYRICS"] == "1"), arguments: [OnlineLyrics.Provider.netease, .qq, .kugou])
+func liveChineseProviders(_ provider: OnlineLyrics.Provider) async throws {
+    let client = OnlineLyrics(providers: [provider])
+    let track = Track(sourceID: "x", path: "/a.flac", title: "晴天", artist: "周杰伦", album: "叶惠美", duration: 269)
+    let text = try #require(await client.lyrics(for: track))
+    #expect(try #require(Lyrics.parse(text)).isSynced)
+    #expect(text.contains("小黄花"))
 }

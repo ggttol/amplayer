@@ -82,6 +82,13 @@ public struct Lyrics: Sendable, Equatable {
         })
     }
 
+    /// 纯文本歌词没有时间轴：按播放进度估计唱到哪一行（假定前奏、尾奏各占一成），用来跟着滚动
+    public func estimatedIndex(progress: Double) -> Int? {
+        guard !lines.isEmpty, progress.isFinite else { return nil }
+        let p = (progress - 0.1) / 0.8
+        return min(max(Int(p * Double(lines.count)), 0), lines.count - 1)
+    }
+
     /// 当前时间对应的行（最后一个开始时间 <= time 的行）
     public func index(at time: TimeInterval) -> Int? {
         guard isSynced else { return nil }
