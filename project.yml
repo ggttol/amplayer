@@ -34,6 +34,8 @@ targets:
         TARGETED_DEVICE_FAMILY: 1
         PRODUCT_BUNDLE_IDENTIFIER: dev.gaotao.amplayer
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # CarPlay 音频权限要苹果批准后才能用于真机和上架；批下来之前只给模拟器
+        "CODE_SIGN_ENTITLEMENTS[sdk=iphonesimulator*]": App/Resources/CarPlay.entitlements
     dependencies:
       - package: AmplayerKit
         product: AmplayerKit
