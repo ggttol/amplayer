@@ -41,6 +41,11 @@ public actor AudioCache {
         self.limit = limit
         try? FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(at: offlineDirectory, withIntermediateDirectories: true)
+        // 上次没下完就被杀掉的临时文件（此时还没有任何下载在进行）
+        let leftovers = (try? FileManager.default.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: nil)) ?? []
+        for url in leftovers where url.pathExtension == "part" || url.lastPathComponent.hasPrefix("dl-") {
+            try? FileManager.default.removeItem(at: url)
+        }
         var offline = offlineDirectory
         var values = URLResourceValues()
         values.isExcludedFromBackup = true
@@ -101,8 +106,10 @@ public actor AudioCache {
         let key = track.id
         if let task = inFlight[key], let file = growing[key] { return (task, file) }
         let destination = cacheDirectory.appendingPathComponent(fileName(for: track))
+        // 每次下载用自己的临时文件名：同一首被取消后马上又点，旧下载清理时不会删掉新下载正在写的文件
+        let staging = cacheDirectory.appendingPathComponent("dl-\(UUID().uuidString.prefix(8))-\(fileName(for: track))")
         let expected = track.fileSize ?? -1
-        let file = GrowingFile(partURL: destination.appendingPathExtension("part"), finalURL: destination, expectedSize: expected)
+        let file = GrowingFile(partURL: staging.appendingPathExtension("part"), finalURL: destination, expectedSize: expected)
         let throttle = ProgressThrottle()
         let task = Task<URL, Error> {
             let report: @Sendable (Int64, Int64) -> Void = { received, total in
@@ -115,9 +122,13 @@ public actor AudioCache {
             defer { Task { @MainActor in DownloadProgressCenter.shared.finish(key) } }
             do {
                 try await DownloadProgress.$report.withValue(report) {
-                    try await source.download(path: track.path, to: destination)
+                    try await source.download(path: track.path, to: staging)
                 }
+                let fm = FileManager.default
+                if fm.fileExists(atPath: destination.path) { try? fm.removeItem(at: destination) }
+                try fm.moveItem(at: staging, to: destination)
             } catch {
+                try? FileManager.default.removeItem(at: staging)
                 file.fail(error)
                 downloadEnded(key, file: file, url: nil)
                 throw error
@@ -190,7 +201,7 @@ public actor AudioCache {
         guard let files = try? fm.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: keys) else { return }
         var entries = files.compactMap { url -> (URL, Int64, Date)? in
             // 正在下载的不动
-            guard url.pathExtension != "part", let v = try? url.resourceValues(forKeys: Set(keys)) else { return nil }
+            guard url.pathExtension != "part", !url.lastPathComponent.hasPrefix("dl-"), let v = try? url.resourceValues(forKeys: Set(keys)) else { return nil }
             return (url, Int64(v.fileSize ?? 0), v.contentModificationDate ?? .distantPast)
         }
         var total = entries.reduce(0) { $0 + $1.1 }

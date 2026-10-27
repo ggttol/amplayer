@@ -11,15 +11,18 @@ protocol PCMStream: AnyObject, Sendable {
     func read(into buffer: AVAudioPCMBuffer) throws -> Int
     /// 读取可能要等数据（边下边播）：调度改在后台做，不在主线程上等
     var mayBlock: Bool { get }
-    /// 让正在等数据的读取马上返回（换歌、跳转前）；resumeReading 恢复
+    /// 读取批次编号：interrupt() 换新批次，让旧批次正在等数据的读取马上返回（换歌、跳转前）
+    var readEpoch: Int { get }
     func interrupt()
-    func resumeReading()
+    /// 之后的读取属于 epoch 这一批（调度开始时取的编号；之后又被打断就不会恢复）
+    func resumeReading(epoch: Int)
 }
 
 extension PCMStream {
     var mayBlock: Bool { false }
+    var readEpoch: Int { 0 }
     func interrupt() {}
-    func resumeReading() {}
+    func resumeReading(epoch: Int) {}
 }
 
 enum PCMStreamError: LocalizedError {
@@ -112,8 +115,9 @@ final class BufferScheduler: @unchecked Sendable {
 
     /// 从 frame 开始排缓冲区；token 用来识别过期回调；结束时回调 onFinished(token)
     func start(from frame: AVAudioFramePosition, token: Int, onFinished: @escaping @Sendable (Int) -> Void) {
+        let epoch = stream.readEpoch
         let work: @Sendable () -> Void = { [self] in
-            stream.resumeReading()
+            stream.resumeReading(epoch: epoch)
             self.token = token
             self.outstanding = 0
             self.reachedEnd = false

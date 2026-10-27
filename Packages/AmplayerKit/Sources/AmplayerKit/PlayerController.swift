@@ -391,6 +391,7 @@ public final class PlayerController {
                         try Task.checkCancellation()
                     }
                 }
+                try Task.checkCancellation()
                 self.loadingTrackID = nil
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()
@@ -423,6 +424,8 @@ public final class PlayerController {
                 PlaybackLog.add("边下边播（已下载 \(file.receivedBytes / 1024) KB）")
             } catch let error as AudioEngineError {
                 throw error
+            } catch is CancellationError {
+                throw CancellationError()
             } catch {
                 PlaybackLog.add("不能边下边播（\(error.localizedDescription)），等下载完")
                 let url = try await cache.localURL(for: track, source: source)

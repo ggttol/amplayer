@@ -77,7 +77,8 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     public nonisolated func nowPlayingTemplateUpNextButtonTapped(_ nowPlayingTemplate: CPNowPlayingTemplate) {
         Task { @MainActor in
             guard let interface = self.interface else { return }
-            let list = CPListTemplate(title: "播放列表", sections: self.queueTemplate.sections)
+            // 列表项不能同时挂在两个模板上：另建一份
+            let list = CPListTemplate(title: "播放列表", sections: [self.queueSection()])
             interface.pushTemplate(list, animated: true, completion: nil)
         }
     }
@@ -180,10 +181,18 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     }
 
     private func refreshQueue() {
-        guard let player = hub.player else { return }
-        let tracks = Array(player.queue.tracks.prefix(Self.limit))
+        queueTemplate.updateSections([queueSection()])
+    }
+
+    /// 当前队列；太长时只列当前曲目附近的一段（车机列表有条数上限）
+    private func queueSection() -> CPListSection {
+        guard let player = hub.player else { return CPListSection(items: []) }
+        let all = player.queue.tracks
         let current = player.queue.currentIndex
-        let items = tracks.enumerated().map { i, track -> CPListItem in
+        let start = max(0, min((current ?? 0) - Self.limit / 4, all.count - Self.limit))
+        let window = all.indices.dropFirst(start).prefix(Self.limit)
+        let items = window.map { i -> CPListItem in
+            let track = all[i]
             let item = CPListItem(text: track.displayName, detailText: track.album)
             item.isPlaying = i == current
             item.playingIndicatorLocation = .trailing
@@ -194,7 +203,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             }
             return item
         }
-        queueTemplate.updateSections([CPListSection(items: items)])
+        return CPListSection(items: items)
     }
 
     private static var limit: Int { max(12, min(CPListTemplate.maximumItemCount, 500)) }

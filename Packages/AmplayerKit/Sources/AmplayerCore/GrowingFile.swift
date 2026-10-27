@@ -8,7 +8,7 @@ public final class GrowingFile: @unchecked Sendable {
         case ready(available: Int64)
         /// 下载失败
         case failed
-        /// 播放器换歌或跳转，放弃等待
+        /// 读取方放弃（换歌、跳转）
         case interrupted
     }
 
@@ -19,7 +19,6 @@ public final class GrowingFile: @unchecked Sendable {
     private var total: Int64
     private var finished = false
     private var failure: (any Error)?
-    private var interrupted = false
 
     public init(partURL: URL, finalURL: URL, expectedSize: Int64 = -1) {
         self.partURL = partURL
@@ -60,28 +59,21 @@ public final class GrowingFile: @unchecked Sendable {
 
     // MARK: 播放方
 
-    /// 阻塞等到前 end 个字节都下载好（在解码线程上调用，不要在主线程用）
-    public func wait(until end: Int64) -> Wait {
+    /// 阻塞等到前 end 个字节都下载好（在解码线程上调用，不要在主线程用）；cancelled 返回真就放弃
+    public func wait(until end: Int64, cancelled: () -> Bool = { false }) -> Wait {
         condition.lock()
         defer { condition.unlock() }
         while true {
-            if interrupted { return .interrupted }
+            if cancelled() { return .interrupted }
             if failure != nil { return .failed }
             if received >= end || finished { return .ready(available: received) }
             condition.wait(until: Date().addingTimeInterval(0.5))
         }
     }
 
-    /// 让正在等的读取马上返回（换歌、跳转前调用）
-    public func interrupt() {
-        condition.withLock {
-            interrupted = true
-            condition.broadcast()
-        }
-    }
-
-    public func resume() {
-        condition.withLock { interrupted = false }
+    /// 叫醒正在等的读取，让它们重新检查是否该放弃
+    public func wakeWaiters() {
+        condition.withLock { condition.broadcast() }
     }
 
     /// 异步等开头若干字节（或下载结束）；不占线程

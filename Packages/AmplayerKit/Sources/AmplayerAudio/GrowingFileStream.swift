@@ -17,6 +17,9 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     private var audioFile: AudioFileID?
     private var extFile: ExtAudioFileRef?
     private let lock = NSLock()
+    /// 解析文件头阶段：MP3、WAV 解析时会去读文件末尾（ID3v1 标签、尾部附加块），
+    /// 这时还没下载到的远处直接当作没有数据，不等，否则要等整个文件下完才能开始放
+    private var opening = true
 
     enum StreamError: LocalizedError {
         case open(OSStatus), unsupported, read(OSStatus)
@@ -33,7 +36,6 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     /// 会等文件头下载好，可能阻塞：放在后台调用（见 open(_:fallbackDuration:)）
     init(file: GrowingFile, fallbackDuration: TimeInterval?) throws {
         self.file = file
-        file.resume()
         size = file.expectedSize
         guard size > 0 else { throw StreamError.unsupported }
         // 下载很快的话可能已经下完并移走了
@@ -66,12 +68,18 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         format = client
 
         // 时长用估计值：精确帧数对 VBR MP3 要扫完整个文件，会一直等到下载完
+        // 还在下载、又是头里没写总长度的 FLAC 时，估计时长要把整个文件扫一遍（等于等下载完）：有服务器给的时长就直接用
         var duration: Float64 = 0
-        var durSize = UInt32(MemoryLayout<Float64>.size)
-        AudioFileGetProperty(id, kAudioFilePropertyEstimatedDuration, &durSize, &duration)
+        if let fallbackDuration, fallbackDuration > 0, !file.isFinished, hint == kAudioFileFLACType, Self.flacTotalSamplesUnknown(handle) {
+            duration = fallbackDuration
+        } else {
+            var durSize = UInt32(MemoryLayout<Float64>.size)
+            AudioFileGetProperty(id, kAudioFilePropertyEstimatedDuration, &durSize, &duration)
+        }
         if duration <= 0 { duration = fallbackDuration ?? 0 }
         guard duration > 0 else { throw StreamError.unsupported }
         length = AVAudioFramePosition(duration * fileFormat.mSampleRate)
+        opening = false
     }
 
     deinit {
@@ -89,8 +97,24 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
 
     var expectedSize: Int64 { size }
 
-    func interrupt() { file.interrupt() }
-    func resumeReading() { file.resume() }
+    // 读取批次：每次 interrupt() 都换一批，旧批次还在等的读取立刻放弃。
+    // 用编号而不是开关：连续跳转时，上一次调度的“恢复”不会把这一次的“打断”抵消掉
+    private let epochLock = NSLock()
+    private var epoch = 0
+    private var activeEpoch = 0
+
+    var readEpoch: Int { epochLock.withLock { epoch } }
+
+    func interrupt() {
+        epochLock.withLock { epoch += 1 }
+        file.wakeWaiters()
+    }
+
+    func resumeReading(epoch: Int) {
+        epochLock.withLock { activeEpoch = epoch }
+    }
+
+    private var readsCancelled: Bool { epochLock.withLock { activeEpoch != epoch } }
 
     func seek(to frame: AVAudioFramePosition) throws {
         guard let extFile else { return }
@@ -119,7 +143,10 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         actual.pointee = 0
         guard position < size else { return kAudioFileEndOfFileError }
         let end = min(size, position + Int64(count))
-        switch file.wait(until: end) {
+        if opening, position > max(file.receivedBytes, Self.openHorizon) {
+            return kAudioFileEndOfFileError
+        }
+        switch file.wait(until: end, cancelled: { readsCancelled }) {
         case .interrupted, .failed:
             return kAudioFileUnspecifiedError
         case .ready(let available):
@@ -132,6 +159,9 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         }
     }
 
+    /// 解析文件头时最多等到这么远（封面图大的 FLAC 头可能有几 MB）
+    static let openHorizon: Int64 = 4 * 1024 * 1024
+
     private static let readProc: AudioFile_ReadProc = { client, position, count, buffer, actual in
         Unmanaged<GrowingFileStream>.fromOpaque(client).takeUnretainedValue().readBytes(at: position, count: count, into: buffer, actual: actual)
     }
@@ -141,6 +171,13 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     }
 
     // MARK: 格式识别
+
+    /// FLAC 的 STREAMINFO 里总采样数（36 位）为 0 表示未知
+    static func flacTotalSamplesUnknown(_ handle: FileHandle) -> Bool {
+        var head = [UInt8](repeating: 0, count: 26)
+        guard pread(handle.fileDescriptor, &head, 26, 0) == 26, head[0..<4] == [0x66, 0x4C, 0x61, 0x43] else { return false }
+        return head[21] & 0x0F == 0 && head[22...25].allSatisfy { $0 == 0 }
+    }
 
     /// 先看文件头，认不出再看扩展名；APE 等 AudioFile 不支持的返回 0
     static func typeHint(file: GrowingFile, handle: FileHandle) -> AudioFileTypeID {

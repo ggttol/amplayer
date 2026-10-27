@@ -27,6 +27,7 @@ private func makeAudio(ext: String, seconds: Double = 3) throws -> (URL, AVAudio
 }
 
 /// 模拟下载：后台把 source 一块块拷到 part，并更新 GrowingFile
+@discardableResult
 private func simulateDownload(from source: URL, to file: GrowingFile, chunk: Int = 16 * 1024, delay: TimeInterval = 0.005, startAfter: Int = 0) -> Thread {
     let data = try! Data(contentsOf: source)
     FileManager.default.createFile(atPath: file.partURL.path, contents: nil)
@@ -211,4 +212,56 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
     // 再点 a：重新下载，能下完
     let url = try await cache.localURL(for: a, source: source)
     #expect(try Data(contentsOf: url).count == 4 * 1024 * 1024)
+}
+
+/// WAV（和 MP3 一样）解析时会去读文件末尾：不能因此等到整个文件下完
+@Test func wavOpensBeforeDownloadFinishes() async throws {
+    let (src, frames) = try makeAudio(ext: "wav", seconds: 20)
+    let size = try Int64(Data(contentsOf: src).count)
+    let file = growingFile(ext: "wav", size: size)
+    simulateDownload(from: src, to: file, chunk: 64 * 1024, delay: 0.01).start()
+    try await file.waitAsync(forFirst: 384 * 1024)
+    let stream = try await GrowingFileStream.open(file, fallbackDuration: nil)
+    #expect(file.receivedBytes < size / 2)
+    #expect(abs(stream.length - frames) < 4410)
+}
+
+/// 头里没写总采样数的 FLAC：有服务器给的时长就不扫整个文件
+@Test func unknownLengthFlacStreamsWithServerDuration() async throws {
+    let (src, frames) = try makeAudio(ext: "flac", seconds: 20)
+    var data = try Data(contentsOf: src)
+    data[8 + 13] &= 0xF0
+    for i in 14...17 { data[8 + i] = 0 }
+    let patched = FileManager.default.temporaryDirectory.appendingPathComponent("nolen-src-\(UUID().uuidString).flac")
+    try data.write(to: patched)
+    let file = growingFile(ext: "flac", size: Int64(data.count))
+    simulateDownload(from: patched, to: file, chunk: 64 * 1024, delay: 0.01).start()
+    try await file.waitAsync(forFirst: 384 * 1024)
+    let stream = try await GrowingFileStream.open(file, fallbackDuration: 20)
+    #expect(file.receivedBytes < Int64(data.count) / 2)
+    #expect(abs(stream.length - frames) < 4410)
+}
+
+/// 连续两次跳到还没下载的位置：主线程不能卡住
+@MainActor
+@Test func rapidSeeksIntoUndownloadedRegionDoNotBlock() async throws {
+    let (src, _) = try makeAudio(ext: "flac", seconds: 20)
+    let data = try Data(contentsOf: src)
+    let file = growingFile(ext: "flac", size: Int64(data.count))
+    // 只给前 400 KB，后面一直不来
+    try data.prefix(400 * 1024).write(to: file.partURL)
+    file.update(received: 400 * 1024, total: Int64(data.count))
+    let player = AudioPlayer()
+    player.volume = 0
+    try await player.load(growing: file, fallbackDuration: nil)
+    player.play()
+    for target in [15.0, 18.0, 12.0] {
+        let before = Date()
+        player.seek(to: target)
+        #expect(Date().timeIntervalSince(before) < 0.5)
+        try await Task.sleep(for: .milliseconds(50))
+    }
+    let before = Date()
+    player.stop()
+    #expect(Date().timeIntervalSince(before) < 0.5)
 }

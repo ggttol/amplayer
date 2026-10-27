@@ -164,6 +164,8 @@ public final class AudioPlayer {
     /// 边下边播：文件还在下载，开头已经够解析格式了（准备从头播放，不自动开始）
     public func load(growing file: GrowingFile, fallbackDuration: TimeInterval?) async throws {
         let stream = try await GrowingFileStream.open(file, fallbackDuration: fallbackDuration)
+        // 解析文件头时用户可能已经换了歌：别把旧歌装回来
+        try Task.checkCancellation()
         stopNode()
         do {
             try connectChain(format: stream.format)
@@ -242,6 +244,7 @@ public final class AudioPlayer {
         do {
             if !engine.isRunning { try engine.start() }
         } catch {
+            PlaybackLog.add("音频引擎启动失败：\(error.localizedDescription)")
             return
         }
         idleTask?.cancel()
