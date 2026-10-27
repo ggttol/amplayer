@@ -119,11 +119,11 @@ public actor AudioCache {
                 }
             } catch {
                 file.fail(error)
-                downloadEnded(key, url: nil)
+                downloadEnded(key, file: file, url: nil)
                 throw error
             }
             file.finish()
-            downloadEnded(key, url: destination)
+            downloadEnded(key, file: file, url: destination)
             return destination
         }
         inFlight[key] = task
@@ -131,10 +131,23 @@ public actor AudioCache {
         return (task, file)
     }
 
-    private func downloadEnded(_ key: String, url: URL?) {
-        inFlight[key] = nil
-        growing[key] = nil
+    /// 只清自己这次的记录：被取消后同一首可能已经重新开始下载了
+    private func downloadEnded(_ key: String, file: GrowingFile, url: URL?) {
+        if growing[key] === file {
+            inFlight[key] = nil
+            growing[key] = nil
+        }
         if let url { evictIfNeeded(protecting: url) }
+    }
+
+    /// 换歌时取消别的下载：跳过的歌没必要下完，同时下载的连接数有限，占着会让新点的歌排队
+    public func cancelDownloads(except keep: Set<String>) {
+        for (key, task) in inFlight where !keep.contains(key) {
+            task.cancel()
+            growing[key]?.fail(CancellationError())
+            inFlight[key] = nil
+            growing[key] = nil
+        }
     }
 
     /// 离线下载：下载（或从缓存移动）到不会被淘汰的目录

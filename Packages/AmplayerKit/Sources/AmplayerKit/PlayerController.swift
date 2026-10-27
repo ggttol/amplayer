@@ -370,6 +370,8 @@ public final class PlayerController {
         PlaybackLog.add("加载：\(track.displayName)")
         loadTask = Task { [weak self] in
             guard let self else { return }
+            // 跳过的歌和预取的下一首都停掉，让这首先下
+            await self.cache.cancelDownloads(except: [track.id])
             do {
                 guard let source = self.sources.source(track.sourceID) else {
                     throw SourceError.notConfigured("来源已删除：\(track.sourceID)")

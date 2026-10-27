@@ -196,3 +196,19 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
     #expect(player.currentTime > 0.2)
     player.stop()
 }
+
+/// 换歌时取消别的下载，被取消的那首之后还能重新下
+@Test func cancelsAbandonedDownloads() async throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("stream-cancel-\(UUID().uuidString)")
+    let cache = AudioCache(cacheDirectory: root.appendingPathComponent("c"), offlineDirectory: root.appendingPathComponent("o"))
+    let source = SlowSource(payload: Data(repeating: 2, count: 4 * 1024 * 1024))
+    let a = Track(sourceID: "slow", path: "/a.flac", title: "a"), b = Track(sourceID: "slow", path: "/b.flac", title: "b")
+    guard case .growing(let fa) = try await cache.playable(for: a, source: source) else { Issue.record("a 应该边下边播"); return }
+    await cache.cancelDownloads(except: [b.id])
+    #expect(fa.error != nil)
+    try await Task.sleep(for: .milliseconds(200))
+    #expect(await cache.cachedURL(for: a) == nil)
+    // 再点 a：重新下载，能下完
+    let url = try await cache.localURL(for: a, source: source)
+    #expect(try Data(contentsOf: url).count == 4 * 1024 * 1024)
+}

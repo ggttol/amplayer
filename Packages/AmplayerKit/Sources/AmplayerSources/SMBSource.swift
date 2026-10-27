@@ -58,9 +58,18 @@ public final class SMBSource: MediaSource, @unchecked Sendable {
         let tmp = destination.appendingPathExtension("part")
         try? fm.removeItem(at: tmp)
         let report = DownloadProgress.report
-        try await manager.downloadItem(atPath: inner, to: tmp) { received, total in
-            report?(received, total)
-            return true
+        let cancelled = CancelFlag()
+        try await withTaskCancellationHandler {
+            try await manager.downloadItem(atPath: inner, to: tmp) { received, total in
+                report?(received, total)
+                return !cancelled.isSet
+            }
+        } onCancel: {
+            cancelled.set()
+        }
+        if cancelled.isSet {
+            try? fm.removeItem(at: tmp)
+            throw CancellationError()
         }
         if fm.fileExists(atPath: destination.path) { try fm.removeItem(at: destination) }
         try fm.moveItem(at: tmp, to: destination)
@@ -105,4 +114,12 @@ public final class SMBSource: MediaSource, @unchecked Sendable {
         lock.withLock { managers[share] = manager }
         return manager
     }
+}
+
+/// 取消标记（SMB 下载的进度回调里查，返回 false 就停）
+final class CancelFlag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = false
+    var isSet: Bool { lock.withLock { value } }
+    func set() { lock.withLock { value = true } }
 }
