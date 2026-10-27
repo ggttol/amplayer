@@ -14,12 +14,15 @@ public final class CarPlayHub {
     private init() {}
 }
 
-/// CarPlay 车机界面：播放列表、曲库、来源三个标签页，加系统的“正在播放”页面。
+/// CarPlay 车机界面：播放列表、曲库、来源三个标签页，加系统的“正在播放”页面和歌词页。
 /// 用 Info.plist 的 CPTemplateApplicationSceneSessionRoleApplication 场景启动。
 @MainActor
 public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPNowPlayingTemplateObserver {
     private var interface: CPInterfaceController?
     private let queueTemplate = CPListTemplate(title: "播放列表", sections: [])
+    private let lyricsTemplate = CPListTemplate(title: "歌词", sections: [])
+    private var lyricsTimer: Timer?
+    private var lyricsKey = ""
     private var observing = false
 
     private var hub: CarPlayHub { .shared }
@@ -41,6 +44,8 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     public func templateApplicationScene(_ templateApplicationScene: CPTemplateApplicationScene, didDisconnectInterfaceController interfaceController: CPInterfaceController) {
         interface = nil
         observing = false
+        lyricsTimer?.invalidate()
+        lyricsTimer = nil
         CPNowPlayingTemplate.shared.remove(self)
     }
 
@@ -63,7 +68,10 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             default: .off
             }
         }
-        now.updateNowPlayingButtons([shuffle, repeatButton])
+        let lyricsButton = CPNowPlayingImageButton(image: UIImage(systemName: "quote.bubble") ?? UIImage()) { [weak self] _ in
+            self?.showLyrics()
+        }
+        now.updateNowPlayingButtons([shuffle, repeatButton, lyricsButton])
     }
 
     public nonisolated func nowPlayingTemplateUpNextButtonTapped(_ nowPlayingTemplate: CPNowPlayingTemplate) {
@@ -87,6 +95,72 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
         guard let player = hub.player, !tracks.isEmpty else { return }
         player.setQueue(tracks, startAt: min(max(index, 0), tracks.count - 1), autoplay: true)
         showNowPlaying()
+    }
+
+    // MARK: 歌词
+
+    /// “正在播放”页面的歌词按钮：打开歌词页，播放时每半秒看一次唱到哪句
+    private func showLyrics() {
+        guard let interface else { return }
+        lyricsTemplate.emptyViewTitleVariants = ["没有歌词"]
+        lyricsTemplate.emptyViewSubtitleVariants = ["在手机上长按歌词区域可以在线搜索"]
+        lyricsKey = ""
+        refreshLyrics()
+        if !interface.templates.contains(where: { $0 === lyricsTemplate }) {
+            interface.pushTemplate(lyricsTemplate, animated: true, completion: nil)
+        }
+        lyricsTimer?.invalidate()
+        lyricsTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                // 歌词页退出后停掉
+                guard self.interface?.templates.contains(where: { $0 === self.lyricsTemplate }) == true else {
+                    self.lyricsTimer?.invalidate()
+                    self.lyricsTimer = nil
+                    return
+                }
+                self.refreshLyrics()
+            }
+        }
+    }
+
+    /// 同步歌词：当前这句放在最上面（标成正在播放），下面接着几句，点一句跳过去；纯文本整首列出来
+    private func refreshLyrics() {
+        guard let player = hub.player else { return }
+        let trackID = player.current?.id ?? ""
+        guard let lyrics = player.lyrics, !lyrics.lines.isEmpty else {
+            if lyricsKey != trackID + ":none" {
+                lyricsKey = trackID + ":none"
+                lyricsTemplate.updateSections([])
+            }
+            return
+        }
+        let lines = Array(lyrics.lines.enumerated())
+        func item(_ text: String) -> CPListItem {
+            CPListItem(text: text.trimmingCharacters(in: .whitespaces).isEmpty ? "♪" : text, detailText: nil)
+        }
+        if lyrics.isSynced {
+            let current = lyrics.index(at: player.audio.currentTime)
+            let start = current ?? 0
+            let key = "\(trackID):\(start):\(current != nil)"
+            guard key != lyricsKey else { return }
+            lyricsKey = key
+            let items = lines[start..<min(lines.count, start + 8)].map { i, line -> CPListItem in
+                let row = item(line.text)
+                row.isPlaying = i == current
+                row.playingIndicatorLocation = .leading
+                row.handler = { _, done in
+                    if let t = line.time { player.seek(to: t) }
+                    done()
+                }
+                return row
+            }
+            lyricsTemplate.updateSections([CPListSection(items: items)])
+        } else {
+            guard lyricsKey != trackID + ":plain" else { return }
+            lyricsKey = trackID + ":plain"
+            lyricsTemplate.updateSections([CPListSection(items: lines.prefix(Self.limit).map { item($0.element.text) })])
+        }
     }
 
     // MARK: 播放列表（当前队列）
@@ -239,7 +313,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
 
     /// 列出文件夹（网络来源要等一会儿，CarPlay 会在这一行上显示转圈）
     private func openFolder(_ source: any MediaSource, path: String, title: String, done: @escaping () -> Void) {
-        Task { @MainActor in
+        Task { @MainActor [weak self] in
             do {
                 let entries = try await source.list(path: path).sortedForBrowsing()
                 let folders = entries.filter { $0.kind == .directory }
@@ -275,12 +349,12 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
                 }
                 let list = CPListTemplate(title: title, sections: [CPListSection(items: items)])
                 list.emptyViewTitleVariants = ["这里没有音乐"]
-                interface?.pushTemplate(list, animated: true, completion: nil)
+                self?.interface?.pushTemplate(list, animated: true, completion: nil)
             } catch {
                 let alert = CPAlertTemplate(titleVariants: ["打开失败：\(error.localizedDescription)"], actions: [
                     CPAlertAction(title: "好", style: .cancel) { [weak self] _ in self?.interface?.dismissTemplate(animated: true, completion: nil) },
                 ])
-                interface?.presentTemplate(alert, animated: true, completion: nil)
+                self?.interface?.presentTemplate(alert, animated: true, completion: nil)
             }
             done()
         }

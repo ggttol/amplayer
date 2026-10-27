@@ -21,7 +21,9 @@ public final class PlayerController {
     /// 当前曲目的封面
     public private(set) var artwork: Data?
     /// 当前曲目的歌词；lyricsLoading 为真表示还在找
-    public private(set) var lyrics: Lyrics?
+    public private(set) var lyrics: Lyrics? {
+        didSet { syncLyricTicker() }
+    }
     public private(set) var lyricsLoading = false
 
     @ObservationIgnored public let cache: AudioCache
@@ -31,6 +33,12 @@ public final class PlayerController {
     @ObservationIgnored private let saver = Debouncer()
     @ObservationIgnored private let lyricsStore = LyricsStore()
     @ObservationIgnored private var lyricsTask: Task<Void, Never>?
+    /// 锁屏和车机显示当前歌词：播放时每半秒看一次唱到哪一行，换行才更新
+    @ObservationIgnored private var lyricTimer: Timer?
+    @ObservationIgnored private var nowPlayingLyricIndex: Int?
+    #if canImport(UIKit)
+    @ObservationIgnored private var cachedArtwork: (data: Data, artwork: MPMediaItemArtwork)?
+    #endif
     /// 已经无缝排在当前曲目后面的那首
     @ObservationIgnored private var armedTrackID: String?
     @ObservationIgnored private var perTrackEQ: [String: EqualizerSettings] = [:]
@@ -517,6 +525,12 @@ public final class PlayerController {
     }
 
     /// 是否联网查歌词（设置里可关，默认开）
+    /// 锁屏和 CarPlay 的“正在播放”里，歌手一行换成当前这句歌词（只对带时间轴的歌词）
+    public static var lyricsOnNowPlaying: Bool {
+        get { UserDefaults.standard.object(forKey: "amplayer.lyricsOnNowPlaying") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "amplayer.lyricsOnNowPlaying") }
+    }
+
     public static var onlineLyricsEnabled: Bool {
         get { UserDefaults.standard.object(forKey: "amplayer.onlineLyrics") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "amplayer.onlineLyrics") }
@@ -680,17 +694,59 @@ public final class PlayerController {
             MPNowPlayingInfoPropertyElapsedPlaybackTime: audio.currentTime,
             MPNowPlayingInfoPropertyPlaybackRate: audio.state == .playing ? Double(audio.playbackRate) : 0.0,
         ]
-        if let artist = track.artist { info[MPMediaItemPropertyArtist] = artist }
-        if let album = track.album { info[MPMediaItemPropertyAlbumTitle] = album }
+        if let line = nowPlayingLyricLine() {
+            // 车机多数只显示歌名和歌手两行：歌手那行放歌词，歌手挪到专辑那行
+            info[MPMediaItemPropertyArtist] = line
+            let rest = [track.artist, track.album].compactMap { $0 }.filter { !$0.isEmpty }
+            if !rest.isEmpty { info[MPMediaItemPropertyAlbumTitle] = rest.joined(separator: " - ") }
+        } else {
+            if let artist = track.artist { info[MPMediaItemPropertyArtist] = artist }
+            if let album = track.album { info[MPMediaItemPropertyAlbumTitle] = album }
+        }
         if let duration = audio.info?.duration ?? track.duration { info[MPMediaItemPropertyPlaybackDuration] = duration }
         #if canImport(UIKit)
-        if let data = artwork, let image = UIImage(data: data) {
-            info[MPMediaItemPropertyArtwork] = Self.makeArtwork(image)
+        if let data = artwork {
+            // 换一句歌词就会刷新一次：同一张封面只解码一次
+            if cachedArtwork?.data != data, let image = UIImage(data: data) { cachedArtwork = (data, Self.makeArtwork(image)) }
+            if let cached = cachedArtwork, cached.data == data { info[MPMediaItemPropertyArtwork] = cached.artwork }
         }
         #endif
         center.nowPlayingInfo = info
         #if os(macOS)
         center.playbackState = audio.state == .playing ? .playing : (audio.state == .paused ? .paused : .stopped)
         #endif
+        syncLyricTicker()
     }
+
+    /// 当前这句歌词（关掉了、没有时间轴、还没唱到第一句或这句是空行时为 nil）
+    private func nowPlayingLyricLine() -> String? {
+        guard Self.lyricsOnNowPlaying, let lyrics, lyrics.isSynced, let i = lyrics.index(at: audio.currentTime) else {
+            nowPlayingLyricIndex = nil
+            return nil
+        }
+        nowPlayingLyricIndex = i
+        let text = lyrics.lines[i].text.trimmingCharacters(in: .whitespaces)
+        return text.isEmpty ? nil : text
+    }
+
+    /// 只在播放带时间轴的歌词时跑定时器，暂停或换成纯文本就停
+    private func syncLyricTicker() {
+        let needed = Self.lyricsOnNowPlaying && audio.state == .playing && lyrics?.isSynced == true
+        if !needed {
+            lyricTimer?.invalidate()
+            lyricTimer = nil
+            return
+        }
+        guard lyricTimer == nil else { return }
+        lyricTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                guard self.audio.state == .playing, let lyrics = self.lyrics else { self.syncLyricTicker(); return }
+                if lyrics.index(at: self.audio.currentTime) != self.nowPlayingLyricIndex { self.updateNowPlaying() }
+            }
+        }
+    }
+
+    /// 设置里开关“锁屏和车机显示歌词”后立即生效
+    public func refreshNowPlaying() { updateNowPlaying() }
 }
