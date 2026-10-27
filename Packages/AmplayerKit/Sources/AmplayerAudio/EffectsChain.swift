@@ -1,5 +1,6 @@
 import AVFoundation
 import AmplayerCore
+import AmplayerObjC
 
 /// 音效处理链（在经典 10 段均衡器前后）：
 /// 播放节点 → 声像混音（平衡、环绕旋转）→ 变速变调 → [10 段 EQ] → 音色 → 响度均衡 → 回声 → 混响 → 主混音
@@ -32,16 +33,19 @@ final class EffectsChain {
     }
 
     /// 播放节点 → … → 均衡器 → … → 主混音。fileFormat 是音源格式；声像混音之后统一成立体声
-    func connect(player: AVAudioPlayerNode, equalizer: AVAudioUnitEQ, fileFormat: AVAudioFormat, in engine: AVAudioEngine) {
+    /// 输出设备正在切换（刚连上 CarPlay、蓝牙）时系统可能拒绝连接，这里把异常转成 Swift 错误
+    func connect(player: AVAudioPlayerNode, equalizer: AVAudioUnitEQ, fileFormat: AVAudioFormat, in engine: AVAudioEngine) throws {
         let stereo = AVAudioFormat(standardFormatWithSampleRate: fileFormat.sampleRate, channels: 2)!
-        for node in [player, panMixer, timePitch, equalizer, tone, dynamics, delay, reverb] as [AVAudioNode] {
-            engine.disconnectNodeOutput(node)
-        }
-        engine.connect(player, to: panMixer, format: fileFormat)
+        let nodes: [AVAudioNode] = [player, panMixer, timePitch, equalizer, tone, dynamics, delay, reverb]
         let chain: [AVAudioNode] = [panMixer, timePitch, equalizer, tone, dynamics, delay, reverb, engine.mainMixerNode]
-        for (a, b) in zip(chain, chain.dropFirst()) {
-            engine.connect(a, to: b, format: stereo)
+        let failure = AMPCatchException {
+            for node in nodes { engine.disconnectNodeOutput(node) }
+            engine.connect(player, to: chain[0], format: fileFormat)
+            for (a, b) in zip(chain, chain.dropFirst()) {
+                engine.connect(a, to: b, format: stereo)
+            }
         }
+        if let failure { throw AudioEngineError(reason: failure) }
     }
 
     func apply(_ e: SoundEffects) {

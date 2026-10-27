@@ -3,6 +3,12 @@ import AmplayerCore
 import Observation
 
 /// 基于 AVAudioEngine 的本地文件播放器：播放/暂停/跳转、10 段 EQ、音量、平衡、频谱。
+/// 音频引擎拒绝连接：多半是输出设备正在切换（刚连上 CarPlay、蓝牙或 AirPlay）
+public struct AudioEngineError: LocalizedError, Sendable {
+    public let reason: String
+    public var errorDescription: String? { "音频输出还没准备好，请稍后再试（\(reason)）" }
+}
+
 @MainActor
 @Observable
 public final class AudioPlayer {
@@ -106,7 +112,11 @@ public final class AudioPlayer {
         }
         effectsChain.attach(to: engine)
         let format = engine.mainMixerNode.outputFormat(forBus: 0)
-        effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        do {
+            try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        } catch {
+            PlaybackLog.add("启动时连接音频链失败（加载歌曲时会再接）：\(error.localizedDescription)")
+        }
         effectsChain.apply(effects)
         engine.mainMixerNode.outputVolume = volume
         eqNode.installTap(onBus: 0, bufferSize: 1024, format: nil, block: Self.makeTap(analyzer))
@@ -119,21 +129,54 @@ public final class AudioPlayer {
     public func load(url: URL) throws {
         stopNode()
         let source: Source
-        if url.pathExtension.lowercased() == "ape" {
+        // 按文件头判断：服务器上有把 FLAC 存成 .ape 的
+        if Self.isMonkeysAudio(url) {
             let stream = try APEStream(url: url)
             source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
         } else {
             source = .file(try AVAudioFile(forReading: url))
         }
-        self.source = source
         let format = source.format
-        effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        do {
+            try connectChain(format: format)
+        } catch {
+            unload()
+            throw error
+        }
+        self.source = source
         updatePan()
 
         info = Self.makeInfo(length: source.length, format: format, url: url)
         pausedTime = 0
         schedule(from: 0)
         state = .paused
+    }
+
+    /// 接音效链；被拒绝时（输出设备正在切换）重置引擎再试一次
+    private func connectChain(format: AVAudioFormat) throws {
+        do {
+            try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        } catch {
+            PlaybackLog.add("连接音频链失败，重置音频引擎再试：\(error.localizedDescription)")
+            engine.stop()
+            engine.reset()
+            try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
+        }
+    }
+
+    /// Monkey's Audio 文件以 "MAC " 开头（前面可能有 ID3v2 标签）
+    nonisolated static func isMonkeysAudio(_ url: URL) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return url.pathExtension.lowercased() == "ape" }
+        defer { try? handle.close() }
+        guard var head = try? handle.read(upToCount: 10), head.count >= 4 else { return false }
+        if head.starts(with: Array("ID3".utf8)), head.count == 10 {
+            // ID3v2 长度是 4 个 7 位字节，带页脚再加 10
+            let body = head[6...9].reduce(0) { ($0 << 7) | Int($1 & 0x7F) }
+            let size = body + 10 + (head[5] & 0x10 != 0 ? 10 : 0)
+            guard (try? handle.seek(toOffset: UInt64(size))) != nil, let next = try? handle.read(upToCount: 4) else { return false }
+            head = next
+        }
+        return head.starts(with: Array("MAC ".utf8))
     }
 
     /// 无缝衔接：把下一首排在当前这首后面（同采样率、同声道的普通文件才行；APE 和格式不同的退回普通切歌）。

@@ -376,7 +376,19 @@ public final class PlayerController {
                 }
                 let url = try await self.cache.localURL(for: track, source: source)
                 try Task.checkCancellation()
-                try self.audio.load(url: url)
+                // 刚连上 CarPlay 或蓝牙时输出设备还在切换，引擎会拒绝连接：等一秒再试，最多两次
+                var attempt = 0
+                while true {
+                    do {
+                        try self.audio.load(url: url)
+                        break
+                    } catch is AudioEngineError where attempt < 2 {
+                        attempt += 1
+                        PlaybackLog.add("音频输出还没准备好，1 秒后重试（第 \(attempt) 次）")
+                        try await Task.sleep(for: .seconds(1))
+                        try Task.checkCancellation()
+                    }
+                }
                 self.loadingTrackID = nil
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()

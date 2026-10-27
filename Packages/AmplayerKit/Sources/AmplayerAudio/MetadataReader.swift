@@ -15,7 +15,7 @@ public enum MetadataReader {
     }
 
     public static func read(url: URL) async -> Result {
-        if url.pathExtension.lowercased() == "ape" { return readAPE(url: url) }
+        if AudioPlayer.isMonkeysAudio(url) { return readAPE(url: url) }
         let asset = AVURLAsset(url: url)
         var result = Result()
         if let duration = try? await asset.load(.duration), duration.isNumeric {

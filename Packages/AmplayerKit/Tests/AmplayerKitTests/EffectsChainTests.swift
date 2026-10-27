@@ -28,7 +28,7 @@ import Testing
         engine.attach(eq)
         let chain = EffectsChain()
         chain.attach(to: engine)
-        chain.connect(player: player, equalizer: eq, fileFormat: format, in: engine)
+        try chain.connect(player: player, equalizer: eq, fileFormat: format, in: engine)
         chain.apply(effects)
         player.pan = pan
         try engine.start()
