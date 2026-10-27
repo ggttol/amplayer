@@ -9,6 +9,17 @@ protocol PCMStream: AnyObject, Sendable {
     func seek(to frame: AVAudioFramePosition) throws
     /// 读满（或读到结尾）一个缓冲区，返回帧数；0 表示结束
     func read(into buffer: AVAudioPCMBuffer) throws -> Int
+    /// 读取可能要等数据（边下边播）：调度改在后台做，不在主线程上等
+    var mayBlock: Bool { get }
+    /// 让正在等数据的读取马上返回（换歌、跳转前）；resumeReading 恢复
+    func interrupt()
+    func resumeReading()
+}
+
+extension PCMStream {
+    var mayBlock: Bool { false }
+    func interrupt() {}
+    func resumeReading() {}
 }
 
 enum PCMStreamError: LocalizedError {
@@ -101,7 +112,8 @@ final class BufferScheduler: @unchecked Sendable {
 
     /// 从 frame 开始排缓冲区；token 用来识别过期回调；结束时回调 onFinished(token)
     func start(from frame: AVAudioFramePosition, token: Int, onFinished: @escaping @Sendable (Int) -> Void) {
-        queue.sync {
+        let work: @Sendable () -> Void = { [self] in
+            stream.resumeReading()
             self.token = token
             self.outstanding = 0
             self.reachedEnd = false
@@ -109,10 +121,13 @@ final class BufferScheduler: @unchecked Sendable {
             try? stream.seek(to: frame)
             for _ in 0..<buffersInFlight { scheduleNext() }
         }
+        // 边下边播时读取可能要等下载，放到后台；播放节点先空转，缓冲区到了就接着放
+        if stream.mayBlock { queue.async(execute: work) } else { queue.sync(execute: work) }
     }
 
-    /// 让队列里的旧回调全部失效（stop / 跳转前调用）
+    /// 让队列里的旧回调全部失效（stop / 跳转前调用）；先打断可能正在等下载的读取
     func invalidate() {
+        stream.interrupt()
         queue.sync { token &+= 1_000_000 }
     }
 

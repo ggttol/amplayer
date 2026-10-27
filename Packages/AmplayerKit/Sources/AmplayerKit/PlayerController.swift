@@ -374,13 +374,13 @@ public final class PlayerController {
                 guard let source = self.sources.source(track.sourceID) else {
                     throw SourceError.notConfigured("来源已删除：\(track.sourceID)")
                 }
-                let url = try await self.cache.localURL(for: track, source: source)
+                let playable = try await self.cache.playable(for: track, source: source)
                 try Task.checkCancellation()
                 // 刚连上 CarPlay 或蓝牙时输出设备还在切换，引擎会拒绝连接：等一秒再试，最多两次
                 var attempt = 0
                 while true {
                     do {
-                        try self.audio.load(url: url)
+                        try await self.loadAudio(playable, track: track, source: source)
                         break
                     } catch is AudioEngineError where attempt < 2 {
                         attempt += 1
@@ -392,6 +392,9 @@ public final class PlayerController {
                 self.loadingTrackID = nil
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()
+                // 边下边播时标签、封面、内嵌歌词要等下载完再读
+                guard let url = try? await self.cache.localURL(for: track, source: source),
+                      !Task.isCancelled, self.current?.id == track.id else { return }
                 await self.enrich(track, fileURL: url, source: source)
                 self.prefetchNext()
             } catch is CancellationError {
@@ -403,6 +406,26 @@ public final class PlayerController {
                 self.lastError = "\(track.displayName)：\(error.localizedDescription)"
                 PlaybackLog.add("加载失败：\(self.lastError!)")
                 self.updateNowPlaying()
+            }
+        }
+    }
+
+    /// 完整文件直接打开；还在下载的边下边播，解析不了（少见格式、多声道）就等下载完
+    private func loadAudio(_ playable: AudioCache.Playable, track: Track, source: any MediaSource) async throws {
+        switch playable {
+        case .complete(let url):
+            try audio.load(url: url)
+        case .growing(let file):
+            do {
+                try await audio.load(growing: file, fallbackDuration: track.duration)
+                PlaybackLog.add("边下边播（已下载 \(file.receivedBytes / 1024) KB）")
+            } catch let error as AudioEngineError {
+                throw error
+            } catch {
+                PlaybackLog.add("不能边下边播（\(error.localizedDescription)），等下载完")
+                let url = try await cache.localURL(for: track, source: source)
+                try Task.checkCancellation()
+                try audio.load(url: url)
             }
         }
     }

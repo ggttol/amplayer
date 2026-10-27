@@ -146,7 +146,25 @@ public final class AudioPlayer {
         self.source = source
         updatePan()
 
-        info = Self.makeInfo(length: source.length, format: format, url: url)
+        info = Self.makeInfo(length: source.length, format: format, size: Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0))
+        pausedTime = 0
+        schedule(from: 0)
+        state = .paused
+    }
+
+    /// 边下边播：文件还在下载，开头已经够解析格式了（准备从头播放，不自动开始）
+    public func load(growing file: GrowingFile, fallbackDuration: TimeInterval?) async throws {
+        let stream = try await GrowingFileStream.open(file, fallbackDuration: fallbackDuration)
+        stopNode()
+        do {
+            try connectChain(format: stream.format)
+        } catch {
+            unload()
+            throw error
+        }
+        source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
+        updatePan()
+        info = Self.makeInfo(length: stream.length, format: stream.format, size: stream.expectedSize)
         pausedTime = 0
         schedule(from: 0)
         state = .paused
@@ -348,7 +366,7 @@ public final class AudioPlayer {
             scheduledFrames = next.file.length
             currentToken = next.token
             source = .file(next.file)
-            info = Self.makeInfo(length: next.file.length, format: next.file.processingFormat, url: next.url)
+            info = Self.makeInfo(length: next.file.length, format: next.file.processingFormat, size: Int64((try? next.url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0))
             pausedTime = 0
             onAdvancedToNext?(next.url)
             return
@@ -360,9 +378,8 @@ public final class AudioPlayer {
         onFinished?()
     }
 
-    private static func makeInfo(length: AVAudioFramePosition, format: AVAudioFormat, url: URL) -> FileInfo {
+    private static func makeInfo(length: AVAudioFramePosition, format: AVAudioFormat, size: Int64) -> FileInfo {
         let duration = Double(length) / format.sampleRate
-        let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
         let kbps = duration > 0 ? Int(Double(size) * 8 / duration / 1000) : 0
         return FileInfo(duration: duration, sampleRate: format.sampleRate, channels: Int(format.channelCount), bitrate: kbps)
     }

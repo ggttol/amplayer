@@ -50,19 +50,28 @@ public final class HTTPClient: Sendable {
         return object
     }
 
-    /// 下载到目标路径（先写临时文件，成功后再移动）
+    /// 下载到目标路径：边收边写到 destination.part（边下边播从这里读），成功后改名
     public func download(_ request: URLRequest, to destination: URL) async throws {
-        let delegate = DownloadProgress.report.map(ProgressDelegate.init)
-        let (tmp, response) = try await session.download(for: request, delegate: delegate)
-        guard let http = response as? HTTPURLResponse else { throw SourceError.protocolError("非 HTTP 响应") }
-        guard (200..<300).contains(http.statusCode) else {
-            try? FileManager.default.removeItem(at: tmp)
-            throw SourceError.http(http.statusCode, nil)
-        }
         let fm = FileManager.default
         try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let part = destination.appendingPathExtension("part")
+        try? fm.removeItem(at: part)
+        guard fm.createFile(atPath: part.path, contents: nil) else { throw SourceError.protocolError("无法创建缓存文件") }
+        let writer = try StreamingWriter(file: part, report: DownloadProgress.report)
+        let task = session.dataTask(with: request)
+        task.delegate = writer
+        do {
+            try await withTaskCancellationHandler {
+                try await writer.run(task)
+            } onCancel: {
+                task.cancel()
+            }
+        } catch {
+            try? fm.removeItem(at: part)
+            throw error
+        }
         if fm.fileExists(atPath: destination.path) { try fm.removeItem(at: destination) }
-        try fm.moveItem(at: tmp, to: destination)
+        try fm.moveItem(at: part, to: destination)
     }
 }
 
@@ -117,22 +126,64 @@ public enum DownloadProgress {
     @TaskLocal public static var report: (@Sendable (Int64, Int64) -> Void)?
 }
 
-/// 观察下载任务的已收字节数；按 1% 或 512 KB 节流
-final class ProgressDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
-    private let report: @Sendable (Int64, Int64) -> Void
-    private var observation: NSKeyValueObservation?
-    private var last: Int64 = 0
+/// 数据任务的代理：收到一块就写进文件并上报（已收字节，总字节；未知为 -1）
+final class StreamingWriter: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    private let handle: FileHandle
+    private let report: (@Sendable (Int64, Int64) -> Void)?
+    private let lock = NSLock()
+    private var continuation: CheckedContinuation<Void, Error>?
+    private var received: Int64 = 0
+    private var expected: Int64 = -1
+    private var failure: (any Error)?
 
-    init(_ report: @escaping @Sendable (Int64, Int64) -> Void) { self.report = report }
+    init(file: URL, report: (@Sendable (Int64, Int64) -> Void)?) throws {
+        handle = try FileHandle(forWritingTo: file)
+        self.report = report
+    }
 
-    func urlSession(_ session: URLSession, didCreateTask task: URLSessionTask) {
-        observation = task.observe(\.countOfBytesReceived, options: [.new]) { [weak self] task, _ in
-            guard let self else { return }
-            let received = task.countOfBytesReceived, total = task.countOfBytesExpectedToReceive
-            let step = total > 0 ? max(total / 100, 64 * 1024) : 512 * 1024
-            guard received - self.last >= step || (total > 0 && received >= total) else { return }
-            self.last = received
-            self.report(received, total)
+    func run(_ task: URLSessionDataTask) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            lock.withLock { self.continuation = continuation }
+            task.resume()
         }
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping @Sendable (URLSession.ResponseDisposition) -> Void) {
+        guard let http = response as? HTTPURLResponse else {
+            lock.withLock { failure = SourceError.protocolError("非 HTTP 响应") }
+            return completionHandler(.cancel)
+        }
+        guard (200..<300).contains(http.statusCode) else {
+            lock.withLock { failure = SourceError.http(http.statusCode, nil) }
+            return completionHandler(.cancel)
+        }
+        lock.withLock { expected = http.expectedContentLength }
+        completionHandler(.allow)
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        do {
+            try handle.write(contentsOf: data)
+        } catch {
+            lock.withLock { failure = error }
+            dataTask.cancel()
+            return
+        }
+        let (r, e) = lock.withLock { () -> (Int64, Int64) in
+            received += Int64(data.count)
+            return (received, expected)
+        }
+        report?(r, e)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
+        try? handle.close()
+        let (continuation, stored) = lock.withLock { () -> (CheckedContinuation<Void, Error>?, (any Error)?) in
+            let c = self.continuation
+            self.continuation = nil
+            return (c, failure)
+        }
+        if let e = stored ?? error { continuation?.resume(throwing: e) } else { continuation?.resume() }
     }
 }

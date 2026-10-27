@@ -17,6 +17,19 @@ public actor AudioCache {
     public var limit: Int64
 
     private var inFlight: [String: Task<URL, Error>] = [:]
+    /// 正在下载的文件（边下边播从这里读）
+    private var growing: [String: GrowingFile] = [:]
+
+    /// 可以开始播放的文件
+    public enum Playable: Sendable {
+        /// 已经完整在本地
+        case complete(URL)
+        /// 还在下载，开头已经够了
+        case growing(GrowingFile)
+    }
+
+    /// 开头下载多少就开始边下边播
+    static let streamHead: Int64 = 384 * 1024
 
     public init(
         cacheDirectory: URL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("AudioCache", isDirectory: true),
@@ -67,26 +80,61 @@ public actor AudioCache {
     public func localURL(for track: Track, source: any MediaSource) async throws -> URL {
         if let direct = source.localURL(path: track.path) { return direct }
         if let cached = cachedURL(for: track) { return cached }
+        return try await startDownload(track, source: source).task.value
+    }
+
+    /// 边下边播：已在本地就给完整文件；否则开始（或接上正在进行的）下载，开头够解析了就返回正在下载的文件。
+    /// APE、不知道总大小的，等下载完再给。
+    public func playable(for track: Track, source: any MediaSource) async throws -> Playable {
+        if let direct = source.localURL(path: track.path) { return .complete(direct) }
+        if let cached = cachedURL(for: track) { return .complete(cached) }
+        let (task, file) = startDownload(track, source: source)
+        if track.fileExtension.lowercased() != "ape" {
+            try await file.waitAsync(forFirst: Self.streamHead)
+            if !file.isFinished, file.error == nil, file.expectedSize > 0 { return .growing(file) }
+        }
+        return .complete(try await task.value)
+    }
+
+    /// 开始下载（同一首正在下载就接上）
+    private func startDownload(_ track: Track, source: any MediaSource) -> (task: Task<URL, Error>, file: GrowingFile) {
         let key = track.id
-        if let task = inFlight[key] { return try await task.value }
+        if let task = inFlight[key], let file = growing[key] { return (task, file) }
         let destination = cacheDirectory.appendingPathComponent(fileName(for: track))
         let expected = track.fileSize ?? -1
+        let file = GrowingFile(partURL: destination.appendingPathExtension("part"), finalURL: destination, expectedSize: expected)
+        let throttle = ProgressThrottle()
         let task = Task<URL, Error> {
             let report: @Sendable (Int64, Int64) -> Void = { received, total in
                 let size = total > 0 ? total : expected
-                Task { @MainActor in DownloadProgressCenter.shared.update(key, received: received, total: size) }
+                file.update(received: received, total: size)
+                if throttle.shouldReport(received, size) {
+                    Task { @MainActor in DownloadProgressCenter.shared.update(key, received: received, total: size) }
+                }
             }
             defer { Task { @MainActor in DownloadProgressCenter.shared.finish(key) } }
-            try await DownloadProgress.$report.withValue(report) {
-                try await source.download(path: track.path, to: destination)
+            do {
+                try await DownloadProgress.$report.withValue(report) {
+                    try await source.download(path: track.path, to: destination)
+                }
+            } catch {
+                file.fail(error)
+                downloadEnded(key, url: nil)
+                throw error
             }
+            file.finish()
+            downloadEnded(key, url: destination)
             return destination
         }
         inFlight[key] = task
-        defer { inFlight[key] = nil }
-        let url = try await task.value
-        evictIfNeeded(protecting: url)
-        return url
+        growing[key] = file
+        return (task, file)
+    }
+
+    private func downloadEnded(_ key: String, url: URL?) {
+        inFlight[key] = nil
+        growing[key] = nil
+        if let url { evictIfNeeded(protecting: url) }
     }
 
     /// 离线下载：下载（或从缓存移动）到不会被淘汰的目录
@@ -128,7 +176,8 @@ public actor AudioCache {
         let keys: [URLResourceKey] = [.fileSizeKey, .contentModificationDateKey]
         guard let files = try? fm.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: keys) else { return }
         var entries = files.compactMap { url -> (URL, Int64, Date)? in
-            guard let v = try? url.resourceValues(forKeys: Set(keys)) else { return nil }
+            // 正在下载的不动
+            guard url.pathExtension != "part", let v = try? url.resourceValues(forKeys: Set(keys)) else { return nil }
             return (url, Int64(v.fileSize ?? 0), v.contentModificationDate ?? .distantPast)
         }
         var total = entries.reduce(0) { $0 + $1.1 }
@@ -144,6 +193,21 @@ public actor AudioCache {
     private static func size(of dir: URL) -> Int64 {
         let files = (try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
         return files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+    }
+}
+
+/// 界面进度按 1% 或 64 KB 节流（边下边播需要每块都知道，界面不用）
+final class ProgressThrottle: @unchecked Sendable {
+    private let lock = NSLock()
+    private var last: Int64 = -1
+
+    func shouldReport(_ received: Int64, _ total: Int64) -> Bool {
+        lock.withLock {
+            let step = total > 0 ? max(total / 100, 64 * 1024) : 512 * 1024
+            guard last < 0 || received - last >= step || (total > 0 && received >= total) else { return false }
+            last = received
+            return true
+        }
     }
 }
 
