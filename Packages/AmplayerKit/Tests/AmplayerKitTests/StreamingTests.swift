@@ -174,3 +174,25 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
     // 下完以后直接给完整文件
     if case .complete = try await cache.playable(for: track, source: source) {} else { Issue.record("应该是完整文件") }
 }
+
+/// FLAC 头里总采样数写 0（转码工具常见）：AVAudioFile 认为 0 帧，要改用逐块解码，不能静悄悄不出声
+@MainActor
+@Test func playsFlacWithUnknownLength() async throws {
+    let (src, frames) = try makeAudio(ext: "flac", seconds: 2)
+    var data = try Data(contentsOf: src)
+    // STREAMINFO 从第 8 字节开始；总采样数是它第 13 字节低 4 位 + 第 14～17 字节
+    data[8 + 13] &= 0xF0
+    for i in 14...17 { data[8 + i] = 0 }
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent("nolen-\(UUID().uuidString).ape")
+    try data.write(to: url)
+    #expect(try AVAudioFile(forReading: url).length == 0)
+    let player = AudioPlayer()
+    player.volume = 0
+    try player.load(url: url)
+    let duration = try #require(player.info?.duration)
+    #expect(abs(duration - Double(frames) / 44100) < 0.2)
+    player.play()
+    try await Task.sleep(for: .milliseconds(600))
+    #expect(player.currentTime > 0.2)
+    player.stop()
+}

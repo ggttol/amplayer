@@ -134,7 +134,16 @@ public final class AudioPlayer {
             let stream = try APEStream(url: url)
             source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
         } else {
-            source = .file(try AVAudioFile(forReading: url))
+            let file = try AVAudioFile(forReading: url)
+            if file.length > 0 {
+                source = .file(file)
+            } else {
+                // 有的 FLAC 文件头没写总采样数（转码工具生成的），AVAudioFile 当成 0 帧，排不进任何内容、也不报错。
+                // 改用逐块解码读到文件真正结束，时长用估计值
+                PlaybackLog.add("文件头没写总长度，改用逐块解码：\(url.lastPathComponent)")
+                let stream = try Self.wholeFileStream(url)
+                source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
+            }
         }
         let format = source.format
         do {
@@ -168,6 +177,15 @@ public final class AudioPlayer {
         pausedTime = 0
         schedule(from: 0)
         state = .paused
+    }
+
+    /// 把完整的本地文件当成“已下载完”的 GrowingFile，用逐块解码打开
+    private static func wholeFileStream(_ url: URL) throws -> GrowingFileStream {
+        let size = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+        let file = GrowingFile(partURL: url, finalURL: url, expectedSize: size)
+        file.update(received: size, total: size)
+        file.finish()
+        return try GrowingFileStream(file: file, fallbackDuration: nil)
     }
 
     /// 接音效链；被拒绝时（输出设备正在切换）重置引擎再试一次
