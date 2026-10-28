@@ -71,7 +71,7 @@ struct SideMenuView: View {
                         app.isImportingFiles = true
                     }
                 }
-                row("来源", "externaldrive.connected.to.line.below") { open(.sources) }
+                row("音乐来源", "externaldrive.connected.to.line.below") { open(.sources) }
                 row("曲库与播放列表", "music.note.list") { open(.library) }
             }
             Section("声音") {

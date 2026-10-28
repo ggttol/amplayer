@@ -247,7 +247,7 @@ struct PlaylistWindowView: View {
     private func emptyHint(_ style: PlaylistStyle) -> some View {
         VStack(spacing: 6 * scale) {
             Text("播放列表是空的")
-            Button("打开来源") { app.sheet = .sources }
+            Button("打开音乐来源") { app.sheet = .sources }
                 .buttonStyle(.bordered)
                 .tint(style.normal.color)
             Text("也可以点下面的 ADD 从“文件”或曲库添加")
@@ -285,7 +285,7 @@ struct PlaylistWindowView: View {
         return Group {
             Menu {
                 Button("从“文件”导入…", systemImage: "folder") { app.isImportingFiles = true }
-                Button("从来源添加…", systemImage: "externaldrive.connected.to.line.below") { app.sheet = .sources }
+                Button("从音乐来源添加…", systemImage: "externaldrive.connected.to.line.below") { app.sheet = .sources }
                 Button("从曲库添加…", systemImage: "music.note.list") { app.sheet = .library }
             } label: { hitArea }
                 .accessibilityLabel("添加到播放列表")

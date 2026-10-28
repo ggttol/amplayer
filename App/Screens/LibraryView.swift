@@ -96,9 +96,9 @@ struct LibraryView: View {
                     ContentUnavailableView {
                         Label("曲库是空的", systemImage: "music.note.house")
                     } description: {
-                        Text("在“来源”里长按某个来源或文件夹，选择“扫描到曲库”。")
+                        Text("在“音乐来源”里长按某个来源或文件夹，选择“扫描到曲库”。")
                     } actions: {
-                        Button("打开来源") {
+                        Button("打开音乐来源") {
                             dismiss()
                             Task { @MainActor in
                                 try? await Task.sleep(for: .milliseconds(350))
