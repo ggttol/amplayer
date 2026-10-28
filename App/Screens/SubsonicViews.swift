@@ -333,6 +333,7 @@ struct SubsonicHomeView: View {
     @State private var showFolders = false
     @State private var reload = 0
     @State private var linkedArtist: String?
+    @State private var showArtistList = false
 
     private var ctx: SubsonicContext { SubsonicContext(app: app, sourceID: sourceID) }
 
@@ -341,6 +342,7 @@ struct SubsonicHomeView: View {
             if query.trimmingCharacters(in: .whitespaces).isEmpty {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 30) {
+                        QuickLinks(sourceID: sourceID)
                         ForEach(sections) { section in
                             shelf(section).id("\(section.rawValue)-\(reload)")
                         }
@@ -386,12 +388,13 @@ struct SubsonicHomeView: View {
             if sections.isEmpty { sections = SubsonicHomeSection.load(for: sourceID) }
             if let link = app.pendingArtist, link.sourceID == sourceID {
                 app.pendingArtist = nil
-                linkedArtist = link.name
+                if let name = link.name { linkedArtist = name } else { showArtistList = true }
             }
         }
         .navigationDestination(isPresented: Binding(get: { linkedArtist != nil }, set: { if !$0 { linkedArtist = nil } })) {
             if let linkedArtist { ArtistLinkResolver(sourceID: sourceID, name: linkedArtist) }
         }
+        .navigationDestination(isPresented: $showArtistList) { ArtistListView(sourceID: sourceID) }
         #if DEBUG
         // 截图用：-DebugSubsonicPage album / artists / genres / search:关键词
         .navigationDestination(isPresented: $debugPage) { debugDestination }
@@ -435,6 +438,39 @@ struct SubsonicHomeView: View {
         case .genres: GenreShelf(sourceID: sourceID)
         case .decades: DecadeShelf(sourceID: sourceID)
         }
+    }
+}
+
+/// 首页顶部的快捷入口：歌手、专辑、播放列表、流派、收藏
+private struct QuickLinks: View {
+    let sourceID: String
+
+    var body: some View {
+        HStack(spacing: 10) {
+            tile("歌手", "music.mic", Color(red: 0.95, green: 0.35, blue: 0.4)) { ArtistListView(sourceID: sourceID) }
+            tile("专辑", "square.stack", Color(red: 0.3, green: 0.6, blue: 0.98)) { AlbumGridView(sourceID: sourceID, title: "全部专辑", list: .alphabetical) }
+            tile("歌单", "music.note.list", Color(red: 0.55, green: 0.4, blue: 0.95)) { PlaylistListView(sourceID: sourceID) }
+            tile("流派", "guitars", Color(red: 0.2, green: 0.72, blue: 0.55)) { GenreListView(sourceID: sourceID) }
+            tile("收藏", "star.fill", Color(red: 0.98, green: 0.7, blue: 0.2)) { StarredView(sourceID: sourceID) }
+        }
+        .padding(.horizontal, 18)
+    }
+
+    private func tile<D: View>(_ title: String, _ symbol: String, _ color: Color, @ViewBuilder destination: @escaping () -> D) -> some View {
+        NavigationLink(destination: destination) {
+            VStack(spacing: 7) {
+                Image(systemName: symbol)
+                    .font(.system(size: 19, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 50, height: 50)
+                    .background(LinearGradient(colors: [color.opacity(0.85), color], startPoint: .top, endPoint: .bottom),
+                                in: RoundedRectangle(cornerRadius: 15, style: .continuous))
+                Text(title).font(.caption.weight(.medium)).foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
     }
 }
 

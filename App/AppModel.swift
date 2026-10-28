@@ -44,14 +44,24 @@ final class AppModel {
     var showSideMenu = false
 
     /// 从播放列表或菜单跳到某位歌手（Subsonic 来源）：打开“音乐来源”后自动进入这位歌手
+    /// name 为空表示打开歌手列表
     struct ArtistLink: Equatable {
         var sourceID: String
-        var name: String
+        var name: String?
     }
     var pendingArtist: ArtistLink?
 
     func canShowArtist(_ track: Track) -> Bool {
         track.artist?.isEmpty == false && sources.config(track.sourceID)?.kind == .subsonic
+    }
+
+    /// 第一个 Subsonic / Navidrome 来源（侧边菜单的“歌手”入口用）
+    var subsonicSourceID: String? { sources.configs.first { $0.kind == .subsonic }?.id }
+
+    func showArtistList() {
+        guard let id = subsonicSourceID else { return }
+        pendingArtist = ArtistLink(sourceID: id, name: nil)
+        sheet = .sources
     }
 
     func showArtist(of track: Track) {

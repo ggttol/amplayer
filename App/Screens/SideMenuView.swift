@@ -73,6 +73,15 @@ struct SideMenuView: View {
                 }
                 row("音乐来源", "externaldrive.connected.to.line.below") { open(.sources) }
                 row("曲库与播放列表", "music.note.list") { open(.library) }
+                if app.subsonicSourceID != nil {
+                    row("歌手", "music.mic") {
+                        close()
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(280))
+                            app.showArtistList()
+                        }
+                    }
+                }
                 if let track = app.player.current, app.canShowArtist(track), let artist = track.artist {
                     row("查看歌手：\(artist)", "music.mic") {
                         close()
