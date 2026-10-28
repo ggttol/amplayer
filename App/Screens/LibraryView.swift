@@ -165,6 +165,7 @@ struct LibraryView: View {
 
     private func play(_ tracks: [Track], at index: Int) {
         app.player.setQueue(tracks, startAt: index)
+        app.sheet = nil  // 开始播放后回到播放器
         app.endSelection()
         dismiss()
     }

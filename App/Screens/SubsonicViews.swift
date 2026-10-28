@@ -76,6 +76,8 @@ private struct SubsonicContext {
             start = 0
         }
         app.player.setQueue(tracks, startAt: start)
+        // 开始播放后收起页面，回到播放器
+        app.sheet = nil
     }
 
     func playNext(_ items: [SourceItem]) {
@@ -1164,6 +1166,8 @@ struct ArtistDetailView: View {
     @State var artist: SubsonicArtist
     @State private var albums: [SubsonicAlbum]?
     @State private var songs: [SourceItem] = []
+    /// 歌曲页按专辑分组显示（单曲一组、每张专辑一组），songs 是展开后的播放顺序
+    @State private var groups: [SongGroup] = []
     /// 歌曲页：已载入几张专辑的歌
     @State private var loadedAlbums = 0
     @State private var songsLoading = false
@@ -1173,11 +1177,22 @@ struct ArtistDetailView: View {
 
     enum Tab: Hashable { case albums, songs }
 
-    private var shownSongs: [SourceItem] {
-        let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return songs }
-        return songs.filter { ($0.title ?? $0.name).localizedCaseInsensitiveContains(q) || ($0.album?.localizedCaseInsensitiveContains(q) ?? false) }
+    struct SongGroup: Identifiable {
+        let id: String
+        let album: SubsonicAlbum?
+        let songs: [SourceItem]
     }
+
+    private var shownGroups: [SongGroup] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return groups }
+        return groups.compactMap { g in
+            let hits = g.songs.filter { ($0.title ?? $0.name).localizedCaseInsensitiveContains(q) || ($0.album?.localizedCaseInsensitiveContains(q) ?? false) }
+            return hits.isEmpty ? nil : SongGroup(id: g.id, album: g.album, songs: hits)
+        }
+    }
+
+    private var shownSongs: [SourceItem] { shownGroups.flatMap(\.songs) }
 
     var body: some View {
         let ctx = SubsonicContext(app: app, sourceID: sourceID)
@@ -1245,6 +1260,7 @@ struct ArtistDetailView: View {
                         tab = .songs
                         let found = try await ctx.source?.search(artist.name, artists: 0, albums: 0, songs: 300).songs ?? []
                         songs = found.filter { $0.artist?.localizedCaseInsensitiveContains(artist.name) == true }
+                        groups = [SongGroup(id: "search", album: nil, songs: songs)]
                     }
                 } else { albums = [] }
             } catch {
@@ -1255,8 +1271,11 @@ struct ArtistDetailView: View {
 
     @ViewBuilder
     private func songList(_ ctx: SubsonicContext) -> some View {
-        let list = shownSongs
-        LazyVStack(spacing: 0) {
+        let shown = shownGroups
+        let list = shown.flatMap(\.songs)
+        // 每组第一首在 list 里的位置，点歌时从整份列表的这一首开始放
+        let starts = shown.reduce(into: [Int]()) { acc, g in acc.append((acc.last ?? 0) + (acc.isEmpty ? 0 : shown[acc.count - 1].songs.count)) }
+        LazyVStack(alignment: .leading, spacing: 0) {
             if songsLoading, let albums {
                 HStack(spacing: 8) {
                     ProgressView().controlSize(.small)
@@ -1267,14 +1286,37 @@ struct ArtistDetailView: View {
             if !query.isEmpty, list.isEmpty, !songsLoading {
                 Text("没有找到“\(query)”").font(.footnote).foregroundStyle(.secondary).padding(.vertical, 24)
             }
-            ForEach(Array(list.enumerated()), id: \.offset) { i, song in
-                Button { ctx.play(list, from: i) } label: {
-                    SongRow(item: song, number: i + 1, playing: ctx.isPlaying(song))
-                        .padding(.vertical, 9)
+            ForEach(Array(shown.enumerated()), id: \.element.id) { g, group in
+                if let album = group.album {
+                    NavigationLink { AlbumDetailView(sourceID: sourceID, album: album) } label: {
+                        HStack(spacing: 10) {
+                            CoverArt(source: ctx.source, id: album.coverArt, size: 120, corner: 6)
+                                .frame(width: 40, height: 40)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(album.name).font(.subheadline.weight(.semibold)).lineLimit(1)
+                                Text([album.year.map(String.init), "\(group.songs.count) 首"].compactMap { $0 }.joined(separator: " · "))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                        }
+                        .padding(.top, g == 0 ? 4 : 22)
+                        .padding(.bottom, 6)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .contextMenu { songMenu(ctx, song) }
-                Divider()
+                // 真实专辑用音轨号；单曲组（各自来自不同文件）按顺序编号
+                let useTrackNumbers = group.album.map { !$0.id.hasPrefix("as-") && !$0.name.hasSuffix("单曲") } ?? false
+                ForEach(Array(group.songs.enumerated()), id: \.offset) { i, song in
+                    Button { ctx.play(list, from: starts[g] + i) } label: {
+                        SongRow(item: song, number: useTrackNumbers ? (song.trackNumber ?? i + 1) : i + 1, showArtist: song.artist != artist.name, playing: ctx.isPlaying(song))
+                            .padding(.vertical, 9)
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu { songMenu(ctx, song) }
+                    Divider()
+                }
             }
         }
         .padding(.horizontal, 18)
@@ -1300,7 +1342,7 @@ struct ArtistDetailView: View {
                 byIndex[i] = list
                 loadedAlbums += 1
                 if loadedAlbums % 10 == 0 || loadedAlbums == albums.count {
-                    songs = albums.indices.flatMap { byIndex[$0] ?? [] }
+                    setGroups(albums, byIndex)
                 }
                 if next < albums.count {
                     let j = next, id = albums[j].id
@@ -1309,7 +1351,15 @@ struct ArtistDetailView: View {
                 }
             }
         }
-        songs = albums.indices.flatMap { byIndex[$0] ?? [] }
+        setGroups(albums, byIndex)
+    }
+
+    private func setGroups(_ albums: [SubsonicAlbum], _ byIndex: [Int: [SourceItem]]) {
+        groups = albums.indices.compactMap { i in
+            guard let list = byIndex[i], !list.isEmpty else { return nil }
+            return SongGroup(id: albums[i].id, album: albums[i], songs: list)
+        }
+        songs = groups.flatMap(\.songs)
     }
 
     private func play(_ ctx: SubsonicContext, shuffle: Bool) async {

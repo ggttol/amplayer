@@ -125,7 +125,11 @@ extension SubsonicSource {
     public func artist(id: String) async throws -> (artist: SubsonicArtist, albums: [SubsonicAlbum]) {
         let body = try await call("getArtist", ["id": id])
         guard let a = body.dict("artist"), let artist = Self.artist(a) else { throw SourceError.protocolError("找不到艺术家") }
-        let albums = a.array("album").compactMap(Self.album).sorted { ($0.year ?? 0) > ($1.year ?? 0) }
+        // 新专辑在前；GTMusic 的“单曲”虚拟专辑（as- 开头）始终排第一
+        let albums = a.array("album").compactMap(Self.album).sorted {
+            let (s0, s1) = ($0.id.hasPrefix("as-"), $1.id.hasPrefix("as-"))
+            return s0 != s1 ? s0 : ($0.year ?? 0) > ($1.year ?? 0)
+        }
         return (artist, albums)
     }
 

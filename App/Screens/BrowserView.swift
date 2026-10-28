@@ -134,12 +134,14 @@ struct BrowserView: View {
         let tracks = audio.map { $0.makeTrack(sourceID: target.sourceID) }
         let index = audio.firstIndex(of: item) ?? 0
         app.player.setQueue(tracks, startAt: index)
+        app.sheet = nil  // 开始播放后回到播放器
         app.endSelection()
         app.sheet = nil
     }
 
     private func playAll() {
         app.player.setQueue(audioItems.map { $0.makeTrack(sourceID: target.sourceID) }, startAt: 0)
+        app.sheet = nil  // 开始播放后回到播放器
         app.endSelection()
         app.sheet = nil
     }
