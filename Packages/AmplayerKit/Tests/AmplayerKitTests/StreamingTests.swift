@@ -28,7 +28,7 @@ private func makeAudio(ext: String, seconds: Double = 3) throws -> (URL, AVAudio
 
 /// 模拟下载：后台把 source 一块块拷到 part，并更新 GrowingFile
 @discardableResult
-private func simulateDownload(from source: URL, to file: GrowingFile, chunk: Int = 16 * 1024, delay: TimeInterval = 0.005, startAfter: Int = 0) -> Thread {
+private func simulateDownload(from source: URL, to file: GrowingFile, chunk: Int = 16 * 1024, delay: TimeInterval = 0.005, startAfter: Int = 0, knownTotal: Bool = true) -> Thread {
     let data = try! Data(contentsOf: source)
     FileManager.default.createFile(atPath: file.partURL.path, contents: nil)
     let thread = Thread {
@@ -38,7 +38,7 @@ private func simulateDownload(from source: URL, to file: GrowingFile, chunk: Int
             let end = min(data.count, offset + chunk)
             try! handle.write(contentsOf: data[offset..<end])
             offset = end
-            file.update(received: Int64(offset), total: Int64(data.count))
+            file.update(received: Int64(offset), total: knownTotal ? Int64(data.count) : -1)
             if offset >= startAfter { Thread.sleep(forTimeInterval: delay) }
         }
         try! handle.close()
@@ -133,8 +133,9 @@ private func growingFile(ext: String, size: Int64) -> GrowingFile {
 private final class SlowSource: MediaSource, @unchecked Sendable {
     let config = SourceConfig(id: "slow", kind: .webdav, name: "Slow")
     let payload: Data
+    let reportsTotal: Bool
     var rootPath: String { "/" }
-    init(payload: Data) { self.payload = payload }
+    init(payload: Data, reportsTotal: Bool = true) { self.payload = payload; self.reportsTotal = reportsTotal }
     func list(path: String) async throws -> [SourceItem] { [] }
 
     func download(path: String, to destination: URL) async throws {
@@ -148,7 +149,7 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
             let end = min(payload.count, offset + 64 * 1024)
             try handle.write(contentsOf: payload[offset..<end])
             offset = end
-            DownloadProgress.report?(Int64(offset), Int64(payload.count))
+            DownloadProgress.report?(Int64(offset), reportsTotal ? Int64(payload.count) : -1)
             try await Task.sleep(for: .milliseconds(30))
         }
         try handle.close()
@@ -264,4 +265,49 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
     let before = Date()
     player.stop()
     #expect(Date().timeIntervalSince(before) < 0.5)
+}
+
+/// 服务器边转码边发（CUE 分轨）：不知道总大小、FLAC 头里也没有总采样数，也要边下边播并完整放完
+@Test func streamsWithoutKnownSize() async throws {
+    let (src, frames) = try makeAudio(ext: "flac", seconds: 20)
+    var data = try Data(contentsOf: src)
+    data[8 + 13] &= 0xF0
+    for i in 14...17 { data[8 + i] = 0 }
+    let patched = FileManager.default.temporaryDirectory.appendingPathComponent("nosize-src-\(UUID().uuidString).flac")
+    try data.write(to: patched)
+    let file = growingFile(ext: "flac", size: -1)
+    simulateDownload(from: patched, to: file, chunk: 64 * 1024, delay: 0.02, knownTotal: false).start()
+    try await file.waitAsync(forFirst: 384 * 1024)
+    let stream = try await GrowingFileStream.open(file, fallbackDuration: 20)
+    #expect(file.receivedBytes < Int64(data.count) / 2)
+    #expect(abs(stream.length - frames) < 4410)
+    // 一直读到结束：总帧数对，而且不会卡住
+    let decoded = try await Task.detached {
+        let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: 8192)!
+        var total = 0
+        while true {
+            let n = try stream.read(into: buffer)
+            if n == 0 { break }
+            total += n
+        }
+        return total
+    }.value
+    #expect(file.isFinished)
+    #expect(abs(AVAudioFramePosition(decoded) - frames) < 4410)
+}
+
+/// 下载拿不到总大小时，缓存也要先交出正在下载的文件
+@Test func cacheStreamsWithoutKnownSize() async throws {
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("stream-nosize-\(UUID().uuidString)")
+    let cache = AudioCache(cacheDirectory: root.appendingPathComponent("c"), offlineDirectory: root.appendingPathComponent("o"))
+    let source = SlowSource(payload: Data(repeating: 3, count: 2 * 1024 * 1024), reportsTotal: false)
+    let track = Track(sourceID: "slow", path: "/cue.flac", title: "cue")
+    guard case .growing(let file) = try await cache.playable(for: track, source: source) else {
+        Issue.record("不知道大小也应该边下边播")
+        return
+    }
+    #expect(file.expectedSize <= 0)
+    #expect(!file.isFinished)
+    _ = try await cache.localURL(for: track, source: source)
+    #expect(file.isFinished)
 }

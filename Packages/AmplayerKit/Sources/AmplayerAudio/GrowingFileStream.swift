@@ -13,7 +13,8 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
 
     private let file: GrowingFile
     private let handle: FileHandle
-    private let size: Int64
+    /// 下载开始时就知道的总大小；服务器边转码边发（CUE 分轨等）时不知道，为 -1
+    private let knownSize: Int64
     private var audioFile: AudioFileID?
     private var extFile: ExtAudioFileRef?
     private let lock = NSLock()
@@ -36,8 +37,10 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     /// 会等文件头下载好，可能阻塞：放在后台调用（见 open(_:fallbackDuration:)）
     init(file: GrowingFile, fallbackDuration: TimeInterval?) throws {
         self.file = file
-        size = file.expectedSize
-        guard size > 0 else { throw StreamError.unsupported }
+        knownSize = file.expectedSize
+        // 不知道总大小时，AudioFile 按文件大小估出来的时长不可信：必须有服务器给的时长
+        let sizeUnknown = knownSize <= 0 && !file.isFinished
+        if sizeUnknown, (fallbackDuration ?? 0) <= 0 { throw StreamError.unsupported }
         // 下载很快的话可能已经下完并移走了
         if let h = try? FileHandle(forReadingFrom: file.partURL) {
             handle = h
@@ -70,7 +73,9 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         // 时长用估计值：精确帧数对 VBR MP3 要扫完整个文件，会一直等到下载完
         // 还在下载、又是头里没写总长度的 FLAC 时，估计时长要把整个文件扫一遍（等于等下载完）：有服务器给的时长就直接用
         var duration: Float64 = 0
-        if let fallbackDuration, fallbackDuration > 0, !file.isFinished, hint == kAudioFileFLACType, Self.flacTotalSamplesUnknown(handle) {
+        if sizeUnknown, let fallbackDuration {
+            duration = fallbackDuration
+        } else if let fallbackDuration, fallbackDuration > 0, !file.isFinished, hint == kAudioFileFLACType, Self.flacTotalSamplesUnknown(handle) {
             duration = fallbackDuration
         } else {
             var durSize = UInt32(MemoryLayout<Float64>.size)
@@ -95,7 +100,17 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         }.value
     }
 
-    var expectedSize: Int64 { size }
+    /// 码率显示用；不知道大小时为 0
+    var expectedSize: Int64 { max(knownSize, 0) }
+
+    /// 给 AudioFile 的文件大小：知道就用真实大小；还在下载又不知道大小时先报一个很大的数，
+    /// 读到还没下载的位置照常等，下载结束后改报实际收到的字节数，读到末尾自然结束
+    private var size: Int64 {
+        if knownSize > 0 { return knownSize }
+        return file.isFinished ? file.receivedBytes : Self.unknownSizeCeiling
+    }
+
+    private static let unknownSizeCeiling: Int64 = 1 << 40
 
     // 读取批次：每次 interrupt() 都换一批，旧批次还在等的读取立刻放弃。
     // 用编号而不是开关：连续跳转时，上一次调度的“恢复”不会把这一次的“打断”抵消掉
@@ -129,6 +144,11 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         buffer.frameLength = buffer.frameCapacity
         let list = buffer.mutableAudioBufferList
         let status = lock.withLock { ExtAudioFileRead(extFile, &frames, list) }
+        // 不知道总大小的流：下载结束后读到末尾时解码器可能报错而不是返回 0 帧，当作放完了
+        if status != noErr, knownSize <= 0, file.isFinished, file.error == nil {
+            buffer.frameLength = 0
+            return 0
+        }
         if status != noErr {
             if file.error != nil { PlaybackLog.add("边下边播：下载中断，停在这里") }
             throw StreamError.read(status)

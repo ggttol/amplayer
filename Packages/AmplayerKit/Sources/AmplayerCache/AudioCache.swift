@@ -96,7 +96,8 @@ public actor AudioCache {
         let (task, file) = startDownload(track, source: source)
         if track.fileExtension.lowercased() != "ape" {
             try await file.waitAsync(forFirst: Self.streamHead)
-            if !file.isFinished, file.error == nil, file.expectedSize > 0 { return .growing(file) }
+            // 不知道总大小（服务器边转码边发）也先试边下边播；解析不了的会退回等下载完
+            if !file.isFinished, file.error == nil { return .growing(file) }
         }
         return .complete(try await task.value)
     }
