@@ -1,4 +1,5 @@
 import AVFoundation
+import CoreAudio
 import AmplayerCore
 import AmplayerObjC
 

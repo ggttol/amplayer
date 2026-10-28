@@ -473,6 +473,7 @@ public final class PlayerController {
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()
                 if self.audio.info?.duration == 0 { self.watchDuration(of: track, source: source) }
+                if case .growing = playable { self.prefetchSourceLyrics(for: track, source: source) }
                 // 边下边播时标签、封面、内嵌歌词要等下载完再读
                 guard let url = try? await self.cache.localURL(for: track, source: source),
                       !Task.isCancelled, self.current?.id == track.id else { return }
@@ -687,6 +688,19 @@ public final class PlayerController {
 
     /// 优先顺序：已缓存 → 来源提供的（同名 .lrc、群晖/Navidrome 歌词接口）→ 文件内嵌 → 在线（LRCLIB、网易云、QQ 音乐、酷狗）。
     /// 带时间轴的优先：本地只有纯文本时也会去在线找一份同步歌词。
+    /// 边下边播时不等下载完：先问来源（媒体服务器）要歌词。内嵌歌词、在线查找仍在下载完后按原流程走
+    private func prefetchSourceLyrics(for track: Track, source: any MediaSource) {
+        guard lyrics == nil else { return }
+        let store = lyricsStore
+        Task { [weak self] in
+            guard let text = await source.lyrics(for: track), let parsed = Lyrics.parse(text) else { return }
+            guard let self, self.current?.id == track.id, self.lyrics == nil else { return }
+            self.lyrics = Self.forDisplay(parsed)
+            self.lyricsLoading = false
+            await store.save(text, for: track)
+        }
+    }
+
     private func findLyrics(for track: Track, source: any MediaSource, embedded: String?) {
         let store = lyricsStore
         let online = Self.onlineLyricsEnabled

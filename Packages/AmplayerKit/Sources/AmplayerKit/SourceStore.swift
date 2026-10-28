@@ -8,6 +8,8 @@ import Observation
 public final class SourceStore {
     public private(set) var configs: [SourceConfig]
     @ObservationIgnored private var instances: [String: any MediaSource] = [:]
+    /// App 自带的来源（不保存、不出现在来源列表里），比如 Music 客户端的服务器
+    @ObservationIgnored private var builtIn: [String: any MediaSource] = [:]
     private static let fileName = "sources.json"
 
     public init() {
@@ -29,7 +31,11 @@ public final class SourceStore {
 
     public func config(_ id: String) -> SourceConfig? { configs.first { $0.id == id } }
 
+    /// 注册 App 自带的来源；同一个 ID 再注册会替换（比如换了账号）
+    public func register(_ source: any MediaSource) { builtIn[source.config.id] = source }
+
     public func source(_ id: String) -> (any MediaSource)? {
+        if let s = builtIn[id] { return s }
         if let s = instances[id] { return s }
         guard let config = config(id) else { return nil }
         let s = SourceFactory.make(config)
