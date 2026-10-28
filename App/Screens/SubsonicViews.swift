@@ -1159,40 +1159,35 @@ private struct LetterBar: View {
     }
 }
 
-/// 艺术家详情：专辑 / 全部歌曲两页；歌曲页可以在这位艺术家的歌里搜索
+/// 艺术家详情：默认显示单曲，“播放”只放单曲；专辑要点进去再播放。
+/// 单曲来自 GTMusic 的“单曲”虚拟专辑（as- 开头）；没有专辑的艺术家按名字搜出来的歌也当单曲。
 struct ArtistDetailView: View {
     @Environment(AppModel.self) private var app
     let sourceID: String
     @State var artist: SubsonicArtist
+    /// 真实专辑（不含单曲虚拟专辑）
     @State private var albums: [SubsonicAlbum]?
-    @State private var songs: [SourceItem] = []
-    /// 歌曲页按专辑分组显示（单曲一组、每张专辑一组），songs 是展开后的播放顺序
-    @State private var groups: [SongGroup] = []
-    /// 歌曲页：已载入几张专辑的歌
-    @State private var loadedAlbums = 0
-    @State private var songsLoading = false
-    @State private var tab = Tab.albums
+    @State private var singles: [SourceItem]?
+    @State private var tab = Tab.singles
     @State private var query = ""
     @State private var error: String?
 
-    enum Tab: Hashable { case albums, songs }
+    enum Tab: Hashable { case singles, albums }
 
-    struct SongGroup: Identifiable {
-        let id: String
-        let album: SubsonicAlbum?
-        let songs: [SourceItem]
-    }
+    private var hasSingles: Bool { !(singles ?? []).isEmpty }
+    private var hasAlbums: Bool { !(albums ?? []).isEmpty }
 
-    private var shownGroups: [SongGroup] {
+    private var shownSingles: [SourceItem] {
         let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return groups }
-        return groups.compactMap { g in
-            let hits = g.songs.filter { ($0.title ?? $0.name).localizedCaseInsensitiveContains(q) || ($0.album?.localizedCaseInsensitiveContains(q) ?? false) }
-            return hits.isEmpty ? nil : SongGroup(id: g.id, album: g.album, songs: hits)
-        }
+        guard !q.isEmpty else { return singles ?? [] }
+        return (singles ?? []).filter { ($0.title ?? $0.name).localizedCaseInsensitiveContains(q) }
     }
 
-    private var shownSongs: [SourceItem] { shownGroups.flatMap(\.songs) }
+    private var shownAlbums: [SubsonicAlbum] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return albums ?? [] }
+        return (albums ?? []).filter { $0.name.localizedCaseInsensitiveContains(q) }
+    }
 
     var body: some View {
         let ctx = SubsonicContext(app: app, sourceID: sourceID)
@@ -1202,20 +1197,14 @@ struct ArtistDetailView: View {
                     .frame(width: 150, height: 150)
                     .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
                 Text(artist.name).font(.title.weight(.bold)).multilineTextAlignment(.center)
-                if let albums {
-                    Text([albums.isEmpty ? nil : "\(albums.count) 张专辑", songs.isEmpty || songsLoading ? nil : "\(songs.count) 首歌"]
-                        .compactMap { $0 }.joined(separator: " · "))
+                if albums != nil {
+                    Text([hasSingles ? "\(singles!.count) 首单曲" : nil, hasAlbums ? "\(albums!.count) 张专辑" : nil].compactMap { $0 }.joined(separator: " · "))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
-                PlayButtons(disabled: (albums ?? []).isEmpty && songs.isEmpty) {
-                    Task { await play(ctx, shuffle: false) }
-                } shuffle: {
-                    Task { await play(ctx, shuffle: true) }
-                }
-                if let albums, !albums.isEmpty {
+                if hasSingles, hasAlbums {
                     Picker("显示", selection: $tab) {
+                        Text("单曲").tag(Tab.singles)
                         Text("专辑").tag(Tab.albums)
-                        Text("全部歌曲").tag(Tab.songs)
                     }
                     .pickerStyle(.segmented)
                 }
@@ -1226,9 +1215,13 @@ struct ArtistDetailView: View {
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.secondary).padding()
             }
-            if tab == .albums, let albums, !albums.isEmpty {
+            if albums == nil, error == nil {
+                ProgressView().padding()
+            } else if tab == .singles, hasSingles {
+                singlesList(ctx)
+            } else if hasAlbums {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 22) {
-                    ForEach(albums) { album in
+                    ForEach(shownAlbums) { album in
                         NavigationLink { AlbumDetailView(sourceID: sourceID, album: album) } label: {
                             AlbumCard(source: ctx.source, album: album)
                         }
@@ -1237,80 +1230,57 @@ struct ArtistDetailView: View {
                 }
                 .padding(18)
             } else if albums != nil {
-                songList(ctx)
+                ContentUnavailableView("没有可播放的歌", systemImage: "music.note")
             }
-            if albums == nil, error == nil { ProgressView().padding() }
         }
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "搜索\(artist.name)的歌")
-        .onChange(of: query) { _, q in if !q.isEmpty { tab = .songs } }
-        .onChange(of: tab) { _, t in if t == .songs { Task { await loadSongs(ctx) } } }
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic),
+                    prompt: tab == .singles ? "搜索\(artist.name)的单曲" : "搜索\(artist.name)的专辑")
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             guard albums == nil else { return }
             do {
-                if let detail = try await ctx.source?.artist(id: artist.id) {
-                    artist = detail.artist
-                    albums = detail.albums
-                    #if DEBUG
-                    if UserDefaults.standard.string(forKey: "DebugArtistMode") == "songs" { tab = .songs }
-                    #endif
-                    // 只在别人专辑里出现的艺术家：直接按名字找歌
-                    if detail.albums.isEmpty {
-                        tab = .songs
-                        let found = try await ctx.source?.search(artist.name, artists: 0, albums: 0, songs: 300).songs ?? []
-                        songs = found.filter { $0.artist?.localizedCaseInsensitiveContains(artist.name) == true }
-                        groups = [SongGroup(id: "search", album: nil, songs: songs)]
-                    }
-                } else { albums = [] }
+                guard let source = ctx.source else { albums = []; return }
+                let detail = try await source.artist(id: artist.id)
+                artist = detail.artist
+                let singlesAlbum = detail.albums.first { $0.id.hasPrefix("as-") }
+                let real = detail.albums.filter { !$0.id.hasPrefix("as-") }
+                if let singlesAlbum {
+                    singles = try await source.album(id: singlesAlbum.id).songs
+                } else if real.isEmpty {
+                    // 只在别人专辑里出现的艺术家：按名字找他的歌
+                    let found = try await source.search(artist.name, artists: 0, albums: 0, songs: 300).songs
+                    singles = found.filter { $0.artist?.localizedCaseInsensitiveContains(artist.name) == true }
+                }
+                tab = (singles ?? []).isEmpty ? .albums : .singles
+                #if DEBUG
+                if UserDefaults.standard.string(forKey: "DebugArtistMode") == "albums" { tab = .albums }
+                #endif
+                albums = real
             } catch {
                 self.error = error.localizedDescription
             }
         }
     }
 
+    /// 单曲列表：播放 / 随机播放只放单曲
     @ViewBuilder
-    private func songList(_ ctx: SubsonicContext) -> some View {
-        let shown = shownGroups
-        let list = shown.flatMap(\.songs)
-        // 每组第一首在 list 里的位置，点歌时从整份列表的这一首开始放
-        let starts = shown.reduce(into: [Int]()) { acc, g in acc.append((acc.last ?? 0) + (acc.isEmpty ? 0 : shown[acc.count - 1].songs.count)) }
-        LazyVStack(alignment: .leading, spacing: 0) {
-            if songsLoading, let albums {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text("正在载入 \(loadedAlbums)/\(albums.count) 张专辑的歌…").font(.caption).foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 10)
+    private func singlesList(_ ctx: SubsonicContext) -> some View {
+        let list = shownSingles
+        VStack(spacing: 0) {
+            PlayButtons(disabled: list.isEmpty) {
+                ctx.play(list)
+            } shuffle: {
+                ctx.play(list, shuffle: true)
             }
-            if !query.isEmpty, list.isEmpty, !songsLoading {
+            .padding(.vertical, 12)
+            if !query.isEmpty, list.isEmpty {
                 Text("没有找到“\(query)”").font(.footnote).foregroundStyle(.secondary).padding(.vertical, 24)
             }
-            ForEach(Array(shown.enumerated()), id: \.element.id) { g, group in
-                if let album = group.album {
-                    NavigationLink { AlbumDetailView(sourceID: sourceID, album: album) } label: {
-                        HStack(spacing: 10) {
-                            CoverArt(source: ctx.source, id: album.coverArt, size: 120, corner: 6)
-                                .frame(width: 40, height: 40)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(album.name).font(.subheadline.weight(.semibold)).lineLimit(1)
-                                Text([album.year.map(String.init), "\(group.songs.count) 首"].compactMap { $0 }.joined(separator: " · "))
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-                        }
-                        .padding(.top, g == 0 ? 4 : 22)
-                        .padding(.bottom, 6)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                // 真实专辑用音轨号；单曲组（各自来自不同文件）按顺序编号
-                let useTrackNumbers = group.album.map { !$0.id.hasPrefix("as-") && !$0.name.hasSuffix("单曲") } ?? false
-                ForEach(Array(group.songs.enumerated()), id: \.offset) { i, song in
-                    Button { ctx.play(list, from: starts[g] + i) } label: {
-                        SongRow(item: song, number: useTrackNumbers ? (song.trackNumber ?? i + 1) : i + 1, showArtist: song.artist != artist.name, playing: ctx.isPlaying(song))
+            LazyVStack(spacing: 0) {
+                ForEach(Array(list.enumerated()), id: \.offset) { i, song in
+                    Button { ctx.play(list, from: i) } label: {
+                        SongRow(item: song, number: i + 1, showArtist: song.artist != artist.name, playing: ctx.isPlaying(song))
                             .padding(.vertical, 9)
                     }
                     .buttonStyle(.plain)
@@ -1320,53 +1290,6 @@ struct ArtistDetailView: View {
             }
         }
         .padding(.horizontal, 18)
-        .padding(.top, 8)
-    }
-
-    /// 逐张专辑取歌：先到先显示，最终按专辑顺序（新专辑在前）排好
-    private func loadSongs(_ ctx: SubsonicContext) async {
-        guard !songsLoading, songs.isEmpty, let source = ctx.source, let albums, !albums.isEmpty else { return }
-        songsLoading = true
-        defer { songsLoading = false }
-        loadedAlbums = 0
-        var byIndex: [Int: [SourceItem]] = [:]
-        await withTaskGroup(of: (Int, [SourceItem]).self) { group in
-            var next = 0
-            // 同时最多 6 个请求，专辑多的歌手也不会把服务器压垮
-            for _ in 0..<min(6, albums.count) {
-                let i = next, id = albums[i].id
-                group.addTask { (i, (try? await source.album(id: id).songs) ?? []) }
-                next += 1
-            }
-            for await (i, list) in group {
-                byIndex[i] = list
-                loadedAlbums += 1
-                if loadedAlbums % 10 == 0 || loadedAlbums == albums.count {
-                    setGroups(albums, byIndex)
-                }
-                if next < albums.count {
-                    let j = next, id = albums[j].id
-                    group.addTask { (j, (try? await source.album(id: id).songs) ?? []) }
-                    next += 1
-                }
-            }
-        }
-        setGroups(albums, byIndex)
-    }
-
-    private func setGroups(_ albums: [SubsonicAlbum], _ byIndex: [Int: [SourceItem]]) {
-        groups = albums.indices.compactMap { i in
-            guard let list = byIndex[i], !list.isEmpty else { return nil }
-            return SongGroup(id: albums[i].id, album: albums[i], songs: list)
-        }
-        songs = groups.flatMap(\.songs)
-    }
-
-    private func play(_ ctx: SubsonicContext, shuffle: Bool) async {
-        if songs.isEmpty { await loadSongs(ctx) }
-        let list = shownSongs
-        ctx.play(list, shuffle: shuffle)
-        app.show("\(shuffle ? "随机播放" : "播放") \(artist.name) 的 \(list.count) 首歌")
     }
 }
 
