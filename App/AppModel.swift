@@ -93,6 +93,7 @@ final class AppModel {
         CarPlayHub.shared.library = library
         CarPlayHub.shared.sources = sources
         player.onTrackUpdated = { [weak library] track in library?.update(track) }
+        player.onNotice = { [weak self] message in self?.show(message) }
         let limit = defaults.object(forKey: "amplayer.cacheLimit") as? Int64 ?? 2 * 1024 * 1024 * 1024
         Task { await AudioCache.shared.setLimit(limit) }
     }

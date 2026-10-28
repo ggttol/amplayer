@@ -18,9 +18,9 @@ struct LyricsPanelView: View {
             if let lyrics = player.lyrics {
                 if lyrics.isSynced {
                     TimelineView(.periodic(from: .now, by: 0.2)) { _ in
-                        let current = lyrics.index(at: player.audio.currentTime)
+                        let current = lyrics.index(at: player.lyricsTime)
                         LyricsLines(lyrics: lyrics, current: current, follow: current, style: style, scale: scale) { time in
-                            player.seek(to: time)
+                            player.seek(to: time - player.lyricsOffset)
                         }
                     }
                 } else {
@@ -40,6 +40,18 @@ struct LyricsPanelView: View {
                 .disabled(player.current == nil)
             Button("重新查找歌词", systemImage: "arrow.clockwise") { player.reloadLyrics() }
                 .disabled(player.current == nil)
+            if player.lyrics?.isSynced == true {
+                Section(PlayerController.describeLyricsOffset(player.lyricsOffset)) {
+                    Button("歌词提前 0.5 秒", systemImage: "backward") { shiftLyrics(0.5) }
+                    Button("歌词延后 0.5 秒", systemImage: "forward") { shiftLyrics(-0.5) }
+                    if player.lyricsOffset != 0 {
+                        Button("恢复歌词时间", systemImage: "arrow.uturn.backward") {
+                            player.resetLyricsOffset()
+                            app.show("歌词时间已恢复")
+                        }
+                    }
+                }
+            }
             Button("显示播放列表", systemImage: "list.bullet") { app.showLyrics = false }
         }
         .sheet(isPresented: $searching) { LyricsSearchView() }
@@ -55,6 +67,12 @@ struct LyricsPanelView: View {
         }
     }
 
+    /// 歌词比歌声慢就提前，快就延后；每首歌单独记住
+    private func shiftLyrics(_ delta: TimeInterval) {
+        player.adjustLyricsOffset(by: delta)
+        app.show(PlayerController.describeLyricsOffset(player.lyricsOffset))
+    }
+
     private func estimatedLine(_ lyrics: Lyrics) -> Int? {
         guard let duration = player.audio.info?.duration, duration > 0 else { return nil }
         return lyrics.estimatedIndex(progress: player.audio.currentTime / duration)
@@ -62,6 +80,11 @@ struct LyricsPanelView: View {
 
     private var placeholder: some View {
         VStack(spacing: 6 * scale) {
+            if let data = player.artwork, player.current != nil {
+                ArtworkView(data: data)
+                    .frame(maxWidth: 90 * scale, maxHeight: 90 * scale)
+                    .padding(.bottom, 2 * scale)
+            }
             if player.current == nil {
                 Text("没有正在播放的歌曲")
             } else if player.lyricsLoading {
@@ -69,8 +92,11 @@ struct LyricsPanelView: View {
                 Text("正在查找歌词…")
             } else {
                 Text("没有找到歌词")
-                Text("长按这里可在线搜索或导入 .lrc")
-                    .opacity(0.6)
+                HStack(spacing: 8 * scale) {
+                    pixelButton("在线搜索") { searching = true }
+                    pixelButton("导入 .lrc") { importing = true }
+                }
+                .padding(.top, 2 * scale)
             }
         }
         .font(.system(size: 8.5 * scale))
@@ -78,6 +104,41 @@ struct LyricsPanelView: View {
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
+    }
+}
+
+extension LyricsPanelView {
+    /// 和播放列表配色一致的小方框按钮
+    fileprivate func pixelButton(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 8 * scale, weight: .medium))
+                .foregroundStyle(style.normal.color)
+                .padding(.horizontal, 6 * scale)
+                .padding(.vertical, 3 * scale)
+                .overlay(Rectangle().stroke(style.normal.color.opacity(0.6), lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// 专辑封面：只在封面变了时解码一次
+struct ArtworkView: View {
+    let data: Data
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFit()
+                    .shadow(color: .black.opacity(0.5), radius: 4, y: 1)
+            }
+        }
+        .task(id: data) { image = UIImage(data: data) }
+        .accessibilityHidden(true)
     }
 }
 

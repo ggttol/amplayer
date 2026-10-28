@@ -25,6 +25,12 @@ public final class PlayerController {
         didSet { syncLyricTicker() }
     }
     public private(set) var lyricsLoading = false
+    /// 歌词时间微调（秒）：正数表示歌词提前出现。每首歌单独记
+    public private(set) var lyricsOffset: TimeInterval = 0
+    /// 歌词按这个时间走：播放位置加上微调
+    public var lyricsTime: TimeInterval { audio.currentTime + lyricsOffset }
+    /// 给界面的一句提示（比如“从 1:23 继续播放”），App 接到后弹出来
+    @ObservationIgnored public var onNotice: ((String) -> Void)?
 
     @ObservationIgnored public let cache: AudioCache
     @ObservationIgnored private let sources: SourceStore
@@ -44,6 +50,17 @@ public final class PlayerController {
     @ObservationIgnored private var perTrackEQ: [String: EqualizerSettings] = [:]
     @ObservationIgnored private var perTrackEQDirty = false
     @ObservationIgnored private var sleepTask: Task<Void, Never>?
+    @ObservationIgnored private var lyricsOffsets: [String: Double] = [:]
+    /// 上次退出时播到的位置：启动后第一次加载这首歌时跳过去
+    @ObservationIgnored private var pendingResume: ResumePoint?
+    @ObservationIgnored private var positionTimer: Timer?
+
+    private struct ResumePoint: Codable {
+        var trackID: String
+        var time: TimeInterval
+    }
+    private static let resumeKey = "amplayer.resume"
+    private static let lyricsOffsetsKey = "amplayer.lyricsOffsets"
 
     /// 均衡器 AUTO（经典播放器的含义）：开着时调均衡器会记到当前这首歌上，下次播它自动换回来
     public var autoEqualizer = false {
@@ -86,6 +103,54 @@ public final class PlayerController {
         audio.onAdvancedToNext = { [weak self] url in self?.advancedGaplessly(to: url) }
         audio.onStateChangedExternally = { [weak self] in self?.updateNowPlaying() }
         setupRemoteCommands()
+        lyricsOffsets = UserDefaults.standard.dictionary(forKey: Self.lyricsOffsetsKey) as? [String: Double] ?? [:]
+        pendingResume = UserDefaults.standard.data(forKey: Self.resumeKey).flatMap { try? JSONDecoder().decode(ResumePoint.self, from: $0) }
+        // 播放时每 15 秒记一次位置，App 被系统关掉后也能接着播
+        let timer = Timer(timeInterval: 15, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.audio.state == .playing else { return }
+                self.savePosition()
+            }
+        }
+        timer.tolerance = 5
+        RunLoop.main.add(timer, forMode: .common)
+        positionTimer = timer
+    }
+
+    // MARK: 断点续播
+
+    /// 记下当前播到哪里（暂停、切到后台时也会调用）。开头 5 秒内和最后 10 秒不记
+    public func savePosition() {
+        guard let track = current, let info = audio.info, loadingTrackID == nil else { return }
+        let time = audio.currentTime
+        let worth = time > 5 && (info.duration <= 0 || info.duration - time > 10)
+        if worth, let data = try? JSONEncoder().encode(ResumePoint(trackID: track.id, time: time)) {
+            UserDefaults.standard.set(data, forKey: Self.resumeKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Self.resumeKey)
+        }
+    }
+
+    // MARK: 歌词时间微调
+
+    /// 歌词整体提前（正数）或延后（负数），记在当前这首歌上
+    public func adjustLyricsOffset(by delta: TimeInterval) {
+        guard let id = current?.id else { return }
+        lyricsOffset = ((lyricsOffset + delta) * 10).rounded() / 10
+        lyricsOffsets[id] = lyricsOffset == 0 ? nil : lyricsOffset
+        UserDefaults.standard.set(lyricsOffsets, forKey: Self.lyricsOffsetsKey)
+        nowPlayingLyricIndex = nil
+        updateNowPlaying()
+    }
+
+    public func resetLyricsOffset() { adjustLyricsOffset(by: -lyricsOffset) }
+
+    /// “歌词提前 0.5 秒” / “歌词延后 1 秒” / “歌词时间未调整”
+    nonisolated public static func describeLyricsOffset(_ offset: TimeInterval) -> String {
+        if offset == 0 { return "歌词时间未调整" }
+        let v = abs(offset)
+        let text = v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
+        return offset > 0 ? "歌词提前 \(text) 秒" : "歌词延后 \(text) 秒"
     }
 
     public var current: Track? { queue.current }
@@ -118,6 +183,7 @@ public final class PlayerController {
     public func pause() {
         audio.pause()
         updateNowPlaying()
+        savePosition()
     }
 
     public func togglePause() {
@@ -129,6 +195,8 @@ public final class PlayerController {
         loadingTrackID = nil
         audio.stop()
         updateNowPlaying()
+        // 停止表示下次从头放
+        UserDefaults.standard.removeObject(forKey: Self.resumeKey)
     }
 
     public func next() {
@@ -368,6 +436,9 @@ public final class PlayerController {
         loadingTrackID = track.id
         updateNowPlaying()
         PlaybackLog.add("加载：\(track.displayName)")
+        // 启动后第一次加载的正好是上次没播完的那首：接着上次的位置
+        let resumeAt = pendingResume?.trackID == track.id ? pendingResume?.time : nil
+        pendingResume = nil
         loadTask = Task { [weak self] in
             guard let self else { return }
             // 跳过的歌和预取的下一首都停掉，让这首先下
@@ -393,6 +464,10 @@ public final class PlayerController {
                 }
                 try Task.checkCancellation()
                 self.loadingTrackID = nil
+                if let resumeAt, resumeAt < (self.audio.info?.duration ?? 0) - 5 {
+                    self.audio.seek(to: resumeAt)
+                    self.onNotice?("从 \(TimeFormat.clock(resumeAt)) 继续播放")
+                }
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()
                 // 边下边播时标签、封面、内嵌歌词要等下载完再读
@@ -440,6 +515,7 @@ public final class PlayerController {
         if autoEqualizer, let saved = perTrackEQ[track.id] { applyPerTrackEQ(saved) }
         lastError = nil
         artwork = nil
+        lyricsOffset = lyricsOffsets[track.id] ?? 0
         lyricsTask?.cancel()
         lyrics = Self.forDisplay(lyricsStore.cached(track))
         lyricsLoading = lyrics == nil
@@ -760,7 +836,7 @@ public final class PlayerController {
 
     /// 当前这句歌词（关掉了、没有时间轴、还没唱到第一句或这句是空行时为 nil）
     private func nowPlayingLyricLine() -> String? {
-        guard Self.lyricsOnNowPlaying, let lyrics, lyrics.isSynced, let i = lyrics.index(at: audio.currentTime) else {
+        guard Self.lyricsOnNowPlaying, let lyrics, lyrics.isSynced, let i = lyrics.index(at: lyricsTime) else {
             nowPlayingLyricIndex = nil
             return nil
         }
@@ -782,7 +858,7 @@ public final class PlayerController {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 guard self.audio.state == .playing, let lyrics = self.lyrics else { self.syncLyricTicker(); return }
-                if lyrics.index(at: self.audio.currentTime) != self.nowPlayingLyricIndex { self.updateNowPlaying() }
+                if lyrics.index(at: self.lyricsTime) != self.nowPlayingLyricIndex { self.updateNowPlaying() }
             }
         }
     }

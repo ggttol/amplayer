@@ -141,7 +141,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             CPListItem(text: text.trimmingCharacters(in: .whitespaces).isEmpty ? "♪" : text, detailText: nil)
         }
         if lyrics.isSynced {
-            let current = lyrics.index(at: player.audio.currentTime)
+            let current = lyrics.index(at: player.lyricsTime)
             let start = current ?? 0
             let key = "\(trackID):\(start):\(current != nil)"
             guard key != lyricsKey else { return }
@@ -151,7 +151,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
                 row.isPlaying = i == current
                 row.playingIndicatorLocation = .leading
                 row.handler = { _, done in
-                    if let t = line.time { player.seek(to: t) }
+                    if let t = line.time { player.seek(to: t - player.lyricsOffset) }
                     done()
                 }
                 return row

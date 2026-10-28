@@ -46,7 +46,10 @@ struct PlayerScreen: View {
             if case let .success(urls) = result { app.importAudioFiles(urls, play: true) }
         }
         .onOpenURL { app.open(url: $0) }
-        .onChange(of: scenePhase, initial: true) { _, _ in updateAnalyzer() }
+        .onChange(of: scenePhase, initial: true) { _, phase in
+            updateAnalyzer()
+            if phase == .background { app.player.savePosition() }
+        }
         .onChange(of: app.visualizerMode) { _, _ in updateAnalyzer() }
         .onChange(of: app.player.lastError) { _, error in
             if let error { app.show(error) }
