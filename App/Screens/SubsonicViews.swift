@@ -332,6 +332,7 @@ struct SubsonicHomeView: View {
     @State private var editing = false
     @State private var showFolders = false
     @State private var reload = 0
+    @State private var linkedArtist: String?
 
     private var ctx: SubsonicContext { SubsonicContext(app: app, sourceID: sourceID) }
 
@@ -381,7 +382,16 @@ struct SubsonicHomeView: View {
         .sheet(isPresented: $editing) {
             SubsonicHomeEditor(sections: $sections) { SubsonicHomeSection.save($0, for: sourceID) }
         }
-        .onAppear { if sections.isEmpty { sections = SubsonicHomeSection.load(for: sourceID) } }
+        .onAppear {
+            if sections.isEmpty { sections = SubsonicHomeSection.load(for: sourceID) }
+            if let link = app.pendingArtist, link.sourceID == sourceID {
+                app.pendingArtist = nil
+                linkedArtist = link.name
+            }
+        }
+        .navigationDestination(isPresented: Binding(get: { linkedArtist != nil }, set: { if !$0 { linkedArtist = nil } })) {
+            if let linkedArtist { ArtistLinkResolver(sourceID: sourceID, name: linkedArtist) }
+        }
         #if DEBUG
         // 截图用：-DebugSubsonicPage album / artists / genres / search:关键词
         .navigationDestination(isPresented: $debugPage) { debugDestination }
@@ -389,7 +399,7 @@ struct SubsonicHomeView: View {
             guard let page = UserDefaults.standard.string(forKey: "DebugSubsonicPage") else { return }
             if page.hasPrefix("search:") { query = String(page.dropFirst(7)); return }
             if page == "editor" { editing = true; return }
-            guard ["album", "artists", "genres"].contains(page) else { return }
+            guard ["album", "artists", "genres", "artist"].contains(page) else { return }
             if page == "album" { debugAlbum = try? await ctx.source?.albums(.newest, size: 1).first }
             debugPage = true
         }
@@ -403,6 +413,7 @@ struct SubsonicHomeView: View {
         switch UserDefaults.standard.string(forKey: "DebugSubsonicPage") {
         case "album": if let debugAlbum { AlbumDetailView(sourceID: sourceID, album: debugAlbum) }
         case "artists": ArtistListView(sourceID: sourceID)
+        case "artist": ArtistLinkResolver(sourceID: sourceID, name: "张学友")
         case "genres": GenreListView(sourceID: sourceID)
         default: EmptyView()
         }
@@ -936,41 +947,119 @@ private func swipe(_ ctx: SubsonicContext, _ song: SourceItem) -> some View {
 
 // MARK: - 艺术家
 
+/// 艺术家：“热门”头像墙（按专辑数）和“A–Z”列表（右侧字母条快速定位），顶部可筛选
 struct ArtistListView: View {
     @Environment(AppModel.self) private var app
     let sourceID: String
     var preloaded: [SubsonicArtistIndex]?
     @State private var index: [SubsonicArtistIndex]?
     @State private var query = ""
+    @State private var mode = Mode.popular
+    @State private var activeLetter: String?
+
+    enum Mode: String, CaseIterable { case popular = "热门", all = "A–Z" }
 
     var body: some View {
         let ctx = SubsonicContext(app: app, sourceID: sourceID)
-        List {
-            ForEach(filtered) { group in
-                Section(group.name) {
-                    ForEach(group.artists) { artist in
-                        NavigationLink { ArtistDetailView(sourceID: sourceID, artist: artist) } label: {
-                            HStack(spacing: 12) {
-                                CoverArt(source: ctx.source, id: artist.coverArt, size: 120, corner: 22, symbol: "music.mic")
-                                    .frame(width: 44, height: 44)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(artist.name)
-                                    if let n = artist.albumCount, n > 0 { Text("\(n) 张专辑").font(.caption).foregroundStyle(.secondary) }
-                                }
+        Group {
+            if !query.trimmingCharacters(in: .whitespaces).isEmpty || mode == .all {
+                alphabetical(ctx)
+            } else {
+                popular(ctx)
+            }
+        }
+        .safeAreaInset(edge: .top) {
+            if query.isEmpty {
+                Picker("显示", selection: $mode) {
+                    ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 8)
+                .background(.bar)
+            }
+        }
+        .overlay { if index == nil { ProgressView() } }
+        .searchable(text: $query, prompt: "筛选艺术家")
+        .navigationTitle(index.map { "艺术家（\($0.reduce(0) { $0 + $1.artists.count })）" } ?? "艺术家")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            #if DEBUG
+            if UserDefaults.standard.string(forKey: "DebugArtistMode") == "az" { mode = .all }
+            #endif
+            if index == nil { index = preloaded }
+            if index == nil { index = (try? await ctx.source?.artistIndex()) ?? [] }
+        }
+    }
+
+    /// 专辑最多的 90 位，头像网格
+    private func popular(_ ctx: SubsonicContext) -> some View {
+        let top = (index ?? []).flatMap(\.artists).sorted { ($0.albumCount ?? 0) > ($1.albumCount ?? 0) }.prefix(90)
+        return ScrollView {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 14)], spacing: 18) {
+                ForEach(Array(top)) { artist in
+                    NavigationLink { ArtistDetailView(sourceID: sourceID, artist: artist) } label: {
+                        VStack(spacing: 6) {
+                            CoverArt(source: ctx.source, id: artist.coverArt, size: 240, corner: 50, symbol: "music.mic")
+                                .aspectRatio(1, contentMode: .fit)
+                                .shadow(color: .black.opacity(0.35), radius: 5, y: 2)
+                            Text(artist.name).font(.subheadline.weight(.medium)).lineLimit(1)
+                            if let n = artist.albumCount, n > 0 {
+                                Text("\(n) 张专辑").font(.caption2).foregroundStyle(.secondary)
                             }
                         }
                     }
+                    .buttonStyle(.plain)
                 }
             }
+            .padding(18)
         }
-        .listStyle(.plain)
-        .overlay { if index == nil { ProgressView() } }
-        .searchable(text: $query, prompt: "筛选艺术家")
-        .navigationTitle("艺术家")
-        .navigationBarTitleDisplayMode(.inline)
-        .task {
-            if index == nil { index = preloaded }
-            if index == nil { index = (try? await ctx.source?.artistIndex()) ?? [] }
+    }
+
+    private func alphabetical(_ ctx: SubsonicContext) -> some View {
+        let groups = filtered
+        return ScrollViewReader { proxy in
+            List {
+                ForEach(groups) { group in
+                    Section {
+                        ForEach(Array(group.artists.enumerated()), id: \.element.id) { i, artist in
+                            NavigationLink { ArtistDetailView(sourceID: sourceID, artist: artist) } label: {
+                                HStack(spacing: 12) {
+                                    CoverArt(source: ctx.source, id: artist.coverArt, size: 120, corner: 22, symbol: "music.mic")
+                                        .frame(width: 44, height: 44)
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(artist.name)
+                                        if let n = artist.albumCount, n > 0 { Text("\(n) 张专辑").font(.caption).foregroundStyle(.secondary) }
+                                    }
+                                }
+                            }
+                            .id(i == 0 ? "letter-\(group.name)" : artist.id)
+                        }
+                    } header: {
+                        Text(group.name)
+                    }
+                }
+            }
+            .listStyle(.plain)
+            .contentMargins(.trailing, query.isEmpty && groups.count > 5 ? 20 : 0, for: .scrollContent)
+            .overlay(alignment: .trailing) {
+                if query.isEmpty, groups.count > 5 {
+                    LetterBar(letters: groups.map(\.name), active: $activeLetter) { letter in
+                        proxy.scrollTo("letter-\(letter)", anchor: .top)
+                    }
+                    .padding(.trailing, 2)
+                }
+            }
+            .overlay {
+                if let activeLetter {
+                    Text(activeLetter)
+                        .font(.system(size: 44, weight: .bold, design: .rounded))
+                        .frame(width: 88, height: 88)
+                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
+            }
         }
     }
 
@@ -985,33 +1074,100 @@ struct ArtistListView: View {
     }
 }
 
+/// 右侧竖排字母条：点或滑动到某个字母就跳过去
+private struct LetterBar: View {
+    let letters: [String]
+    @Binding var active: String?
+    let onSelect: (String) -> Void
+    @State private var lastHaptic: String?
+
+    var body: some View {
+        GeometryReader { geo in
+            let rowHeight = min(18, geo.size.height / CGFloat(max(letters.count, 1)))
+            VStack(spacing: 0) {
+                ForEach(letters, id: \.self) { letter in
+                    Text(letter)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(active == letter ? Color.primary : Color.accentColor)
+                        .frame(width: 22, height: rowHeight)
+                }
+            }
+            .padding(.vertical, 6)
+            .background(Capsule().fill(Color(white: 0.12).opacity(active == nil ? 0 : 0.85)))
+            .frame(maxHeight: .infinity)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .local)
+                    .onChanged { value in
+                        let total = rowHeight * CGFloat(letters.count)
+                        let top = (geo.size.height - total) / 2
+                        let i = Int((value.location.y - top) / rowHeight)
+                        let letter = letters[min(max(i, 0), letters.count - 1)]
+                        if letter != active {
+                            active = letter
+                            onSelect(letter)
+                            if letter != lastHaptic { UISelectionFeedbackGenerator().selectionChanged(); lastHaptic = letter }
+                        }
+                    }
+                    .onEnded { _ in
+                        withAnimation(.easeOut(duration: 0.3)) { active = nil }
+                        lastHaptic = nil
+                    }
+            )
+            .frame(maxWidth: .infinity, alignment: .trailing)
+        }
+        .frame(width: 26)
+        .accessibilityHidden(true)
+    }
+}
+
+/// 艺术家详情：专辑 / 全部歌曲两页；歌曲页可以在这位艺术家的歌里搜索
 struct ArtistDetailView: View {
     @Environment(AppModel.self) private var app
     let sourceID: String
     @State var artist: SubsonicArtist
     @State private var albums: [SubsonicAlbum]?
-    /// 没有自己的专辑时（只在别人专辑里出现），按名字搜出来的歌
     @State private var songs: [SourceItem] = []
+    /// 歌曲页：已载入几张专辑的歌
+    @State private var loadedAlbums = 0
+    @State private var songsLoading = false
+    @State private var tab = Tab.albums
+    @State private var query = ""
     @State private var error: String?
-    @State private var collecting = false
+
+    enum Tab: Hashable { case albums, songs }
+
+    private var shownSongs: [SourceItem] {
+        let q = query.trimmingCharacters(in: .whitespaces)
+        guard !q.isEmpty else { return songs }
+        return songs.filter { ($0.title ?? $0.name).localizedCaseInsensitiveContains(q) || ($0.album?.localizedCaseInsensitiveContains(q) ?? false) }
+    }
 
     var body: some View {
         let ctx = SubsonicContext(app: app, sourceID: sourceID)
         ScrollView {
             VStack(spacing: 14) {
-                CoverArt(source: ctx.source, id: artist.coverArt, size: 400, corner: 80, symbol: "music.mic")
-                    .frame(width: 160, height: 160)
+                CoverArt(source: ctx.source, id: artist.coverArt, size: 400, corner: 75, symbol: "music.mic")
+                    .frame(width: 150, height: 150)
                     .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
                 Text(artist.name).font(.title.weight(.bold)).multilineTextAlignment(.center)
                 if let albums {
-                    Text(albums.isEmpty ? "\(songs.count) 首歌" : "\(albums.count) 张专辑").font(.subheadline).foregroundStyle(.secondary)
+                    Text([albums.isEmpty ? nil : "\(albums.count) 张专辑", songs.isEmpty || songsLoading ? nil : "\(songs.count) 首歌"]
+                        .compactMap { $0 }.joined(separator: " · "))
+                        .font(.subheadline).foregroundStyle(.secondary)
                 }
-                PlayButtons(disabled: ((albums ?? []).isEmpty && songs.isEmpty) || collecting) {
-                    Task { await playAll(ctx, shuffle: false) }
+                PlayButtons(disabled: (albums ?? []).isEmpty && songs.isEmpty) {
+                    Task { await play(ctx, shuffle: false) }
                 } shuffle: {
-                    Task { await playAll(ctx, shuffle: true) }
+                    Task { await play(ctx, shuffle: true) }
                 }
-                .overlay { if collecting { ProgressView() } }
+                if let albums, !albums.isEmpty {
+                    Picker("显示", selection: $tab) {
+                        Text("专辑").tag(Tab.albums)
+                        Text("全部歌曲").tag(Tab.songs)
+                    }
+                    .pickerStyle(.segmented)
+                }
             }
             .padding(.horizontal, 18)
             .padding(.top, 8)
@@ -1019,31 +1175,24 @@ struct ArtistDetailView: View {
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.secondary).padding()
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 22) {
-                ForEach(albums ?? []) { album in
-                    NavigationLink { AlbumDetailView(sourceID: sourceID, album: album) } label: {
-                        AlbumCard(source: ctx.source, album: album)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(18)
-            if !songs.isEmpty {
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(songs.enumerated()), id: \.offset) { i, song in
-                        Button { ctx.play(songs, from: i) } label: {
-                            SongRow(item: song, number: i + 1, playing: ctx.isPlaying(song))
-                                .padding(.vertical, 10)
+            if tab == .albums, let albums, !albums.isEmpty {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 16)], spacing: 22) {
+                    ForEach(albums) { album in
+                        NavigationLink { AlbumDetailView(sourceID: sourceID, album: album) } label: {
+                            AlbumCard(source: ctx.source, album: album)
                         }
                         .buttonStyle(.plain)
-                        .contextMenu { songMenu(ctx, song) }
-                        Divider()
                     }
                 }
-                .padding(.horizontal, 18)
+                .padding(18)
+            } else if albums != nil {
+                songList(ctx)
             }
             if albums == nil, error == nil { ProgressView().padding() }
         }
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "搜索\(artist.name)的歌")
+        .onChange(of: query) { _, q in if !q.isEmpty { tab = .songs } }
+        .onChange(of: tab) { _, t in if t == .songs { Task { await loadSongs(ctx) } } }
         .navigationTitle(artist.name)
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -1051,11 +1200,16 @@ struct ArtistDetailView: View {
             do {
                 if let detail = try await ctx.source?.artist(id: artist.id) {
                     artist = detail.artist
+                    albums = detail.albums
+                    #if DEBUG
+                    if UserDefaults.standard.string(forKey: "DebugArtistMode") == "songs" { tab = .songs }
+                    #endif
+                    // 只在别人专辑里出现的艺术家：直接按名字找歌
                     if detail.albums.isEmpty {
-                        let found = try await ctx.source?.search(artist.name, artists: 0, albums: 0, songs: 200).songs ?? []
+                        tab = .songs
+                        let found = try await ctx.source?.search(artist.name, artists: 0, albums: 0, songs: 300).songs ?? []
                         songs = found.filter { $0.artist?.localizedCaseInsensitiveContains(artist.name) == true }
                     }
-                    albums = detail.albums
                 } else { albums = [] }
             } catch {
                 self.error = error.localizedDescription
@@ -1063,25 +1217,101 @@ struct ArtistDetailView: View {
         }
     }
 
-    /// 把所有专辑的歌按专辑顺序收集起来
-    private func playAll(_ ctx: SubsonicContext, shuffle: Bool) async {
-        guard let source = ctx.source, let albums else { return }
-        if albums.isEmpty {
-            ctx.play(songs, shuffle: shuffle)
-            return
+    @ViewBuilder
+    private func songList(_ ctx: SubsonicContext) -> some View {
+        let list = shownSongs
+        LazyVStack(spacing: 0) {
+            if songsLoading, let albums {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    Text("正在载入 \(loadedAlbums)/\(albums.count) 张专辑的歌…").font(.caption).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 10)
+            }
+            if !query.isEmpty, list.isEmpty, !songsLoading {
+                Text("没有找到“\(query)”").font(.footnote).foregroundStyle(.secondary).padding(.vertical, 24)
+            }
+            ForEach(Array(list.enumerated()), id: \.offset) { i, song in
+                Button { ctx.play(list, from: i) } label: {
+                    SongRow(item: song, number: i + 1, playing: ctx.isPlaying(song))
+                        .padding(.vertical, 9)
+                }
+                .buttonStyle(.plain)
+                .contextMenu { songMenu(ctx, song) }
+                Divider()
+            }
         }
-        collecting = true
-        defer { collecting = false }
+        .padding(.horizontal, 18)
+        .padding(.top, 8)
+    }
+
+    /// 逐张专辑取歌：先到先显示，最终按专辑顺序（新专辑在前）排好
+    private func loadSongs(_ ctx: SubsonicContext) async {
+        guard !songsLoading, songs.isEmpty, let source = ctx.source, let albums, !albums.isEmpty else { return }
+        songsLoading = true
+        defer { songsLoading = false }
+        loadedAlbums = 0
         var byIndex: [Int: [SourceItem]] = [:]
         await withTaskGroup(of: (Int, [SourceItem]).self) { group in
-            for (i, album) in albums.enumerated() {
-                group.addTask { (i, (try? await source.album(id: album.id).songs) ?? []) }
+            var next = 0
+            // 同时最多 6 个请求，专辑多的歌手也不会把服务器压垮
+            for _ in 0..<min(6, albums.count) {
+                let i = next, id = albums[i].id
+                group.addTask { (i, (try? await source.album(id: id).songs) ?? []) }
+                next += 1
             }
-            for await (i, songs) in group { byIndex[i] = songs }
+            for await (i, list) in group {
+                byIndex[i] = list
+                loadedAlbums += 1
+                if loadedAlbums % 10 == 0 || loadedAlbums == albums.count {
+                    songs = albums.indices.flatMap { byIndex[$0] ?? [] }
+                }
+                if next < albums.count {
+                    let j = next, id = albums[j].id
+                    group.addTask { (j, (try? await source.album(id: id).songs) ?? []) }
+                    next += 1
+                }
+            }
         }
-        let songs = albums.indices.flatMap { byIndex[$0] ?? [] }
-        ctx.play(songs, shuffle: shuffle)
-        app.show("\(shuffle ? "随机播放" : "播放") \(artist.name) 的 \(songs.count) 首歌")
+        songs = albums.indices.flatMap { byIndex[$0] ?? [] }
+    }
+
+    private func play(_ ctx: SubsonicContext, shuffle: Bool) async {
+        if songs.isEmpty { await loadSongs(ctx) }
+        let list = shownSongs
+        ctx.play(list, shuffle: shuffle)
+        app.show("\(shuffle ? "随机播放" : "播放") \(artist.name) 的 \(list.count) 首歌")
+    }
+}
+
+/// 从别处（播放列表、菜单）跳到某位歌手：按名字在服务器上找到这位艺术家再打开
+struct ArtistLinkResolver: View {
+    @Environment(AppModel.self) private var app
+    let sourceID: String
+    let name: String
+    @State private var artist: SubsonicArtist?
+    @State private var failed = false
+
+    var body: some View {
+        Group {
+            if let artist {
+                ArtistDetailView(sourceID: sourceID, artist: artist)
+            } else if failed {
+                ContentUnavailableView("找不到歌手", systemImage: "music.mic", description: Text("服务器上没有“\(name)”"))
+            } else {
+                ProgressView()
+            }
+        }
+        .task {
+            guard artist == nil else { return }
+            let source = SubsonicContext(app: app, sourceID: sourceID).source
+            let found = (try? await source?.search(name, artists: 20, albums: 0, songs: 0).artists) ?? []
+            if let hit = found.first(where: { $0.name.caseInsensitiveCompare(name) == .orderedSame }) ?? found.first {
+                artist = hit
+            } else {
+                failed = true
+            }
+        }
     }
 }
 

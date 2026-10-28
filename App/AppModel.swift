@@ -43,6 +43,23 @@ final class AppModel {
     var isSelecting = false
     var showSideMenu = false
 
+    /// 从播放列表或菜单跳到某位歌手（Subsonic 来源）：打开“音乐来源”后自动进入这位歌手
+    struct ArtistLink: Equatable {
+        var sourceID: String
+        var name: String
+    }
+    var pendingArtist: ArtistLink?
+
+    func canShowArtist(_ track: Track) -> Bool {
+        track.artist?.isEmpty == false && sources.config(track.sourceID)?.kind == .subsonic
+    }
+
+    func showArtist(of track: Track) {
+        guard canShowArtist(track), let artist = track.artist else { return }
+        pendingArtist = ArtistLink(sourceID: track.sourceID, name: artist)
+        sheet = .sources
+    }
+
     /// 迷你模式：只留主窗口；记住进入前哪些窗口开着
     private var miniRestore: (eq: Bool, pl: Bool)?
     var isMiniMode: Bool { miniRestore != nil }

@@ -142,6 +142,9 @@ struct SourcesView: View {
             }
             .onAppear {
                 app.discovery.start()
+                if let link = app.pendingArtist, path.isEmpty, let config = app.sources.config(link.sourceID) {
+                    path.append(BrowseTarget(sourceID: config.id, path: nil, title: config.name))
+                }
                 #if DEBUG
                 // 截图用：-DebugAddSource YES 直接打开“添加音乐来源”
                 if UserDefaults.standard.bool(forKey: "DebugAddSource"), path.isEmpty { path.append(Route.add) }
