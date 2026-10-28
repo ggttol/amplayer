@@ -108,6 +108,13 @@ public struct SubsonicSource: MediaSource {
         return text
     }
 
+    public func refreshDuration(path: String) async -> TimeInterval? {
+        guard path.hasPrefix("song/"),
+              let song = try? await call("getSong", ["id": String(path.dropFirst("song/".count))]).dict("song"),
+              let d = song.double("duration"), d > 0 else { return nil }
+        return d
+    }
+
     public func artworkRequest(ref: String) async throws -> URLRequest? {
         URLRequest(url: try endpoint("getCoverArt", ["id": ref, "size": "600"]))
     }

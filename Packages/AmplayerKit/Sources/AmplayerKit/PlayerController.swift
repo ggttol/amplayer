@@ -36,6 +36,7 @@ public final class PlayerController {
     @ObservationIgnored private let sources: SourceStore
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var prefetchTask: Task<Void, Never>?
+    @ObservationIgnored private var durationTask: Task<Void, Never>?
     @ObservationIgnored private let saver = Debouncer()
     @ObservationIgnored private let lyricsStore = LyricsStore()
     @ObservationIgnored private var lyricsTask: Task<Void, Never>?
@@ -430,6 +431,7 @@ public final class PlayerController {
     private func load(_ track: Track, autoplay: Bool) {
         loadTask?.cancel()
         prefetchTask?.cancel()
+        durationTask?.cancel()
         audio.stop()
         armedTrackID = nil
         resetPerTrackState(for: track)
@@ -470,6 +472,7 @@ public final class PlayerController {
                 }
                 if autoplay { self.audio.play() }
                 self.updateNowPlaying()
+                if self.audio.info?.duration == 0 { self.watchDuration(of: track, source: source) }
                 // 边下边播时标签、封面、内嵌歌词要等下载完再读
                 guard let url = try? await self.cache.localURL(for: track, source: source),
                       !Task.isCancelled, self.current?.id == track.id else { return }
@@ -607,11 +610,41 @@ public final class PlayerController {
         }
     }
 
+    /// 边下边播开始时不知道时长：服务器通常几秒内就测出来，隔一会儿问一次
+    private func watchDuration(of track: Track, source: any MediaSource) {
+        durationTask?.cancel()
+        durationTask = Task { [weak self] in
+            for delay in [3, 5, 8, 15, 30] {
+                try? await Task.sleep(for: .seconds(delay))
+                guard let self, !Task.isCancelled, self.current?.id == track.id, self.audio.info?.duration == 0 else { return }
+                if let d = await source.refreshDuration(path: track.path), !Task.isCancelled, self.current?.id == track.id {
+                    self.applyDuration(d, to: track)
+                    return
+                }
+            }
+        }
+    }
+
+    /// 补上时长：进度条、拖动、锁屏都用得上
+    private func applyDuration(_ seconds: TimeInterval, to track: Track) {
+        guard seconds > 0, audio.info?.duration == 0 else { return }
+        audio.updateDuration(seconds)
+        PlaybackLog.add("拿到时长 \(TimeFormat.clock(seconds))，可以拖动了")
+        if var t = queue.tracks.first(where: { $0.id == track.id }), (t.duration ?? 0) <= 0 {
+            t.duration = seconds
+            queue.update(t)
+            onTrackUpdated?(t)
+            persist()
+        }
+        updateNowPlaying()
+    }
+
     /// 从文件标签补全信息，并取封面
     private func enrich(_ track: Track, fileURL: URL, source: any MediaSource) async {
         let tags = await MetadataReader.read(url: fileURL)
         let preferFileTags = [.local, .webdav, .smb].contains(source.config.kind)
         let updated = MetadataReader.merge(tags, into: track, preferFileTags: preferFileTags)
+        if current?.id == track.id, let d = tags.duration { applyDuration(d, to: track) }
         if updated != track {
             queue.update(updated)
             onTrackUpdated?(updated)

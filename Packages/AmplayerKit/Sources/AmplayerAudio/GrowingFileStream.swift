@@ -9,6 +9,8 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     // 打开文件前就要把 self 交给 AudioFile 回调，所以先给占位值
     private(set) var format = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
     private(set) var length: AVAudioFramePosition = 0
+    /// 时长未知（服务器边转码边发、又没给时长）：先照常播放，length 是占位值，知道后用 setDuration 补上
+    private(set) var durationKnown = true
     var mayBlock: Bool { true }
 
     private let file: GrowingFile
@@ -38,9 +40,8 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
     init(file: GrowingFile, fallbackDuration: TimeInterval?) throws {
         self.file = file
         knownSize = file.expectedSize
-        // 不知道总大小时，AudioFile 按文件大小估出来的时长不可信：必须有服务器给的时长
+        // 不知道总大小时，AudioFile 按文件大小估出来的时长不可信：用服务器给的时长，没有就先当未知
         let sizeUnknown = knownSize <= 0 && !file.isFinished
-        if sizeUnknown, (fallbackDuration ?? 0) <= 0 { throw StreamError.unsupported }
         // 下载很快的话可能已经下完并移走了
         if let h = try? FileHandle(forReadingFrom: file.partURL) {
             handle = h
@@ -73,17 +74,21 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         // 时长用估计值：精确帧数对 VBR MP3 要扫完整个文件，会一直等到下载完
         // 还在下载、又是头里没写总长度的 FLAC 时，估计时长要把整个文件扫一遍（等于等下载完）：有服务器给的时长就直接用
         var duration: Float64 = 0
-        if sizeUnknown, let fallbackDuration {
-            duration = fallbackDuration
-        } else if let fallbackDuration, fallbackDuration > 0, !file.isFinished, hint == kAudioFileFLACType, Self.flacTotalSamplesUnknown(handle) {
-            duration = fallbackDuration
+        let flacLengthUnknown = !file.isFinished && hint == kAudioFileFLACType && Self.flacTotalSamplesUnknown(handle)
+        if sizeUnknown || flacLengthUnknown {
+            duration = fallbackDuration ?? 0
         } else {
             var durSize = UInt32(MemoryLayout<Float64>.size)
             AudioFileGetProperty(id, kAudioFilePropertyEstimatedDuration, &durSize, &duration)
         }
         if duration <= 0 { duration = fallbackDuration ?? 0 }
-        guard duration > 0 else { throw StreamError.unsupported }
-        length = AVAudioFramePosition(duration * fileFormat.mSampleRate)
+        if duration > 0 {
+            length = AVAudioFramePosition(duration * fileFormat.mSampleRate)
+        } else {
+            // 时长未知也先放：读到文件末尾自然结束；占位长度只用来排缓冲区
+            durationKnown = false
+            length = AVAudioFramePosition(Self.unknownDurationCeiling * fileFormat.mSampleRate)
+        }
         opening = false
     }
 
@@ -98,6 +103,16 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
         try await Task.detached(priority: .userInitiated) {
             try GrowingFileStream(file: file, fallbackDuration: fallbackDuration)
         }.value
+    }
+
+    /// 时长未知时的占位长度（秒）
+    static let unknownDurationCeiling: Double = 6 * 3600
+
+    /// 补上后来知道的时长（服务器测出来了，或者下载完读到了）
+    func setDuration(_ seconds: TimeInterval) {
+        guard seconds > 0 else { return }
+        length = AVAudioFramePosition(seconds * format.sampleRate)
+        durationKnown = true
     }
 
     /// 码率显示用；不知道大小时为 0

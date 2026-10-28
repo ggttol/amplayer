@@ -99,6 +99,9 @@ public protocol MediaSource: Sendable {
 
     /// 歌词文本（LRC 或纯文本）；没有返回 nil
     func lyrics(for track: Track) async -> String?
+
+    /// 重新向服务器要一次时长（列表里没给、服务器播放时才测的）；不支持返回 nil
+    func refreshDuration(path: String) async -> TimeInterval?
 }
 
 extension MediaSource {
@@ -109,6 +112,7 @@ extension MediaSource {
     public func artworkRequest(ref: String) async throws -> URLRequest? { nil }
     public func testConnection() async throws { _ = try await list(path: "/") }
     public func lyrics(for track: Track) async -> String? { nil }
+    public func refreshDuration(path: String) async -> TimeInterval? { nil }
 
     /// 递归列出目录下所有可播放曲目（用于“添加整个文件夹”和建库）
     public func collectTracks(path: String, maxDepth: Int = 8, limit: Int = 5000) async throws -> [Track] {

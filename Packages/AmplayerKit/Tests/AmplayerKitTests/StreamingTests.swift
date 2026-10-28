@@ -311,3 +311,48 @@ private final class SlowSource: MediaSource, @unchecked Sendable {
     _ = try await cache.localURL(for: track, source: source)
     #expect(file.isFinished)
 }
+
+/// 服务器边转码边发、又没给时长（DSD、APE 单曲）：照样边下边播，时长先未知，补上后能拖动
+@MainActor
+@Test func streamsWithoutSizeOrDuration() async throws {
+    let (src, frames) = try makeAudio(ext: "flac", seconds: 20)
+    var data = try Data(contentsOf: src)
+    data[8 + 13] &= 0xF0
+    for i in 14...17 { data[8 + i] = 0 }
+    let patched = FileManager.default.temporaryDirectory.appendingPathComponent("nodur-src-\(UUID().uuidString).flac")
+    try data.write(to: patched)
+    let file = growingFile(ext: "flac", size: -1)
+    simulateDownload(from: patched, to: file, chunk: 64 * 1024, delay: 0.02, knownTotal: false).start()
+    try await file.waitAsync(forFirst: 128 * 1024)
+    let stream = try await GrowingFileStream.open(file, fallbackDuration: nil)
+    #expect(!stream.durationKnown)
+    #expect(file.receivedBytes < Int64(data.count) / 2)
+    let decoded = try await Task.detached {
+        let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: 8192)!
+        var total = 0
+        while true {
+            let n = try stream.read(into: buffer)
+            if n == 0 { break }
+            total += n
+        }
+        return total
+    }.value
+    #expect(abs(AVAudioFramePosition(decoded) - frames) < 4410)
+
+    // 播放器：开始时 duration 为 0、进度照走；补上时长后可以拖动
+    let file2 = growingFile(ext: "flac", size: -1)
+    simulateDownload(from: patched, to: file2, chunk: 64 * 1024, delay: 0.02, knownTotal: false).start()
+    try await file2.waitAsync(forFirst: 128 * 1024)
+    let player = AudioPlayer()
+    player.volume = 0
+    try await player.load(growing: file2, fallbackDuration: nil)
+    #expect(player.info?.duration == 0)
+    player.play()
+    try await Task.sleep(for: .milliseconds(600))
+    #expect(player.currentTime > 0.2)
+    player.updateDuration(20)
+    #expect(player.info?.duration == 20)
+    player.seek(to: 2)
+    #expect(abs(player.currentTime - 2) < 0.5)
+    player.stop()
+}

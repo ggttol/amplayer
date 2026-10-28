@@ -175,7 +175,8 @@ public final class AudioPlayer {
         }
         source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
         updatePan()
-        info = Self.makeInfo(length: stream.length, format: stream.format, size: stream.expectedSize)
+        // 时长未知时 duration 为 0：界面不显示总长、不能拖动，等 updateDuration 补上
+        info = Self.makeInfo(length: stream.durationKnown ? stream.length : 0, format: stream.format, size: stream.expectedSize)
         pausedTime = 0
         schedule(from: 0)
         state = .paused
@@ -292,6 +293,14 @@ public final class AudioPlayer {
     }
 
     /// 释放文件（播放列表清空时）
+    /// 边下边播开始时不知道时长的，后来知道了就补上（之后可以拖动）
+    public func updateDuration(_ seconds: TimeInterval) {
+        guard seconds > 0, case .stream(let stream, _) = source,
+              let growing = stream as? GrowingFileStream, !growing.durationKnown else { return }
+        growing.setDuration(seconds)
+        info = Self.makeInfo(length: growing.length, format: growing.format, size: growing.expectedSize)
+    }
+
     public func unload() {
         stopNode()
         source = nil
@@ -318,7 +327,8 @@ public final class AudioPlayer {
               let playerTime = playerNode.playerTime(forNodeTime: nodeTime)
         else { return pausedTime }
         let seconds = Double(segmentStart + playerTime.sampleTime - nodeOffset) / source.format.sampleRate
-        let time = min(max(0, seconds), info?.duration ?? seconds)
+        let duration = info?.duration ?? 0
+        let time = duration > 0 ? min(max(0, seconds), duration) : max(0, seconds)
         lastObservedTime = time
         return time
     }

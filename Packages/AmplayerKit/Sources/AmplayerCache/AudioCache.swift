@@ -29,7 +29,7 @@ public actor AudioCache {
     }
 
     /// 开头下载多少就开始边下边播
-    static let streamHead: Int64 = 384 * 1024
+    static let streamHead: Int64 = 128 * 1024
 
     public init(
         cacheDirectory: URL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("AudioCache", isDirectory: true),
