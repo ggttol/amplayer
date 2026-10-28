@@ -115,7 +115,12 @@ struct SourcesView: View {
             .navigationTitle("音乐来源")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: BrowseTarget.self) { target in
-                BrowserView(target: target)
+                // Subsonic / Navidrome 用专门的曲库界面，其余按目录浏览
+                if target.path == nil, app.sources.config(target.sourceID)?.kind == .subsonic {
+                    SubsonicHomeView(sourceID: target.sourceID, title: target.title)
+                } else {
+                    BrowserView(target: target)
+                }
             }
             .navigationDestination(for: Route.self) { _ in
                 AddSourceView(discovered: discovered) { editing = $0 }
@@ -140,6 +145,10 @@ struct SourcesView: View {
                 #if DEBUG
                 // 截图用：-DebugAddSource YES 直接打开“添加音乐来源”
                 if UserDefaults.standard.bool(forKey: "DebugAddSource"), path.isEmpty { path.append(Route.add) }
+                if let name = UserDefaults.standard.string(forKey: "DebugBrowseSource"), path.isEmpty,
+                   let config = app.sources.configs.first(where: { $0.name == name }) {
+                    path.append(BrowseTarget(sourceID: config.id, path: nil, title: config.name))
+                }
                 #endif
             }
             .task {

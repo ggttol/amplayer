@@ -8,7 +8,7 @@ import AmplayerCore
 public struct SubsonicSource: MediaSource {
     public let config: SourceConfig
     private let password: String
-    private let http: HTTPClient
+    let http: HTTPClient
 
     public init(config: SourceConfig, password: String?) {
         self.config = config
@@ -23,6 +23,10 @@ public struct SubsonicSource: MediaSource {
                 SourceItem(path: "artists", name: "艺术家", kind: .directory),
                 SourceItem(path: "albums", name: "最近添加的专辑", kind: .directory),
                 SourceItem(path: "playlists", name: "播放列表", kind: .directory),
+                SourceItem(path: "starred", name: "我的收藏", kind: .directory),
+                SourceItem(path: "recent", name: "最近播放", kind: .directory),
+                SourceItem(path: "frequent", name: "最常播放", kind: .directory),
+                SourceItem(path: "genres", name: "流派", kind: .directory),
                 SourceItem(path: "random", name: "随机 100 首", kind: .directory),
             ]
         case "artists":
@@ -41,6 +45,15 @@ public struct SubsonicSource: MediaSource {
                 guard let id = p.string("id") else { return nil }
                 return SourceItem(path: "playlist/\(id)", name: p.string("name") ?? id, kind: .directory)
             }
+        case "starred":
+            let r = try await starred()
+            return r.albums.map(albumDirectory) + r.songs
+        case "recent":
+            return try await albums(.recent, size: 100).map(albumDirectory)
+        case "frequent":
+            return try await albums(.frequent, size: 100).map(albumDirectory)
+        case "genres":
+            return try await genres().map { SourceItem(path: "genre/\($0.name)", name: "\($0.name)（\($0.albumCount)）", kind: .directory) }
         case "random":
             let body = try await call("getRandomSongs", ["size": "100"])
             return (body.dict("randomSongs")?.array("song") ?? []).compactMap(songItem)
@@ -57,6 +70,8 @@ public struct SubsonicSource: MediaSource {
         case "album":
             let body = try await call("getAlbum", ["id": id])
             return (body.dict("album")?.array("song") ?? []).compactMap(songItem)
+        case "genre":
+            return try await albums(.genre(id), size: 200).map(albumDirectory)
         case "playlist":
             let body = try await call("getPlaylist", ["id": id])
             return (body.dict("playlist")?.array("entry") ?? []).compactMap(songItem)
@@ -110,7 +125,11 @@ public struct SubsonicSource: MediaSource {
         return SourceItem(path: "album/\(id)", name: artist.map { "\(name) — \($0)" } ?? name, kind: .directory, artworkRef: a.string("coverArt"))
     }
 
-    private func songItem(_ s: [String: Any]) -> SourceItem? {
+    private func albumDirectory(_ a: SubsonicAlbum) -> SourceItem {
+        SourceItem(path: "album/\(a.id)", name: a.artist.map { "\(a.name) — \($0)" } ?? a.name, kind: .directory, artworkRef: a.coverArt)
+    }
+
+    func songItem(_ s: [String: Any]) -> SourceItem? {
         guard let id = s.string("id"), s["isDir"] as? Bool != true else { return nil }
         let suffix = s.string("suffix") ?? (s.string("path").map { ($0 as NSString).pathExtension } ?? "mp3")
         let title = s.string("title") ?? id
@@ -138,7 +157,7 @@ public struct SubsonicSource: MediaSource {
         return base.appendingQuery(query)
     }
 
-    private func call(_ method: String, _ params: [String: String] = [:]) async throws -> [String: Any] {
+    func call(_ method: String, _ params: [String: String] = [:]) async throws -> [String: Any] {
         let json = try await http.json(for: URLRequest(url: try endpoint(method, params)))
         guard let body = json.dict("subsonic-response") else { throw SourceError.protocolError("不是 Subsonic 响应") }
         if body.string("status") != "ok" {
