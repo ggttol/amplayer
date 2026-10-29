@@ -55,6 +55,16 @@ public final class PlayerController {
     /// 上次退出时播到的位置：启动后第一次加载这首歌时跳过去
     @ObservationIgnored private var pendingResume: ResumePoint?
     @ObservationIgnored private var positionTimer: Timer?
+    /// 淡入淡出秒数（0 = 关，用无缝衔接）。开着时最后这几秒和下一首重叠
+    public var crossfadeDuration: TimeInterval = 0 {
+        didSet {
+            if crossfadeDuration > 0, armedTrackID != nil { revalidateGapless() }
+        }
+    }
+    /// 已经下好、可以拿来淡入的下一首
+    @ObservationIgnored private var crossfadeReadyID: String?
+    @ObservationIgnored private var crossfadeTimer: Timer?
+    @ObservationIgnored private var pendingFadeIn: TimeInterval = 0
 
     private struct ResumePoint: Codable {
         var trackID: String
@@ -116,6 +126,27 @@ public final class PlayerController {
         timer.tolerance = 5
         RunLoop.main.add(timer, forMode: .common)
         positionTimer = timer
+        // 淡入淡出：快播完时看一眼
+        let fade = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkCrossfade() }
+        }
+        RunLoop.main.add(fade, forMode: .common)
+        crossfadeTimer = fade
+    }
+
+    /// 剩下的时间不到淡入淡出时长、下一首已经在本地：当前这首交给淡出节点，马上开始下一首并淡入
+    private func checkCrossfade() {
+        let fade = crossfadeDuration
+        guard fade > 0, audio.state == .playing, loadingTrackID == nil, !sleepAfterCurrent,
+              queue.repeatMode != .one, let duration = audio.info?.duration, duration > fade * 2 + 5,
+              duration - audio.currentTime <= fade,
+              let i = queue.nextIndex(auto: true), queue.tracks[i].id == crossfadeReadyID else { return }
+        crossfadeReadyID = nil
+        guard audio.handOffForCrossfade(duration: fade), let next = queue.advance(auto: true) else { return }
+        PlaybackLog.add("淡入淡出到：\(next.displayName)")
+        pendingFadeIn = fade
+        load(next, autoplay: true)
+        persist()
     }
 
     // MARK: 断点续播
@@ -198,6 +229,20 @@ public final class PlayerController {
         updateNowPlaying()
         // 停止表示下次从头放
         UserDefaults.standard.removeObject(forKey: Self.resumeKey)
+    }
+
+    /// 只换“当前曲目”、本机不播放（投放到别的设备时用）
+    public func selectWithoutPlaying(index: Int) {
+        guard queue.tracks.indices.contains(index) else { return }
+        loadTask?.cancel()
+        prefetchTask?.cancel()
+        loadingTrackID = nil
+        audio.stop()
+        queue.select(index: index)
+        resetPerTrackState(for: queue.tracks[index])
+        lyricsLoading = false
+        updateNowPlaying()
+        persist()
     }
 
     public func next() {
@@ -434,6 +479,9 @@ public final class PlayerController {
         durationTask?.cancel()
         audio.stop()
         armedTrackID = nil
+        crossfadeReadyID = nil
+        let fadeIn = pendingFadeIn
+        pendingFadeIn = 0
         resetPerTrackState(for: track)
         loadingTrackID = track.id
         updateNowPlaying()
@@ -470,7 +518,10 @@ public final class PlayerController {
                     self.audio.seek(to: resumeAt)
                     self.onNotice?("从 \(TimeFormat.clock(resumeAt)) 继续播放")
                 }
-                if autoplay { self.audio.play() }
+                if autoplay {
+                    if fadeIn > 0 { self.audio.fadeIn(duration: fadeIn) }
+                    self.audio.play()
+                }
                 self.updateNowPlaying()
                 if self.audio.info?.duration == 0 { self.watchDuration(of: track, source: source) }
                 if case .growing = playable { self.prefetchSourceLyrics(for: track, source: source) }
@@ -529,6 +580,11 @@ public final class PlayerController {
 
     /// 下一首已经在本地（本机或缓存）时，排到当前这首后面
     private func armGapless() {
+        // 开着淡入淡出时不排无缝衔接，改为记下下一首已经就绪
+        if crossfadeDuration > 0 {
+            if let i = queue.nextIndex(auto: true) { crossfadeReadyID = queue.tracks[i].id }
+            return
+        }
         guard armedTrackID == nil, !sleepAfterCurrent, !audio.hasQueuedNext, audio.info != nil, loadingTrackID == nil,
               let i = queue.nextIndex(auto: true) else { return }
         let next = queue.tracks[i]

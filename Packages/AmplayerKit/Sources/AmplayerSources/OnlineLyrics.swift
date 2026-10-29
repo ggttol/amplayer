@@ -241,10 +241,16 @@ public struct OnlineLyrics: Sendable {
     }
 
     private func neteaseLyrics(id: String) async throws -> String? {
-        let request = Self.get(Self.netease.appendingPathComponent("song/lyric"), [("id", id), ("lv", "1")], referer: "https://music.163.com/")
+        let request = Self.get(Self.netease.appendingPathComponent("song/lyric"), [("id", id), ("lv", "1"), ("tv", "-1")], referer: "https://music.163.com/")
         guard let data = try await fetch(request),
               let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
-        return (json["lrc"] as? [String: Any])?["lyric"] as? String
+        let original = (json["lrc"] as? [String: Any])?["lyric"] as? String
+        // 外文歌带中文翻译：同样的时间戳接在后面，解析时会合并成“原文\n译文”两行
+        if let original, let translation = (json["tlyric"] as? [String: Any])?["lyric"] as? String,
+           translation.contains("["), !translation.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return original + "\n" + translation
+        }
+        return original
     }
 
     private func qqSearch(_ keyword: String) async throws -> [Result] {

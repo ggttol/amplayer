@@ -74,3 +74,17 @@ import Testing
     let lyrics = try #require(Lyrics.parse("[00:01.00]故事的小黃花\n[00:02.00]從出生那年就飄著\n[00:03.00]Hello"))
     #expect(lyrics.simplified().lines.map(\.text) == ["故事的小黄花", "从出生那年就飘着", "Hello"])
 }
+
+@Test func parsesWordTimesAndKeepsTranslation() throws {
+    let text = """
+    [00:01.00]<00:01.00>第<00:01.60>一<00:02.20>句
+    [00:05.00]Hello world
+    [00:05.00]你好，世界
+    """
+    let lyrics = try #require(Lyrics.parse(text))
+    #expect(lyrics.lines[0].text == "第一句")
+    #expect(lyrics.lines[0].words?.map(\.text) == ["第", "一", "句"])
+    #expect(lyrics.lines[0].words?.map(\.time) == [1.0, 1.6, 2.2])
+    #expect(lyrics.lines[1].text == "Hello world\n你好，世界")
+    #expect(lyrics.lines[1].words == nil)
+}

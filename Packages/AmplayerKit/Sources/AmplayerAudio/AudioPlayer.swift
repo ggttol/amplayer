@@ -1,5 +1,6 @@
 import AVFoundation
 import AmplayerCore
+import AmplayerObjC
 import Observation
 
 /// 基于 AVAudioEngine 的本地文件播放器：播放/暂停/跳转、10 段 EQ、音量、平衡、频谱。
@@ -55,10 +56,19 @@ public final class AudioPlayer {
         didSet { applyEqualizer() }
     }
 
+    /// 音量均衡（ReplayGain）：当前曲目额外加减的分贝数，叠加在均衡器前级增益上（可以提升，不会被音量上限截住）
+    public var gainAdjustment: Float = 0 {
+        didSet { applyEqualizer() }
+    }
+
     @ObservationIgnored public let analyzer = SpectrumAnalyzer()
 
     @ObservationIgnored private let engine = AVAudioEngine()
     @ObservationIgnored private let playerNode = AVAudioPlayerNode()
+    /// 淡入淡出：上一首剩下的尾巴交给这个节点淡出，同时主节点淡入下一首
+    @ObservationIgnored private let fadeNode = AVAudioPlayerNode()
+    @ObservationIgnored private var fadeOutTimer: Timer?
+    @ObservationIgnored private var fadeInTimer: Timer?
     @ObservationIgnored private let eqNode = AVAudioUnitEQ(numberOfBands: 10)
     @ObservationIgnored private let effectsChain = EffectsChain()
     @ObservationIgnored private var surroundTimer: Timer?
@@ -102,6 +112,7 @@ public final class AudioPlayer {
 
     public init() {
         engine.attach(playerNode)
+        engine.attach(fadeNode)
         engine.attach(eqNode)
         for (i, band) in eqNode.bands.enumerated() {
             band.filterType = .parametric
@@ -267,6 +278,7 @@ public final class AudioPlayer {
 
     public func pause() {
         guard state == .playing else { return }
+        cancelFades()
         pausedTime = currentTime
         playerNode.pause()
         state = .paused
@@ -302,6 +314,7 @@ public final class AudioPlayer {
     }
 
     public func unload() {
+        cancelFades()
         stopNode()
         source = nil
         info = nil
@@ -311,6 +324,7 @@ public final class AudioPlayer {
 
     public func seek(to time: TimeInterval) {
         guard let source, let info else { return }
+        cancelFades()
         let clamped = time.clamped(to: 0...max(0, info.duration - 0.05))
         let frame = AVAudioFramePosition(clamped * source.format.sampleRate)
         let wasPlaying = state == .playing
@@ -449,7 +463,74 @@ public final class AudioPlayer {
         for (i, band) in eqNode.bands.enumerated() {
             band.gain = on ? equalizer.bands[i] : 0
         }
-        eqNode.globalGain = on ? equalizer.preamp : 0
+        eqNode.globalGain = ((on ? equalizer.preamp : 0) + gainAdjustment).clamped(to: -96...24)
+    }
+
+    // MARK: 淡入淡出
+
+    /// 把当前这首从现在起剩下的部分交给淡出节点，在 duration 秒内淡出。
+    /// 成功后主节点空出来，调用方接着加载下一首并 fadeIn。只支持普通文件（APE、边下边播的流不行）。
+    @discardableResult
+    public func handOffForCrossfade(duration: TimeInterval) -> Bool {
+        guard state == .playing, duration > 0, case .file(let file) = source else { return false }
+        let start = AVAudioFramePosition(currentTime * file.processingFormat.sampleRate)
+        let remaining = file.length - start
+        guard remaining > 0 else { return false }
+        fadeOutTimer?.invalidate()
+        fadeNode.stop()
+        let engine = engine, fader = fadeNode, mixer = effectsChain.panMixer, format = file.processingFormat
+        let failure = AMPCatchException {
+            engine.disconnectNodeOutput(fader)
+            engine.connect(fader, to: mixer, fromBus: 0, toBus: mixer.nextAvailableInputBus, format: format)
+        }
+        if let failure {
+            PlaybackLog.add("淡出节点连接失败：\(failure)")
+            return false
+        }
+        fadeNode.volume = playerNode.volume
+        fadeNode.scheduleSegment(file, startingFrame: start, frameCount: AVAudioFrameCount(remaining), at: nil)
+        fadeNode.play()
+        fadeOutTimer = ramp(fadeNode, from: fadeNode.volume, to: 0, over: duration) { [weak self] in
+            guard let self else { return }
+            self.fadeNode.stop()
+            self.engine.disconnectNodeOutput(self.fadeNode)
+        }
+        return true
+    }
+
+    /// 刚开始播的这首从无声渐强
+    public func fadeIn(duration: TimeInterval) {
+        fadeInTimer?.invalidate()
+        guard duration > 0 else { playerNode.volume = 1; return }
+        playerNode.volume = 0
+        fadeInTimer = ramp(playerNode, from: 0, to: 1, over: duration, done: {})
+    }
+
+    /// 线性改音量（按听感用平方曲线）
+    private func ramp(_ node: AVAudioPlayerNode, from: Float, to: Float, over duration: TimeInterval, done: @escaping @MainActor () -> Void) -> Timer {
+        let started = Date()
+        let timer = Timer(timeInterval: 0.03, repeats: true) { timer in
+            let finished = MainActor.assumeIsolated { () -> Bool in
+                let t = Float(min(1, Date().timeIntervalSince(started) / duration))
+                let eased = to > from ? t * t : 1 - (1 - t) * (1 - t)
+                node.volume = from + (to - from) * eased
+                if t >= 1 { done() }
+                return t >= 1
+            }
+            if finished { timer.invalidate() }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        return timer
+    }
+
+    /// 停掉还在淡出的尾巴（暂停、停止、跳转时）
+    private func cancelFades() {
+        fadeOutTimer?.invalidate()
+        fadeOutTimer = nil
+        fadeNode.stop()
+        fadeInTimer?.invalidate()
+        fadeInTimer = nil
+        playerNode.volume = 1
     }
 
     private func activateSession() {

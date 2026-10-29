@@ -11,8 +11,8 @@ import AmplayerSources
 public actor AudioCache {
     public static let shared = AudioCache()
 
-    public let cacheDirectory: URL
-    public let offlineDirectory: URL
+    public nonisolated let cacheDirectory: URL
+    public nonisolated let offlineDirectory: URL
     /// 缓存上限（字节）
     public var limit: Int64
 

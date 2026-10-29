@@ -8,6 +8,13 @@ public struct Lyrics: Sendable, Equatable {
         public var time: TimeInterval?
         /// 同一时间戳的多行（如中英对照）用换行合并
         public var text: String
+        /// 增强 LRC 的逐字时间（<mm:ss.xx>字）：卡拉 OK 式一个字一个字亮；只对第一行（原文）
+        public var words: [Word]? = nil
+    }
+
+    public struct Word: Sendable, Equatable {
+        public var time: TimeInterval
+        public var text: String
     }
 
     public var lines: [Line]
@@ -19,7 +26,7 @@ public struct Lyrics: Sendable, Equatable {
     /// 没有时间戳时按纯文本处理。内容为空返回 nil。
     public static func parse(_ text: String) -> Lyrics? {
         var offset: TimeInterval = 0
-        var timed: [(time: TimeInterval, order: Int, text: String)] = []
+        var timed: [(time: TimeInterval, order: Int, text: String, words: [Word]?)] = []
         var plain: [String] = []
         var order = 0
         for raw in text.components(separatedBy: .newlines) {
@@ -42,9 +49,10 @@ public struct Lyrics: Sendable, Equatable {
                 rest = rest[rest.index(after: close)...]
             }
             let body = stripWordTimes(String(rest)).trimmingCharacters(in: .whitespaces)
+            let words = wordTimes(String(rest))
             if !times.isEmpty {
                 for t in times {
-                    timed.append((t, order, body))
+                    timed.append((t, order, body, words))
                     order += 1
                 }
             } else if !isTag, !body.isEmpty {
@@ -62,7 +70,8 @@ public struct Lyrics: Sendable, Equatable {
                         lines[lines.count - 1].text = last.text.isEmpty ? item.text : last.text + "\n" + item.text
                     }
                 } else {
-                    lines.append(Line(id: lines.count, time: time, text: item.text))
+                    let words = item.words?.map { Word(time: max(0, $0.time - offset), text: $0.text) }
+                    lines.append(Line(id: lines.count, time: time, text: item.text, words: words))
                 }
             }
             // 全是空行（只有时间戳）就不算有歌词
@@ -78,6 +87,7 @@ public struct Lyrics: Sendable, Equatable {
         Lyrics(lines: lines.map { line in
             var l = line
             l.text = line.text.applyingTransform(StringTransform("Hant-Hans"), reverse: false) ?? line.text
+            l.words = line.words?.map { Word(time: $0.time, text: $0.text.applyingTransform(StringTransform("Hant-Hans"), reverse: false) ?? $0.text) }
             return l
         })
     }
@@ -124,7 +134,12 @@ public struct Lyrics: Sendable, Equatable {
         lines.map { line in
             guard let t = line.time else { return line.text }
             let stamp = String(format: "[%02d:%05.2f]", Int(t) / 60, t.truncatingRemainder(dividingBy: 60))
-            return line.text.components(separatedBy: "\n").map { stamp + $0 }.joined(separator: "\n")
+            var rows = line.text.components(separatedBy: "\n")
+            // 逐字时间写回第一行（原文）
+            if let words = line.words, !rows.isEmpty {
+                rows[0] = words.map { String(format: "<%02d:%05.2f>", Int($0.time) / 60, $0.time.truncatingRemainder(dividingBy: 60)) + $0.text }.joined()
+            }
+            return rows.map { stamp + $0 }.joined(separator: "\n")
         }
         .joined(separator: "\n")
     }
@@ -139,6 +154,27 @@ public struct Lyrics: Sendable, Equatable {
     }
 
     /// 去掉增强 LRC 的 <mm:ss.xx> 逐字时间
+    /// 逐字时间：“<00:01.00>第<00:01.60>一”拆成 [(1.0, "第"), (1.6, "一")]；没有就是 nil
+    static func wordTimes(_ s: String) -> [Word]? {
+        guard s.contains("<") else { return nil }
+        var words: [Word] = []
+        var rest = Substring(s)
+        var pending: TimeInterval?
+        var text = ""
+        while !rest.isEmpty {
+            if rest.first == "<", let close = rest.firstIndex(of: ">"), let t = timestamp(rest[rest.index(after: rest.startIndex)..<close]) {
+                if let p = pending, !text.isEmpty { words.append(Word(time: p, text: text)) }
+                pending = t
+                text = ""
+                rest = rest[rest.index(after: close)...]
+            } else {
+                text.append(rest.removeFirst())
+            }
+        }
+        if let p = pending, !text.isEmpty { words.append(Word(time: p, text: text)) }
+        return words.count >= 2 ? words : nil
+    }
+
     static func stripWordTimes(_ s: String) -> String {
         guard s.contains("<") else { return s }
         var out = ""
