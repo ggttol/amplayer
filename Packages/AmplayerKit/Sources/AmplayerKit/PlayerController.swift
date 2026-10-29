@@ -63,6 +63,16 @@ public final class PlayerController {
     }
     /// 已经下好、可以拿来淡入的下一首
     @ObservationIgnored private var crossfadeReadyID: String?
+    /// 当前这首已经完整在本地的文件（边下边播的下完后才有）：淡出要从完整文件读尾巴
+    @ObservationIgnored private var currentFileURL: URL?
+
+    /// 锁屏、控制中心、耳机线控、CarPlay 的按键：App 在放别的东西（网络电台、投放到音箱）时由它接管，返回 true 表示已处理
+    @ObservationIgnored public var remoteCommandOverride: (@MainActor (RemoteCommand) -> Bool)?
+
+    public enum RemoteCommand {
+        case play, pause, togglePlayPause, stop, next, previous
+        case seek(TimeInterval)
+    }
     @ObservationIgnored private var crossfadeTimer: Timer?
     @ObservationIgnored private var pendingFadeIn: TimeInterval = 0
 
@@ -142,7 +152,7 @@ public final class PlayerController {
               duration - audio.currentTime <= fade,
               let i = queue.nextIndex(auto: true), queue.tracks[i].id == crossfadeReadyID else { return }
         crossfadeReadyID = nil
-        guard audio.handOffForCrossfade(duration: fade), let next = queue.advance(auto: true) else { return }
+        guard audio.handOffForCrossfade(duration: fade, completedFile: currentFileURL), let next = queue.advance(auto: true) else { return }
         PlaybackLog.add("淡入淡出到：\(next.displayName)")
         pendingFadeIn = fade
         load(next, autoplay: true)
@@ -480,6 +490,7 @@ public final class PlayerController {
         audio.stop()
         armedTrackID = nil
         crossfadeReadyID = nil
+        currentFileURL = nil
         let fadeIn = pendingFadeIn
         pendingFadeIn = 0
         resetPerTrackState(for: track)
@@ -528,6 +539,7 @@ public final class PlayerController {
                 // 边下边播时标签、封面、内嵌歌词要等下载完再读
                 guard let url = try? await self.cache.localURL(for: track, source: source),
                       !Task.isCancelled, self.current?.id == track.id else { return }
+                self.currentFileURL = url
                 await self.enrich(track, fileURL: url, source: source)
                 self.prefetchNext()
             } catch is CancellationError {
@@ -864,34 +876,47 @@ public final class PlayerController {
     private func setupRemoteCommands() {
         let center = MPRemoteCommandCenter.shared()
         center.playCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.play() }
+            MainActor.assumeIsolated { self?.handleRemote(.play) }
             return .success
         }
         center.pauseCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.pause() }
+            MainActor.assumeIsolated { self?.handleRemote(.pause) }
             return .success
         }
         center.togglePlayPauseCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.togglePause() }
+            MainActor.assumeIsolated { self?.handleRemote(.togglePlayPause) }
             return .success
         }
         center.stopCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.stop() }
+            MainActor.assumeIsolated { self?.handleRemote(.stop) }
             return .success
         }
         center.nextTrackCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.next() }
+            MainActor.assumeIsolated { self?.handleRemote(.next) }
             return .success
         }
         center.previousTrackCommand.addTarget { [weak self] _ in
-            MainActor.assumeIsolated { self?.previous() }
+            MainActor.assumeIsolated { self?.handleRemote(.previous) }
             return .success
         }
         center.changePlaybackPositionCommand.addTarget { [weak self] event in
             guard let e = event as? MPChangePlaybackPositionCommandEvent else { return .commandFailed }
             let time = e.positionTime
-            MainActor.assumeIsolated { self?.seek(to: time) }
+            MainActor.assumeIsolated { self?.handleRemote(.seek(time)) }
             return .success
+        }
+    }
+
+    private func handleRemote(_ command: RemoteCommand) {
+        if remoteCommandOverride?(command) == true { return }
+        switch command {
+        case .play: play()
+        case .pause: pause()
+        case .togglePlayPause: togglePause()
+        case .stop: stop()
+        case .next: next()
+        case .previous: previous()
+        case .seek(let t): seek(to: t)
         }
     }
 

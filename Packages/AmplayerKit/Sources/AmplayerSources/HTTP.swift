@@ -24,6 +24,8 @@ public final class HTTPClient: Sendable {
         configuration.timeoutIntervalForResource = 60 * 60
         configuration.httpMaximumConnectionsPerHost = 4
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        // 不落盘：有的服务器把密码放在地址里（Subsonic 的 p=enc:），系统缓存会把它们写进磁盘
+        configuration.urlCache = nil
         session = URLSession(
             configuration: configuration,
             delegate: allowInsecureTLS ? InsecureTrustDelegate() : nil,

@@ -69,6 +69,11 @@ public final class AudioPlayer {
     @ObservationIgnored private let fadeNode = AVAudioPlayerNode()
     @ObservationIgnored private var fadeOutTimer: Timer?
     @ObservationIgnored private var fadeInTimer: Timer?
+    /// 两个节点各自的淡入淡出进度（0...1），实际音量还要乘上音量均衡的补偿
+    @ObservationIgnored private var playerLevel: Float = 1
+    @ObservationIgnored private var fadeLevel: Float = 0
+    /// 正在淡出的尾巴自己的音量均衡分贝数：两首歌的增益不同，不能共用一个总增益
+    @ObservationIgnored private var fadeTailGain: Float?
     @ObservationIgnored private let eqNode = AVAudioUnitEQ(numberOfBands: 10)
     @ObservationIgnored private let effectsChain = EffectsChain()
     @ObservationIgnored private var surroundTimer: Timer?
@@ -463,16 +468,46 @@ public final class AudioPlayer {
         for (i, band) in eqNode.bands.enumerated() {
             band.gain = on ? equalizer.bands[i] : 0
         }
-        eqNode.globalGain = ((on ? equalizer.preamp : 0) + gainAdjustment).clamped(to: -96...24)
+        // 淡出期间两首歌同时经过均衡器：总增益取两者中较大的，各自少的部分在节点音量上减掉（节点音量只能衰减）
+        let shared = max(gainAdjustment, fadeTailGain ?? gainAdjustment)
+        eqNode.globalGain = ((on ? equalizer.preamp : 0) + shared).clamped(to: -96...24)
+        playerScale = Self.linear(gainAdjustment - shared)
+        fadeScale = Self.linear((fadeTailGain ?? shared) - shared)
+        updateNodeVolumes()
+    }
+
+    @ObservationIgnored private var playerScale: Float = 1
+    @ObservationIgnored private var fadeScale: Float = 1
+
+    private static func linear(_ db: Float) -> Float { pow(10, db / 20) }
+
+    /// 测试用：均衡器总增益、主节点和淡出节点的实际音量
+    var mixLevels: (globalGain: Float, player: Float, fade: Float) { (eqNode.globalGain, playerNode.volume, fadeNode.volume) }
+
+    private func updateNodeVolumes() {
+        playerNode.volume = playerLevel * playerScale
+        fadeNode.volume = fadeLevel * fadeScale
     }
 
     // MARK: 淡入淡出
 
     /// 把当前这首从现在起剩下的部分交给淡出节点，在 duration 秒内淡出。
-    /// 成功后主节点空出来，调用方接着加载下一首并 fadeIn。只支持普通文件（APE、边下边播的流不行）。
+    /// 成功后主节点空出来，调用方接着加载下一首并 fadeIn。
+    /// 边下边播的歌传入已经下载完的文件（completedFile）也可以；APE 等只能逐块解码的格式不行。
     @discardableResult
-    public func handOffForCrossfade(duration: TimeInterval) -> Bool {
-        guard state == .playing, duration > 0, case .file(let file) = source else { return false }
+    public func handOffForCrossfade(duration: TimeInterval, completedFile: URL? = nil) -> Bool {
+        guard state == .playing, duration > 0 else { return false }
+        let file: AVAudioFile
+        switch source {
+        case .file(let f)?:
+            file = f
+        case .stream?:
+            guard let url = completedFile, !Self.isMonkeysAudio(url),
+                  let f = try? AVAudioFile(forReading: url), f.length > 0 else { return false }
+            file = f
+        case nil:
+            return false
+        }
         let start = AVAudioFramePosition(currentTime * file.processingFormat.sampleRate)
         let remaining = file.length - start
         guard remaining > 0 else { return false }
@@ -487,13 +522,19 @@ public final class AudioPlayer {
             PlaybackLog.add("淡出节点连接失败：\(failure)")
             return false
         }
-        fadeNode.volume = playerNode.volume
+        // 尾巴带着这首自己的音量均衡淡出；下一首换了 gainAdjustment 也不影响它
+        fadeTailGain = gainAdjustment
+        fadeLevel = playerLevel
+        applyEqualizer()
         fadeNode.scheduleSegment(file, startingFrame: start, frameCount: AVAudioFrameCount(remaining), at: nil)
         fadeNode.play()
-        fadeOutTimer = ramp(fadeNode, from: fadeNode.volume, to: 0, over: duration) { [weak self] in
+        fadeOutTimer = ramp(from: fadeLevel, to: 0, over: duration, set: { [weak self] in self?.fadeLevel = $0 }) { [weak self] in
             guard let self else { return }
             self.fadeNode.stop()
             self.engine.disconnectNodeOutput(self.fadeNode)
+            self.fadeTailGain = nil
+            self.fadeLevel = 0
+            self.applyEqualizer()
         }
         return true
     }
@@ -501,19 +542,22 @@ public final class AudioPlayer {
     /// 刚开始播的这首从无声渐强
     public func fadeIn(duration: TimeInterval) {
         fadeInTimer?.invalidate()
-        guard duration > 0 else { playerNode.volume = 1; return }
-        playerNode.volume = 0
-        fadeInTimer = ramp(playerNode, from: 0, to: 1, over: duration, done: {})
+        guard duration > 0 else { playerLevel = 1; updateNodeVolumes(); return }
+        playerLevel = 0
+        updateNodeVolumes()
+        fadeInTimer = ramp(from: 0, to: 1, over: duration, set: { [weak self] in self?.playerLevel = $0 }, done: {})
     }
 
     /// 线性改音量（按听感用平方曲线）
-    private func ramp(_ node: AVAudioPlayerNode, from: Float, to: Float, over duration: TimeInterval, done: @escaping @MainActor () -> Void) -> Timer {
+    private func ramp(from: Float, to: Float, over duration: TimeInterval, set: @escaping @MainActor (Float) -> Void,
+                      done: @escaping @MainActor () -> Void) -> Timer {
         let started = Date()
-        let timer = Timer(timeInterval: 0.03, repeats: true) { timer in
+        let timer = Timer(timeInterval: 0.03, repeats: true) { [weak self] timer in
             let finished = MainActor.assumeIsolated { () -> Bool in
                 let t = Float(min(1, Date().timeIntervalSince(started) / duration))
                 let eased = to > from ? t * t : 1 - (1 - t) * (1 - t)
-                node.volume = from + (to - from) * eased
+                set(from + (to - from) * eased)
+                self?.updateNodeVolumes()
                 if t >= 1 { done() }
                 return t >= 1
             }
@@ -530,7 +574,14 @@ public final class AudioPlayer {
         fadeNode.stop()
         fadeInTimer?.invalidate()
         fadeInTimer = nil
-        playerNode.volume = 1
+        playerLevel = 1
+        fadeLevel = 0
+        if fadeTailGain != nil {
+            fadeTailGain = nil
+            applyEqualizer()
+        } else {
+            updateNodeVolumes()
+        }
     }
 
     private func activateSession() {
