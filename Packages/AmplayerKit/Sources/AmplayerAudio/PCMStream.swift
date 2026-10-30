@@ -100,11 +100,15 @@ final class BufferScheduler: @unchecked Sendable {
     private let node: AVAudioPlayerNode
     private let stream: PCMStream
     private let framesPerBuffer: AVAudioFrameCount = 16384
-    private let buffersInFlight = 4
+    /// 至少提前排好几秒。完成回调要等声音真正放出来才回，隔空播放、无线 CarPlay 的输出延迟有一两秒，
+    /// 以前固定排 4 块（44.1k 约 1.5 秒，高解析度更短）会断粮，声音一卡一卡
+    private static let minimumAhead: Double = 4
 
     // 以下状态只在 queue 上访问
     private var token = 0
     private var outstanding = 0
+    private var outstandingFrames: AVAudioFramePosition = 0
+    private var targetFrames: AVAudioFramePosition = 0
     private var reachedEnd = false
     private var onFinished: (@Sendable (Int) -> Void)?
 
@@ -120,10 +124,12 @@ final class BufferScheduler: @unchecked Sendable {
             stream.resumeReading(epoch: epoch)
             self.token = token
             self.outstanding = 0
+            self.outstandingFrames = 0
             self.reachedEnd = false
             self.onFinished = onFinished
+            self.targetFrames = Self.aheadFrames(sampleRate: stream.format.sampleRate)
             try? stream.seek(to: frame)
-            for _ in 0..<buffersInFlight { scheduleNext() }
+            fill()
         }
         // 边下边播时读取可能要等下载，放到后台；播放节点先空转，缓冲区到了就接着放
         if stream.mayBlock { queue.async(execute: work) } else { queue.sync(execute: work) }
@@ -135,25 +141,44 @@ final class BufferScheduler: @unchecked Sendable {
         queue.sync { token &+= 1_000_000 }
     }
 
-    private func scheduleNext() {
-        guard !reachedEnd, let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: framesPerBuffer) else { return }
-        let frames = (try? stream.read(into: buffer)) ?? 0
-        guard frames > 0 else {
-            reachedEnd = true
-            finishIfDone()
-            return
+    /// 输出延迟加 2 秒，至少 minimumAhead 秒（换输出设备时会重新调度，跟着重算）
+    private static func aheadFrames(sampleRate: Double) -> AVAudioFramePosition {
+        var seconds = minimumAhead
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        seconds = max(seconds, session.outputLatency + session.ioBufferDuration + 2)
+        if session.outputLatency > 0.3 {
+            let route = session.currentRoute.outputs.first.map { "\($0.portType.rawValue) \($0.portName)" } ?? ""
+            let latency = String(format: "%.1f", session.outputLatency), ahead = String(format: "%.1f", seconds)
+            PlaybackLog.add(String(localized: "输出延迟 \(latency) 秒（\(route)），提前缓冲 \(ahead) 秒"))
         }
-        outstanding += 1
-        let myToken = token
-        node.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
-            guard let self else { return }
-            self.queue.async {
-                guard myToken == self.token else { return }
-                self.outstanding -= 1
-                self.scheduleNext()
-                self.finishIfDone()
+        #endif
+        return AVAudioFramePosition(seconds * sampleRate)
+    }
+
+    /// 排缓冲区，直到提前量够了或读到结尾
+    private func fill() {
+        while !reachedEnd && outstandingFrames < targetFrames {
+            guard let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: framesPerBuffer) else { break }
+            let frames = (try? stream.read(into: buffer)) ?? 0
+            guard frames > 0 else {
+                reachedEnd = true
+                break
+            }
+            outstanding += 1
+            outstandingFrames += AVAudioFramePosition(frames)
+            let myToken = token
+            node.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { [weak self] _ in
+                guard let self else { return }
+                self.queue.async {
+                    guard myToken == self.token else { return }
+                    self.outstanding -= 1
+                    self.outstandingFrames -= AVAudioFramePosition(frames)
+                    self.fill()
+                }
             }
         }
+        finishIfDone()
     }
 
     private func finishIfDone() {

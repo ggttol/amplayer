@@ -5917,6 +5917,16 @@
           }
         }
       }
+    },
+    "输出延迟 %@ 秒（%@），提前缓冲 %@ 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output latency %1$@ s (%2$@), buffering %3$@ s ahead"
+          }
+        }
+      }
     }
   }
 }
