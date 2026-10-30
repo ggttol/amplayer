@@ -34,15 +34,10 @@ struct EqualizerWindowView: View {
                 .accessibilityLabel(player.autoEqualizer ? "均衡器自动：开" : "均衡器自动：关")
                 .at(SkinLayout.eqAuto)
 
-            Menu {
-                Button("音效…", systemImage: "sparkles") { app.sheet = .effects }
-                Divider()
-                ForEach(EqualizerPreset.builtIn) { preset in
-                    Button(preset.name) { player.applyPreset(preset) }
-                }
-            } label: {
+            Button { app.sheet = .effects } label: {
                 SpriteView(S.eqPresetsButton)
             }
+            .buttonStyle(.plain)
             .accessibilityLabel("预设")
             .at(SkinLayout.eqPresets)
 

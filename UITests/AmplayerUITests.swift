@@ -22,6 +22,17 @@ final class AmplayerUITests: XCTestCase {
         element.tap()
     }
 
+    /// 在音效页里选一个经典均衡器预设，再关掉音效页
+    private func pickEQPreset(_ name: String) {
+        let effects = app.navigationBars["音效"]
+        XCTAssertTrue(effects.waitForExistence(timeout: 5), "预设按钮应直接打开音效页")
+        let chip = app.buttons[name].firstMatch
+        let list = app.collectionViews.firstMatch
+        for _ in 0..<8 where !(chip.exists && chip.isHittable) { list.swipeUp() }
+        tapWhenReady(chip)
+        tapWhenReady(effects.buttons["完成"])
+    }
+
     /// 等待元素出现；超时时打印界面层级方便排查
     private func waitFor(_ element: XCUIElement, timeout: TimeInterval = 10, file: StaticString = #filePath, line: UInt = #line) {
         if !element.waitForExistence(timeout: timeout) {
@@ -58,12 +69,12 @@ final class AmplayerUITests: XCTestCase {
         app.launchArguments = ["-AmplayerReset", "YES"]
         app.launch()
         app.buttons["预设"].tap()
-        app.buttons["Rock"].tap()
+        pickEQPreset("Rock")
         let band = app.otherElements["60 赫兹"].firstMatch
         XCTAssertTrue(band.waitForExistence(timeout: 5))
         XCTAssertEqual(band.value as? String, "+5.0 dB")
         app.buttons["预设"].tap()
-        app.buttons["Flat"].tap()
+        pickEQPreset("Flat")
         XCTAssertEqual(band.value as? String, "+0.0 dB")
     }
 

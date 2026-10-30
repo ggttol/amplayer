@@ -155,24 +155,55 @@ public struct SubsonicSource: MediaSource {
 
     func endpoint(_ method: String, _ params: [String: String] = [:]) throws -> URL {
         let base = try config.baseURL().appendingPathComponent("rest").appendingPathComponent("\(method).view")
-        let salt = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12)).lowercased()
-        let token = Insecure.MD5.hash(data: Data((password + salt).utf8)).map { String(format: "%02x", $0) }.joined()
-        var query: [(String, String)] = [
-            ("u", config.username), ("t", token), ("s", salt), ("v", "1.16.1"), ("c", "Amplayer"), ("f", "json"),
-        ]
+        var query: [(String, String)] = [("u", config.username)]
+        if SubsonicPlainAuth.needs(authKey) {
+            query.append(("p", "enc:" + Data(password.utf8).map { String(format: "%02x", $0) }.joined()))
+        } else {
+            let salt = String(UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(12)).lowercased()
+            let token = Insecure.MD5.hash(data: Data((password + salt).utf8)).map { String(format: "%02x", $0) }.joined()
+            query += [("t", token), ("s", salt)]
+        }
+        query += [("v", "1.16.1"), ("c", "Amplayer"), ("f", "json")]
         query += params.sorted { $0.key < $1.key }.map { ($0.key, $0.value) }
         return base.appendingQuery(query)
     }
 
+    /// 记住“这台服务器要用密码登录”的键：地址 + 用户名
+    var authKey: String { ((try? config.baseURL().absoluteString) ?? config.id) + "|" + config.username }
+
     func call(_ method: String, _ params: [String: String] = [:]) async throws -> [String: Any] {
+        do {
+            return try await callOnce(method, params)
+        } catch is SubsonicPlainAuth.TokenUnsupported {
+            // 服务器不支持 token 登录（如 Music），改用账号密码再试一次，并记住
+            SubsonicPlainAuth.mark(authKey)
+            do { return try await callOnce(method, params) } catch is SubsonicPlainAuth.TokenUnsupported {
+                throw SourceError.authenticationFailed("服务器不接受这种登录方式")
+            }
+        }
+    }
+
+    private func callOnce(_ method: String, _ params: [String: String]) async throws -> [String: Any] {
         let json = try await http.json(for: URLRequest(url: try endpoint(method, params)))
         guard let body = json.dict("subsonic-response") else { throw SourceError.protocolError("不是 Subsonic 响应") }
         if body.string("status") != "ok" {
             let error = body.dict("error")
             let message = error?.string("message")
+            if error?.int("code") == 41, !SubsonicPlainAuth.needs(authKey) { throw SubsonicPlainAuth.TokenUnsupported() }
             if let code = error?.int("code"), code == 40 || code == 41 { throw SourceError.authenticationFailed(message) }
             throw SourceError.protocolError(message ?? "未知错误")
         }
         return body
+    }
+}
+
+/// 有的服务器（如 Music）不支持 token 登录，返回错误码 41；对这些服务器改用 p=enc:十六进制密码，并记在本机
+enum SubsonicPlainAuth {
+    private static let key = "subsonic.plainAuthServers"
+    struct TokenUnsupported: Error {}
+    static func needs(_ server: String) -> Bool { (UserDefaults.standard.stringArray(forKey: key) ?? []).contains(server) }
+    static func mark(_ server: String) {
+        var list = UserDefaults.standard.stringArray(forKey: key) ?? []
+        if !list.contains(server) { list.append(server); UserDefaults.standard.set(list, forKey: key) }
     }
 }

@@ -27,6 +27,19 @@ struct SoundEffectsView: View {
                     Text("音效叠加在经典 10 段均衡器之上。环绕、8D 旋转戴耳机效果最明显。")
                 }
 
+                Section {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], spacing: 8) {
+                        ForEach(EqualizerPreset.builtIn) { eqChip($0) }
+                    }
+                    .padding(.vertical, 4)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
+                    .listRowBackground(Color.clear)
+                } header: {
+                    Text("均衡器预设")
+                } footer: {
+                    Text("设置经典 10 段均衡器，可以和上面的音效一起用。")
+                }
+
                 Section("音色") {
                     slider("低音", value: binding(\.bass), range: -12...12, unit: "dB")
                     slider("人声", value: binding(\.vocal), range: -12...12, unit: "dB")
@@ -93,6 +106,24 @@ struct SoundEffectsView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("音效：\(preset.name)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private func eqChip(_ preset: EqualizerPreset) -> some View {
+        let selected = player.equalizer.bands == preset.bands && player.equalizer.preamp == preset.preamp
+        return Button {
+            player.applyPreset(preset)
+        } label: {
+            Text(preset.name)
+                .font(.subheadline.weight(.medium))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background(selected ? Color.orange : Color(white: 0.16), in: RoundedRectangle(cornerRadius: 10))
+                .foregroundStyle(selected ? Color.black : Color.primary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(preset.name)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
