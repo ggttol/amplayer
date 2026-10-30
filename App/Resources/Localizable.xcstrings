@@ -1,0 +1,5922 @@
+{
+  "sourceLanguage": "zh-Hans",
+  "version": "1.0",
+  "strings": {
+    "\n经 QuickConnect 连接到 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\nConnected to %@ via QuickConnect"
+          }
+        }
+      }
+    },
+    "%@ 赫兹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Hz"
+          }
+        }
+      }
+    },
+    "%@ 错误码 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ error code %lld"
+          }
+        }
+      }
+    },
+    "%lld 个文件不是有效皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files are not valid skins"
+          }
+        }
+      }
+    },
+    "%lld 位艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld artists"
+          }
+        }
+      }
+    },
+    "%lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld 小时 %lld 分钟": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld hr %lld min"
+          }
+        }
+      }
+    },
+    "%lld 年代": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld's"
+          }
+        }
+      }
+    },
+    "%lld 张专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld albums"
+          }
+        }
+      }
+    },
+    "%lld 张专辑 · %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld albums · %lld songs"
+          }
+        }
+      }
+    },
+    "%lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld songs"
+          }
+        }
+      }
+    },
+    "%lld 首下载失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld songs failed to download"
+          }
+        }
+      }
+    },
+    "%lld 首单曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld singles"
+          }
+        }
+      }
+    },
+    "%lld 首将接着播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld songs will play next"
+          }
+        }
+      }
+    },
+    "%lld 首歌": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld songs"
+          }
+        }
+      }
+    },
+    "3D 环绕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3D Surround"
+          }
+        }
+      }
+    },
+    "8D 旋转": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "8D Orbit"
+          }
+        }
+      }
+    },
+    "APE 解码失败（错误 %d）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "APE decoding failed (error %d)"
+          }
+        }
+      }
+    },
+    "AUTO：关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AUTO: Off"
+          }
+        }
+      }
+    },
+    "AUTO：每首歌记住自己的均衡器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "AUTO: each song remembers its own equalizer"
+          }
+        }
+      }
+    },
+    "Alist / OpenList 的地址形如 http://IP:5244/dav；群晖 WebDAV Server 默认端口 5005（HTTP）/ 5006（HTTPS）。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alist / OpenList addresses look like http://IP:5244/dav. Synology WebDAV Server uses port 5005 (HTTP) / 5006 (HTTPS) by default."
+          }
+        }
+      }
+    },
+    "Alist / OpenList 网盘、NAS WebDAV": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alist / OpenList cloud drives, NAS WebDAV"
+          }
+        }
+      }
+    },
+    "Amplayer - 点左上角菜单打开来源，或点播放列表的 ADD 添加音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amplayer - open a source from the menu at the top left, or tap ADD in the playlist"
+          }
+        }
+      }
+    },
+    "Audio Station · 专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Station · Albums"
+          }
+        }
+      }
+    },
+    "Audio Station · 播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Station · Playlists"
+          }
+        }
+      }
+    },
+    "Audio Station · 文件夹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Station · Folders"
+          }
+        }
+      }
+    },
+    "Audio Station 还没有索引这个文件夹，可以改用共享文件夹浏览": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Station has not indexed this folder yet. Browse it through the shared folders instead."
+          }
+        }
+      }
+    },
+    "DSM 错误码 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DSM error code %lld"
+          }
+        }
+      }
+    },
+    "Deep Ocean 深海": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deep Ocean"
+          }
+        }
+      }
+    },
+    "Emby 里的音乐库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music libraries on Emby"
+          }
+        }
+      }
+    },
+    "IP 已被 NAS 自动封锁（多次登录失败），请在 DSM“安全性 › 账户”里解除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The NAS blocked this IP after too many failed sign-ins. Unblock it in DSM under Security › Account."
+          }
+        }
+      }
+    },
+    "Ivory 象牙": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ivory"
+          }
+        }
+      }
+    },
+    "JTplayer · 点左上角图标打开菜单添加音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "JTplayer · tap the icon at the top left to open the menu and add music"
+          }
+        }
+      }
+    },
+    "Jellyfin 里的音乐库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music libraries on Jellyfin"
+          }
+        }
+      }
+    },
+    "MP3、AAC/M4A、ALAC、FLAC、APE（Monkey's Audio）、WAV、AIFF、CAF、Opus（CAF 封装）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MP3, AAC/M4A, ALAC, FLAC, APE (Monkey's Audio), WAV, AIFF, CAF, Opus (in CAF)"
+          }
+        }
+      }
+    },
+    "NAS 上没有 Audio Station": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio Station is not installed on the NAS"
+          }
+        }
+      }
+    },
+    "NAS 不支持 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The NAS does not support %@"
+          }
+        }
+      }
+    },
+    "NAS 与网盘": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NAS & Cloud Drives"
+          }
+        }
+      }
+    },
+    "NAS 的 HTTPS 常用自签名证书；仅在局域网或你信任的服务器上开启。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NAS HTTPS often uses a self-signed certificate. Only turn this on for your local network or servers you trust."
+          }
+        }
+      }
+    },
+    "NAS、Alist 网盘、Navidrome、Jellyfin 等": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NAS, Alist, Navidrome, Jellyfin and more"
+          }
+        }
+      }
+    },
+    "Navidrome、Airsonic、Gonic、Ampache 等，填服务器根地址。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Navidrome, Airsonic, Gonic, Ampache and others. Enter the server root address."
+          }
+        }
+      }
+    },
+    "Nixie 辉光": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nixie"
+          }
+        }
+      }
+    },
+    "QQ 音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QQ Music"
+          }
+        }
+      }
+    },
+    "QuickConnect ID “%@”不存在，或 NAS 未开启 QuickConnect": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QuickConnect ID \"%@\" does not exist, or QuickConnect is off on the NAS"
+          }
+        }
+      }
+    },
+    "QuickConnect 区域跳转过多": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Too many QuickConnect region redirects"
+          }
+        }
+      }
+    },
+    "QuickConnect 响应格式不对": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unexpected QuickConnect response"
+          }
+        }
+      }
+    },
+    "QuickConnect 找到了 NAS，但%@，中继也不可用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QuickConnect found the NAS, but %@, and the relay is unavailable"
+          }
+        }
+      }
+    },
+    "QuickConnect 返回错误 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QuickConnect returned error %lld"
+          }
+        }
+      }
+    },
+    "SMB 共享": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SMB Share"
+          }
+        }
+      }
+    },
+    "Sakura 樱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura"
+          }
+        }
+      }
+    },
+    "Skin.xml 无法解析（只支持 version=\"2\" 的皮肤）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot read Skin.xml (only version=\"2\" skins are supported)"
+          }
+        }
+      }
+    },
+    "Subsonic、Airsonic、Gonic 等": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Subsonic, Airsonic, Gonic and more"
+          }
+        }
+      }
+    },
+    "Synthwave 霓虹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synthwave"
+          }
+        }
+      }
+    },
+    "UPnP / DLNA 媒体服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "UPnP / DLNA Media Server"
+          }
+        }
+      }
+    },
+    "[缓冲中%@] ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "[Buffering%@] "
+          }
+        }
+      }
+    },
+    "controlURL 无效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid controlURL"
+          }
+        }
+      }
+    },
+    "https://192.168.1.10:5001 或 QuickConnect ID": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://192.168.1.10:5001 or a QuickConnect ID"
+          }
+        }
+      }
+    },
+    "https://nas.local:5006/music 或 http://alist:5244/dav": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "https://nas.local:5006/music or http://alist:5244/dav"
+          }
+        }
+      }
+    },
+    "“文件”App › Amplayer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files app › Amplayer"
+          }
+        }
+      }
+    },
+    "“文件”App › JTplayer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files app › JTplayer"
+          }
+        }
+      }
+    },
+    "“文件”App 里的音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music in the Files app"
+          }
+        }
+      }
+    },
+    "一键音效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One-Tap Effects"
+          }
+        }
+      }
+    },
+    "上一首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous"
+          }
+        }
+      }
+    },
+    "上移": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Up"
+          }
+        }
+      }
+    },
+    "下一首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next"
+          }
+        }
+      }
+    },
+    "下一首播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Next"
+          }
+        }
+      }
+    },
+    "下潜更深，鼓点更有力": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deeper lows, punchier drums"
+          }
+        }
+      }
+    },
+    "下移": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move Down"
+          }
+        }
+      }
+    },
+    "下载失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download failed: %@"
+          }
+        }
+      }
+    },
+    "下载完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download complete"
+          }
+        }
+      }
+    },
+    "不加任何处理": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No processing"
+          }
+        }
+      }
+    },
+    "不支持的 APE 声道或位深": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unsupported APE channels or bit depth"
+          }
+        }
+      }
+    },
+    "不是 Subsonic 响应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a Subsonic response"
+          }
+        }
+      }
+    },
+    "不是曲目：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a track: %@"
+          }
+        }
+      }
+    },
+    "不是有效的 .skn（zip）文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a valid .skn (zip) file"
+          }
+        }
+      }
+    },
+    "不是有效的歌词文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a valid lyrics file"
+          }
+        }
+      }
+    },
+    "不是有效的皮肤文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not a valid skin file"
+          }
+        }
+      }
+    },
+    "不能边下边播（%@），等下载完": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot stream (%@), waiting for the download to finish"
+          }
+        }
+      }
+    },
+    "专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Albums"
+          }
+        }
+      }
+    },
+    "中继": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Relay"
+          }
+        }
+      }
+    },
+    "也可以点上面的“添加”从“文件”或曲库添加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can also tap Add above to add from Files or the library"
+          }
+        }
+      }
+    },
+    "也可以点下面的 ADD 从“文件”或曲库添加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can also tap ADD below to add from Files or the library"
+          }
+        }
+      }
+    },
+    "人声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocals"
+          }
+        }
+      }
+    },
+    "人声靠前，齿音柔和": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vocals up front, softer sibilance"
+          }
+        }
+      }
+    },
+    "从 %@ 继续播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Resuming from %@"
+          }
+        }
+      }
+    },
+    "从“文件”导入 .lrc": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import .lrc from Files"
+          }
+        }
+      }
+    },
+    "从“文件”导入…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import from Files…"
+          }
+        }
+      }
+    },
+    "从列表删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from List"
+          }
+        }
+      }
+    },
+    "从整个曲库随机挑 100 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100 random songs from the whole library"
+          }
+        }
+      }
+    },
+    "从曲库添加…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add from Library…"
+          }
+        }
+      }
+    },
+    "从曲库移除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from Library"
+          }
+        }
+      }
+    },
+    "从音乐来源添加…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add from Music Sources…"
+          }
+        }
+      }
+    },
+    "会话已过期": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Session expired"
+          }
+        }
+      }
+    },
+    "低音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bass"
+          }
+        }
+      }
+    },
+    "低音和高音都推上去，带点回声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boosted lows and highs with a touch of echo"
+          }
+        }
+      }
+    },
+    "使用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use"
+          }
+        }
+      }
+    },
+    "保存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save"
+          }
+        }
+      }
+    },
+    "保存列表…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save List…"
+          }
+        }
+      }
+    },
+    "保存失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save failed: %@"
+          }
+        }
+      }
+    },
+    "保存播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Playlist"
+          }
+        }
+      }
+    },
+    "保存播放列表…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Save Playlist…"
+          }
+        }
+      }
+    },
+    "信任自签名证书": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trust Self-Signed Certificate"
+          }
+        }
+      }
+    },
+    "偏右 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right %lld%%"
+          }
+        }
+      }
+    },
+    "偏左 %lld%%": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Left %lld%%"
+          }
+        }
+      }
+    },
+    "停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "停止播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop Playback"
+          }
+        }
+      }
+    },
+    "免费开源 · github.com/ggttol/amplayer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free and open source · github.com/ggttol/amplayer"
+          }
+        }
+      }
+    },
+    "免费开源 · github.com/ggttol/jtplayer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Free and open source · github.com/ggttol/jtplayer"
+          }
+        }
+      }
+    },
+    "全不选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deselect All"
+          }
+        }
+      }
+    },
+    "全选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select All"
+          }
+        }
+      }
+    },
+    "全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All"
+          }
+        }
+      }
+    },
+    "全部专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All Albums"
+          }
+        }
+      }
+    },
+    "共 %lld 位": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld total"
+          }
+        }
+      }
+    },
+    "共 %lld 种": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld total"
+          }
+        }
+      }
+    },
+    "关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off"
+          }
+        }
+      }
+    },
+    "关于": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "About"
+          }
+        }
+      }
+    },
+    "关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close"
+          }
+        }
+      }
+    },
+    "关闭均衡器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Equalizer"
+          }
+        }
+      }
+    },
+    "关闭播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Playlist"
+          }
+        }
+      }
+    },
+    "关闭歌词秀": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Lyrics"
+          }
+        }
+      }
+    },
+    "关闭菜单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close Menu"
+          }
+        }
+      }
+    },
+    "关闭（停止播放）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Close (Stop Playback)"
+          }
+        }
+      }
+    },
+    "内置皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Built-in Skins"
+          }
+        }
+      }
+    },
+    "分类": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Categories"
+          }
+        }
+      }
+    },
+    "切换到播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to Playlist"
+          }
+        }
+      }
+    },
+    "切换到歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch to Lyrics"
+          }
+        }
+      }
+    },
+    "列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "List"
+          }
+        }
+      }
+    },
+    "列表/歌词窗口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist / Lyrics Window"
+          }
+        }
+      }
+    },
+    "列表·上一首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Previous"
+          }
+        }
+      }
+    },
+    "列表·下一首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Next"
+          }
+        }
+      }
+    },
+    "列表·停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Stop"
+          }
+        }
+      }
+    },
+    "列表·打开文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Open File"
+          }
+        }
+      }
+    },
+    "列表·播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Play"
+          }
+        }
+      }
+    },
+    "列表·暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist · Pause"
+          }
+        }
+      }
+    },
+    "列表循环": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat All"
+          }
+        }
+      }
+    },
+    "删除": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete"
+          }
+        }
+      }
+    },
+    "删除所选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Selected"
+          }
+        }
+      }
+    },
+    "删除曲目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Tracks"
+          }
+        }
+      }
+    },
+    "删除重复的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Duplicates"
+          }
+        }
+      }
+    },
+    "删除重复项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove Duplicates"
+          }
+        }
+      }
+    },
+    "前级放大": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preamp"
+          }
+        }
+      }
+    },
+    "前置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preamp"
+          }
+        }
+      }
+    },
+    "前置放大": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preamp"
+          }
+        }
+      }
+    },
+    "加入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "加入播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Playlist"
+          }
+        }
+      }
+    },
+    "加入曲库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Library"
+          }
+        }
+      }
+    },
+    "加载失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to Load"
+          }
+        }
+      }
+    },
+    "加载失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to load: %@"
+          }
+        }
+      }
+    },
+    "加载：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loading: %@"
+          }
+        }
+      }
+    },
+    "动态与质感": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dynamics & Texture"
+          }
+        }
+      }
+    },
+    "包厢里的混响和回声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Karaoke-room reverb and echo"
+          }
+        }
+      }
+    },
+    "半音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "semitones"
+          }
+        }
+      }
+    },
+    "协议错误：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Protocol error: %@"
+          }
+        }
+      }
+    },
+    "单声道": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mono"
+          }
+        }
+      }
+    },
+    "单循": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat 1"
+          }
+        }
+      }
+    },
+    "单曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Singles"
+          }
+        }
+      }
+    },
+    "单曲循环": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat One"
+          }
+        }
+      }
+    },
+    "单曲播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Once"
+          }
+        }
+      }
+    },
+    "压住突然的大声，小音量也听得清": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tames sudden loud parts so quiet passages stay clear"
+          }
+        }
+      }
+    },
+    "原创": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original"
+          }
+        }
+      }
+    },
+    "原声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Original Sound"
+          }
+        }
+      }
+    },
+    "反转顺序": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverse Order"
+          }
+        }
+      }
+    },
+    "反选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invert Selection"
+          }
+        }
+      }
+    },
+    "反馈问题 / 提建议": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report a Problem / Suggest a Feature"
+          }
+        }
+      }
+    },
+    "发现的设备都已经添加过了。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All discovered devices have already been added."
+          }
+        }
+      }
+    },
+    "取消": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel"
+          }
+        }
+      }
+    },
+    "取消定时": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cancel Timer"
+          }
+        }
+      }
+    },
+    "取消收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unfavorite"
+          }
+        }
+      }
+    },
+    "取消静音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unmute"
+          }
+        }
+      }
+    },
+    "变调": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pitch"
+          }
+        }
+      }
+    },
+    "变速": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed"
+          }
+        }
+      }
+    },
+    "变速不变调，变调不变速。练歌、听播客、做 Slowed + Reverb 都用得上。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change speed without changing pitch, or pitch without changing speed. Handy for singing practice, podcasts and slowed + reverb."
+          }
+        }
+      }
+    },
+    "只保留所选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep Only Selected"
+          }
+        }
+      }
+    },
+    "可写成 smb://IP 浏览全部共享，或 smb://IP/共享名 直接进入。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use smb://IP to browse all shares, or smb://IP/share to open one directly."
+          }
+        }
+      }
+    },
+    "可视化": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizer"
+          }
+        }
+      }
+    },
+    "可视化，点按切换": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Visualizer, tap to switch"
+          }
+        }
+      }
+    },
+    "同一 Wi‑Fi 下的 NAS、电脑共享和媒体服务器会自动出现在这里。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NAS devices, shared computers and media servers on the same Wi‑Fi appear here automatically."
+          }
+        }
+      }
+    },
+    "同步": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sync"
+          }
+        }
+      }
+    },
+    "名称": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "启动时连接音频链失败（加载歌曲时会再接）：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not connect the audio chain at launch (will retry when a song loads): %@"
+          }
+        }
+      }
+    },
+    "响应不是 JSON 对象": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The response is not a JSON object"
+          }
+        }
+      }
+    },
+    "响度均衡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loudness Leveling"
+          }
+        }
+      }
+    },
+    "回声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo"
+          }
+        }
+      }
+    },
+    "回声间隔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Echo Delay"
+          }
+        }
+      }
+    },
+    "圈/秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "rev/s"
+          }
+        }
+      }
+    },
+    "在“曲库”或“来源”里选歌": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick songs in Library or Sources"
+          }
+        }
+      }
+    },
+    "在“音乐来源”里长按某个来源或文件夹，选择“扫描到曲库”。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Music Sources, touch and hold a source or folder, then choose Scan to Library."
+          }
+        }
+      }
+    },
+    "在局域网中发现": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found on Your Network"
+          }
+        }
+      }
+    },
+    "在手机上把来源扫描进曲库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan a source into the library on your phone"
+          }
+        }
+      }
+    },
+    "在手机上添加 NAS 或媒体服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a NAS or media server on your phone"
+          }
+        }
+      }
+    },
+    "在手机上长按歌词区域可以在线搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Touch and hold the lyrics on your phone to search online"
+          }
+        }
+      }
+    },
+    "在播放列表窗口点 LIST › 保存播放列表。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the playlist window, tap LIST › Save Playlist."
+          }
+        }
+      }
+    },
+    "在线搜索": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Online"
+          }
+        }
+      }
+    },
+    "在线搜索歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Lyrics Online"
+          }
+        }
+      }
+    },
+    "在线搜索歌词…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Lyrics Online…"
+          }
+        }
+      }
+    },
+    "在线查找歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Lyrics Online"
+          }
+        }
+      }
+    },
+    "在线皮肤库（Winamp Skin Museum）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Online Skin Library (Winamp Skin Museum)"
+          }
+        }
+      }
+    },
+    "地址无效：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Invalid address: %@"
+          }
+        }
+      }
+    },
+    "均衡器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer"
+          }
+        }
+      }
+    },
+    "均衡器已关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer off"
+          }
+        }
+      }
+    },
+    "均衡器已开启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer on"
+          }
+        }
+      }
+    },
+    "均衡器窗口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer Window"
+          }
+        }
+      }
+    },
+    "均衡器自动：关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto equalizer: Off"
+          }
+        }
+      }
+    },
+    "均衡器自动：开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Auto equalizer: On"
+          }
+        }
+      }
+    },
+    "均衡器预设": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer Presets"
+          }
+        }
+      }
+    },
+    "均衡器：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer: %@"
+          }
+        }
+      }
+    },
+    "均衡器：关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer: Off"
+          }
+        }
+      }
+    },
+    "均衡器：开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Equalizer: On"
+          }
+        }
+      }
+    },
+    "填 DSM 地址（例如 https://IP:5001、DDNS 域名），或直接填 QuickConnect ID，会自动选择局域网或外网线路。可浏览所有共享文件夹；装了 Audio Station 并建好索引时，还会显示专辑与播放列表。不支持开启了两步验证的账号。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the DSM address (for example https://IP:5001 or a DDNS domain) or a QuickConnect ID; the local or internet route is chosen automatically. You can browse all shared folders, and albums and playlists appear when Audio Station is installed and indexed. Accounts with two-step verification are not supported."
+          }
+        }
+      }
+    },
+    "填 Emby 服务器地址，部分安装需要带 /emby 后缀。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the Emby server address. Some installations need the /emby suffix."
+          }
+        }
+      }
+    },
+    "填 Jellyfin 服务器地址，例如 http://IP:8096。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the Jellyfin server address, for example http://IP:8096."
+          }
+        }
+      }
+    },
+    "填媒体服务器的设备描述地址；一般在上方“局域网”里自动发现即可。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enter the media server's device description URL. Usually it is found automatically under Local Network above."
+          }
+        }
+      }
+    },
+    "声场变宽，像在房间里听音箱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A wider soundstage, like speakers in a room"
+          }
+        }
+      }
+    },
+    "声音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound"
+          }
+        }
+      }
+    },
+    "声音绕着头转圈，戴耳机听": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound circles your head; use headphones"
+          }
+        }
+      }
+    },
+    "复制": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "复古、放松，慢一点": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retro, relaxed and a bit slower"
+          }
+        }
+      }
+    },
+    "外网": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Internet"
+          }
+        }
+      }
+    },
+    "外观与设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance & Settings"
+          }
+        }
+      }
+    },
+    "多选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select"
+          }
+        }
+      }
+    },
+    "夜间轻柔": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Night Mode"
+          }
+        }
+      }
+    },
+    "大型场馆": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arena"
+          }
+        }
+      }
+    },
+    "大型场馆的空间感": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The space of a big arena"
+          }
+        }
+      }
+    },
+    "大小": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size"
+          }
+        }
+      }
+    },
+    "好": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        }
+      }
+    },
+    "存储": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Storage"
+          }
+        }
+      }
+    },
+    "完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done"
+          }
+        }
+      }
+    },
+    "定时关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep Timer"
+          }
+        }
+      }
+    },
+    "定时关闭：%lld 分钟后": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep timer: in %lld min"
+          }
+        }
+      }
+    },
+    "定时关闭：已暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep timer: paused"
+          }
+        }
+      }
+    },
+    "定时关闭：当前这首播完，停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep timer: stopped after the current song"
+          }
+        }
+      }
+    },
+    "定时关闭：播完当前这首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sleep timer: after the current song"
+          }
+        }
+      }
+    },
+    "家里 NAS 上的音乐文件夹，或者通过 Alist / OpenList 接入的网盘": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music folders on your home NAS, or cloud drives through Alist / OpenList"
+          }
+        }
+      }
+    },
+    "密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password"
+          }
+        }
+      }
+    },
+    "密码已过期，请先在 DSM 网页里修改密码": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The password has expired. Change it on the DSM web page first."
+          }
+        }
+      }
+    },
+    "密码（留空则不修改）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Password (leave blank to keep)"
+          }
+        }
+      }
+    },
+    "导入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import"
+          }
+        }
+      }
+    },
+    "导入 .lrc": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import .lrc"
+          }
+        }
+      }
+    },
+    "导入 .skn 皮肤…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import .skn Skin…"
+          }
+        }
+      }
+    },
+    "导入失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import failed: %@"
+          }
+        }
+      }
+    },
+    "导入的皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported Skins"
+          }
+        }
+      }
+    },
+    "小房间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Small Room"
+          }
+        }
+      }
+    },
+    "局域网": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local Network"
+          }
+        }
+      }
+    },
+    "局域网 IPv6": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local IPv6"
+          }
+        }
+      }
+    },
+    "局域网媒体": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local Media"
+          }
+        }
+      }
+    },
+    "居中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center"
+          }
+        }
+      }
+    },
+    "已使用这份歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using these lyrics"
+          }
+        }
+      }
+    },
+    "已保存到 文件 › Amplayer › Playlists": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to Files › Amplayer › Playlists"
+          }
+        }
+      }
+    },
+    "已保存到 文件 › JTplayer › Playlists": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved to Files › JTplayer › Playlists"
+          }
+        }
+      }
+    },
+    "已停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopped"
+          }
+        }
+      }
+    },
+    "已切换到皮肤 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switched to skin %@"
+          }
+        }
+      }
+    },
+    "已删除 %lld 个重复项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removed %lld duplicates"
+          }
+        }
+      }
+    },
+    "已删除 %lld 首重复的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removed %lld duplicate songs"
+          }
+        }
+      }
+    },
+    "已加入 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %lld songs"
+          }
+        }
+      }
+    },
+    "已加入播放列表 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %lld songs to the playlist"
+          }
+        }
+      }
+    },
+    "已取消收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Removed from favorites"
+          }
+        }
+      }
+    },
+    "已复制播放日志": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback log copied"
+          }
+        }
+      }
+    },
+    "已导入": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported"
+          }
+        }
+      }
+    },
+    "已导入 %lld 个皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Imported %lld skins"
+          }
+        }
+      }
+    },
+    "已导入歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics imported"
+          }
+        }
+      }
+    },
+    "已收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added to favorites"
+          }
+        }
+      }
+    },
+    "已暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paused"
+          }
+        }
+      }
+    },
+    "已添加 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added %lld songs"
+          }
+        }
+      }
+    },
+    "已载入 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Loaded %lld songs"
+          }
+        }
+      }
+    },
+    "已选 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld selected"
+          }
+        }
+      }
+    },
+    "已重置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        }
+      }
+    },
+    "平衡": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Balance"
+          }
+        }
+      }
+    },
+    "年代": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decades"
+          }
+        }
+      }
+    },
+    "开启": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On"
+          }
+        }
+      }
+    },
+    "开始下载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading"
+          }
+        }
+      }
+    },
+    "开始扫描": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning"
+          }
+        }
+      }
+    },
+    "开始扫描 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning %@"
+          }
+        }
+      }
+    },
+    "开始离线下载 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Downloading %lld songs for offline"
+          }
+        }
+      }
+    },
+    "开源许可": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Source Licenses"
+          }
+        }
+      }
+    },
+    "开源项目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Source"
+          }
+        }
+      }
+    },
+    "录音棚": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Studio"
+          }
+        }
+      }
+    },
+    "循环": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat"
+          }
+        }
+      }
+    },
+    "循环播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repeat All"
+          }
+        }
+      }
+    },
+    "恢复原声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to Original"
+          }
+        }
+      }
+    },
+    "恢复歌词时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset Lyrics Timing"
+          }
+        }
+      }
+    },
+    "恢复窗口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Window"
+          }
+        }
+      }
+    },
+    "恢复默认": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Defaults"
+          }
+        }
+      }
+    },
+    "我的播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Playlist"
+          }
+        }
+      }
+    },
+    "我的收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
+    "我的音乐来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My Music Sources"
+          }
+        }
+      }
+    },
+    "所有账号密码只保存在这台设备的钥匙串里，App 直接连接你的服务器。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accounts and passwords are stored only in this device's keychain. The app connects directly to your servers."
+          }
+        }
+      }
+    },
+    "打开列表…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open List…"
+          }
+        }
+      }
+    },
+    "打开失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to open: %@"
+          }
+        }
+      }
+    },
+    "打开播放列表…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Playlist…"
+          }
+        }
+      }
+    },
+    "打开文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open File"
+          }
+        }
+      }
+    },
+    "打开文件…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open File…"
+          }
+        }
+      }
+    },
+    "打开音乐来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Music Sources"
+          }
+        }
+      }
+    },
+    "打断结束，%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interruption ended, %@"
+          }
+        }
+      }
+    },
+    "扫描 %@ 失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning %@ failed: %@"
+          }
+        }
+      }
+    },
+    "扫描到曲库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scan to Library"
+          }
+        }
+      }
+    },
+    "找不到专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Album not found"
+          }
+        }
+      }
+    },
+    "找不到播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist not found"
+          }
+        }
+      }
+    },
+    "找不到歌手": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artist not found"
+          }
+        }
+      }
+    },
+    "找不到艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artist not found"
+          }
+        }
+      }
+    },
+    "拿到时长 %@，可以拖动了": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got duration %@, seeking enabled"
+          }
+        }
+      }
+    },
+    "按专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By Album"
+          }
+        }
+      }
+    },
+    "按住右边的横线拖动可以调整顺序。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the handles on the right to reorder."
+          }
+        }
+      }
+    },
+    "按文件路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By File Path"
+          }
+        }
+      }
+    },
+    "按标题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By Title"
+          }
+        }
+      }
+    },
+    "按目录浏览": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse Folders"
+          }
+        }
+      }
+    },
+    "按艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By Artist"
+          }
+        }
+      }
+    },
+    "按艺术家、专辑浏览，带封面和歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browse by artist and album, with artwork and lyrics"
+          }
+        }
+      }
+    },
+    "按路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By Path"
+          }
+        }
+      }
+    },
+    "换一批": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "换下一套皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next Skin"
+          }
+        }
+      }
+    },
+    "换个关键词试试，比如只写歌名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try different keywords, such as just the song title"
+          }
+        }
+      }
+    },
+    "排序": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sort"
+          }
+        }
+      }
+    },
+    "搜索%@的专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search albums by %@"
+          }
+        }
+      }
+    },
+    "搜索%@的单曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search songs by %@"
+          }
+        }
+      }
+    },
+    "搜索失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search Failed"
+          }
+        }
+      }
+    },
+    "搜索失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search failed: %@"
+          }
+        }
+      }
+    },
+    "搜索标题、艺术家、专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search titles, artists, albums"
+          }
+        }
+      }
+    },
+    "搜索艺术家、专辑、歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search artists, albums, songs"
+          }
+        }
+      }
+    },
+    "播完当前这首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After Current Song"
+          }
+        }
+      }
+    },
+    "播完这首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "After this song"
+          }
+        }
+      }
+    },
+    "播完，自动下一首：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished, playing next: %@"
+          }
+        }
+      }
+    },
+    "播完：已是列表最后一首（共 %lld 首，循环：%@，随机：%@），停止": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finished: last song in the list (%lld songs, repeat: %@, shuffle: %@), stopping"
+          }
+        }
+      }
+    },
+    "播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play"
+          }
+        }
+      }
+    },
+    "播放专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Album"
+          }
+        }
+      }
+    },
+    "播放中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playing"
+          }
+        }
+      }
+    },
+    "播放全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play All"
+          }
+        }
+      }
+    },
+    "播放全部（%lld 首）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play All (%lld songs)"
+          }
+        }
+      }
+    },
+    "播放全部（含子目录）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play All (Including Subfolders)"
+          }
+        }
+      }
+    },
+    "播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists"
+          }
+        }
+      }
+    },
+    "播放列表为空或无法读取": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The playlist is empty or cannot be read"
+          }
+        }
+      }
+    },
+    "播放列表保存为 M3U，位于“文件”App › Amplayer › Playlists，可与其他播放器互通。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists are saved as M3U in Files app › Amplayer › Playlists and work with other players."
+          }
+        }
+      }
+    },
+    "播放列表保存为 M3U，位于“文件”App › JTplayer › Playlists，可与其他播放器互通。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists are saved as M3U in Files app › JTplayer › Playlists and work with other players."
+          }
+        }
+      }
+    },
+    "播放列表已关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist closed"
+          }
+        }
+      }
+    },
+    "播放列表文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist Files"
+          }
+        }
+      }
+    },
+    "播放列表是空的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The playlist is empty"
+          }
+        }
+      }
+    },
+    "播放收藏的歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Favorite Songs"
+          }
+        }
+      }
+    },
+    "播放整个文件夹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Entire Folder"
+          }
+        }
+      }
+    },
+    "播放日志": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback Log"
+          }
+        }
+      }
+    },
+    "播放时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Time"
+          }
+        }
+      }
+    },
+    "播放本目录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play This Folder"
+          }
+        }
+      }
+    },
+    "播放模式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Mode"
+          }
+        }
+      }
+    },
+    "播放模式：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play mode: %@"
+          }
+        }
+      }
+    },
+    "播放缓存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playback Cache"
+          }
+        }
+      }
+    },
+    "播放顺序": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play Order"
+          }
+        }
+      }
+    },
+    "支持 QuickConnect，在外也能连": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "QuickConnect support, works away from home"
+          }
+        }
+      }
+    },
+    "支持千千静听格式的 .skn 皮肤（Skin.xml version=\"2\"），也可以在“文件”App 里用 JTplayer 打开 .skn。皮肤里没有的窗口会用默认皮肤补上。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports classic .skn skins (Skin.xml version=\"2\"). You can also open a .skn with JTplayer from the Files app. Windows missing from a skin use the default skin."
+          }
+        }
+      }
+    },
+    "支持的格式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supported Formats"
+          }
+        }
+      }
+    },
+    "支持经典 .wsz 皮肤（Winamp 2.x 格式）。在下面的皮肤库里下载后，在“文件”App 里用 Amplayer 打开，或点右上角导入。皮肤版权归原作者所有。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Supports classic .wsz skins (Winamp 2.x format). Download one from the skin library below, then open it with Amplayer from the Files app or tap Import at the top right. Skins belong to their original authors."
+          }
+        }
+      }
+    },
+    "收录了七万多款经典皮肤，可以直接在浏览器里预览和下载 .wsz。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More than 70,000 classic skins you can preview and download as .wsz in your browser."
+          }
+        }
+      }
+    },
+    "收藏": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorites"
+          }
+        }
+      }
+    },
+    "收藏专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Favorite Album"
+          }
+        }
+      }
+    },
+    "教堂": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cathedral"
+          }
+        }
+      }
+    },
+    "文件头没写总长度，改用逐块解码：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file header has no total length, decoding block by block: %@"
+          }
+        }
+      }
+    },
+    "文件夹": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folders"
+          }
+        }
+      }
+    },
+    "文件或文件夹不存在": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file or folder does not exist"
+          }
+        }
+      }
+    },
+    "新建列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New List"
+          }
+        }
+      }
+    },
+    "新建（清空）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New (Clear)"
+          }
+        }
+      }
+    },
+    "旋转速度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orbit Speed"
+          }
+        }
+      }
+    },
+    "无法创建缓存文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot create the cache file"
+          }
+        }
+      }
+    },
+    "无法加载皮肤 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot load skin %@"
+          }
+        }
+      }
+    },
+    "无法打开 APE 文件（错误 %d）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot open the APE file (error %d)"
+          }
+        }
+      }
+    },
+    "无法边下边播（格式解析失败 %d）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot stream (format parsing failed %d)"
+          }
+        }
+      }
+    },
+    "无缝衔接到：%@%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gapless transition to: %@%@"
+          }
+        }
+      }
+    },
+    "时长": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Duration"
+          }
+        }
+      }
+    },
+    "显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show"
+          }
+        }
+      }
+    },
+    "显示剩余时间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Remaining Time"
+          }
+        }
+      }
+    },
+    "显示播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Playlist"
+          }
+        }
+      }
+    },
+    "显示歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Lyrics"
+          }
+        }
+      }
+    },
+    "暂不支持：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not supported yet: %@"
+          }
+        }
+      }
+    },
+    "暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause"
+          }
+        }
+      }
+    },
+    "曲库": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library"
+          }
+        }
+      }
+    },
+    "曲库与播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library & Playlists"
+          }
+        }
+      }
+    },
+    "曲库是空的": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The library is empty"
+          }
+        }
+      }
+    },
+    "曲库（音乐窗）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Library (Music Window)"
+          }
+        }
+      }
+    },
+    "曲目信息": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track Info"
+          }
+        }
+      }
+    },
+    "曲目播完但当前不是播放状态（%@），不自动下一首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track finished while not playing (%@), not advancing"
+          }
+        }
+      }
+    },
+    "更多操作": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
+          }
+        }
+      }
+    },
+    "更早": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Earlier"
+          }
+        }
+      }
+    },
+    "最常播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Most Played"
+          }
+        }
+      }
+    },
+    "最近播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Played"
+          }
+        }
+      }
+    },
+    "最近添加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Added"
+          }
+        }
+      }
+    },
+    "最近添加的专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recently Added Albums"
+          }
+        }
+      }
+    },
+    "服务器上没有“%@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "\"%@\" is not on the server"
+          }
+        }
+      }
+    },
+    "服务器不接受这种登录方式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server does not accept this sign-in method"
+          }
+        }
+      }
+    },
+    "服务器没有返回音频地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server did not return an audio URL"
+          }
+        }
+      }
+    },
+    "服务器返回 HTTP %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The server returned HTTP %lld"
+          }
+        }
+      }
+    },
+    "未在播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not Playing"
+          }
+        }
+      }
+    },
+    "未显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden"
+          }
+        }
+      }
+    },
+    "未知专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown Album"
+          }
+        }
+      }
+    },
+    "未知艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown Artist"
+          }
+        }
+      }
+    },
+    "未知路径 %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown path %@"
+          }
+        }
+      }
+    },
+    "未知错误": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown error"
+          }
+        }
+      }
+    },
+    "未返回令牌": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No token returned"
+          }
+        }
+      }
+    },
+    "本地没有带时间轴的歌词时，把歌名、歌手和时长发给 LRCLIB、网易云音乐、QQ 音乐和酷狗查找。找到的歌词保存在本机。“锁屏和车机显示歌词”打开时，锁屏、控制中心和 CarPlay 里歌手一行会换成当前这句。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When a song has no synced lyrics on the device, its title, artist and duration are sent to LRCLIB, NetEase Cloud Music, QQ Music and Kugou to look them up. Lyrics found are saved on this device. With \"Lyrics on Lock Screen and CarPlay\" on, the artist line on the Lock Screen, in Control Center and in CarPlay shows the current lyric line."
+          }
+        }
+      }
+    },
+    "本机文件": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On This Device"
+          }
+        }
+      }
+    },
+    "本目录加入播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Folder to Playlist"
+          }
+        }
+      }
+    },
+    "来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources"
+          }
+        }
+      }
+    },
+    "来源不存在": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The source does not exist"
+          }
+        }
+      }
+    },
+    "来源已删除：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source deleted: %@"
+          }
+        }
+      }
+    },
+    "板式（KTV）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plate (Karaoke)"
+          }
+        }
+      }
+    },
+    "查找": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find"
+          }
+        }
+      }
+    },
+    "查找歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Songs"
+          }
+        }
+      }
+    },
+    "查看歌手：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go to Artist: %@"
+          }
+        }
+      }
+    },
+    "标题": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title"
+          }
+        }
+      }
+    },
+    "格式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Format"
+          }
+        }
+      }
+    },
+    "模式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mode"
+          }
+        }
+      }
+    },
+    "樱花粉": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sakura Pink"
+          }
+        }
+      }
+    },
+    "歌单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists"
+          }
+        }
+      }
+    },
+    "歌名 歌手": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title Artist"
+          }
+        }
+      }
+    },
+    "歌手": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artists"
+          }
+        }
+      }
+    },
+    "歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Songs"
+          }
+        }
+      }
+    },
+    "歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics"
+          }
+        }
+      }
+    },
+    "歌词下载失败，返回换一条试试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not download these lyrics. Go back and try another result."
+          }
+        }
+      }
+    },
+    "歌词延后 %@ 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics delayed %@ s"
+          }
+        }
+      }
+    },
+    "歌词延后 0.5 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delay Lyrics 0.5 s"
+          }
+        }
+      }
+    },
+    "歌词提前 %@ 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics advanced %@ s"
+          }
+        }
+      }
+    },
+    "歌词提前 0.5 秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advance Lyrics 0.5 s"
+          }
+        }
+      }
+    },
+    "歌词时间已恢复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics timing reset"
+          }
+        }
+      }
+    },
+    "歌词时间未调整": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics timing not adjusted"
+          }
+        }
+      }
+    },
+    "歌词来自 LRCLIB、网易云音乐、QQ 音乐、酷狗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics from LRCLIB, NetEase Cloud Music, QQ Music and Kugou"
+          }
+        }
+      }
+    },
+    "歌词秀": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics"
+          }
+        }
+      }
+    },
+    "歌词秀和播放列表已关闭": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics and playlist closed"
+          }
+        }
+      }
+    },
+    "正在扫描 %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scanning %@…"
+          }
+        }
+      }
+    },
+    "正在搜索局域网中的 NAS 和媒体服务器…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking for NAS devices and media servers on your network…"
+          }
+        }
+      }
+    },
+    "正在查找歌词…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finding lyrics…"
+          }
+        }
+      }
+    },
+    "没有保存的播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Saved Playlists"
+          }
+        }
+      }
+    },
+    "没有发现局域网设备，可以点右上角 + 手动添加。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No devices found on your network. Tap + at the top right to add one manually."
+          }
+        }
+      }
+    },
+    "没有可播放的内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing to play"
+          }
+        }
+      }
+    },
+    "没有可播放的歌": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No songs to play"
+          }
+        }
+      }
+    },
+    "没有找到“%@”": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No results for \"%@\""
+          }
+        }
+      }
+    },
+    "没有找到歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Lyrics Found"
+          }
+        }
+      }
+    },
+    "没有找到音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No music found"
+          }
+        }
+      }
+    },
+    "没有播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Playlists"
+          }
+        }
+      }
+    },
+    "没有权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No permission"
+          }
+        }
+      }
+    },
+    "没有歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Lyrics"
+          }
+        }
+      }
+    },
+    "没有正在播放的歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is playing"
+          }
+        }
+      }
+    },
+    "没有结果": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Results"
+          }
+        }
+      }
+    },
+    "没有访问这个文件夹的权限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No permission to access this folder"
+          }
+        }
+      }
+    },
+    "没有重复的歌曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No duplicate songs"
+          }
+        }
+      }
+    },
+    "没有重复项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No duplicates"
+          }
+        }
+      }
+    },
+    "流派": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Genres"
+          }
+        }
+      }
+    },
+    "测试连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Test Connection"
+          }
+        }
+      }
+    },
+    "淡入淡出到：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crossfading to: %@"
+          }
+        }
+      }
+    },
+    "淡出节点连接失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fade-out node connection failed: %@"
+          }
+        }
+      }
+    },
+    "混响": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverb"
+          }
+        }
+      }
+    },
+    "混响量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reverb Amount"
+          }
+        }
+      }
+    },
+    "添加": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "添加到播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to Playlist"
+          }
+        }
+      }
+    },
+    "添加音乐来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Music Source"
+          }
+        }
+      }
+    },
+    "清澈人声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Vocals"
+          }
+        }
+      }
+    },
+    "清空": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear"
+          }
+        }
+      }
+    },
+    "清空列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear List"
+          }
+        }
+      }
+    },
+    "清除播放缓存": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Playback Cache"
+          }
+        }
+      }
+    },
+    "温暖的中频和细微底噪": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Warm mids and a little surface noise"
+          }
+        }
+      }
+    },
+    "演唱会": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concert"
+          }
+        }
+      }
+    },
+    "炫酷黑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cool Black"
+          }
+        }
+      }
+    },
+    "点一下，填上账号就能用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tap one and sign in to use it"
+          }
+        }
+      }
+    },
+    "热门": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Popular"
+          }
+        }
+      }
+    },
+    "版本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version"
+          }
+        }
+      }
+    },
+    "环绕": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surround"
+          }
+        }
+      }
+    },
+    "用户名": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username"
+          }
+        }
+      }
+    },
+    "用户名（留空为访客）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Username (blank for guest)"
+          }
+        }
+      }
+    },
+    "电脑共享文件夹、各品牌 NAS": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shared folders on computers and any brand of NAS"
+          }
+        }
+      }
+    },
+    "电视盒子、路由器、NAS 自带的媒体服务，不用账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Media services built into TV boxes, routers and NAS devices, no account needed"
+          }
+        }
+      }
+    },
+    "电音舞曲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "EDM"
+          }
+        }
+      }
+    },
+    "登录失败": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in failed"
+          }
+        }
+      }
+    },
+    "皮肤": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skins"
+          }
+        }
+      }
+    },
+    "皮肤包里没有 Skin.xml": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skin package has no Skin.xml"
+          }
+        }
+      }
+    },
+    "皮肤缺少主窗口背景图": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The skin is missing the main window background"
+          }
+        }
+      }
+    },
+    "皮肤：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skin: %@"
+          }
+        }
+      }
+    },
+    "示波器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oscilloscope"
+          }
+        }
+      }
+    },
+    "离线": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline"
+          }
+        }
+      }
+    },
+    "离线下载": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download for Offline"
+          }
+        }
+      }
+    },
+    "离线下载完成": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Offline download complete"
+          }
+        }
+      }
+    },
+    "离线下载所选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Download Selected for Offline"
+          }
+        }
+      }
+    },
+    "秒": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "s"
+          }
+        }
+      }
+    },
+    "移到最前": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to Top"
+          }
+        }
+      }
+    },
+    "移到最后": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move to Bottom"
+          }
+        }
+      }
+    },
+    "移动": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move"
+          }
+        }
+      }
+    },
+    "空间": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space"
+          }
+        }
+      }
+    },
+    "窗口": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows"
+          }
+        }
+      }
+    },
+    "窗口内容": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window Content"
+          }
+        }
+      }
+    },
+    "立体声": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stereo"
+          }
+        }
+      }
+    },
+    "筛选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter"
+          }
+        }
+      }
+    },
+    "筛选艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Filter Artists"
+          }
+        }
+      }
+    },
+    "紧凑、干净，适合细听": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tight and clean, for close listening"
+          }
+        }
+      }
+    },
+    "繁体歌词显示为简体": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Traditional Chinese Lyrics as Simplified"
+          }
+        }
+      }
+    },
+    "纯文本": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Plain Text"
+          }
+        }
+      }
+    },
+    "纯音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instrumental"
+          }
+        }
+      }
+    },
+    "结束查找": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "End Search"
+          }
+        }
+      }
+    },
+    "缓冲": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buffering"
+          }
+        }
+      }
+    },
+    "缓冲中": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Buffering"
+          }
+        }
+      }
+    },
+    "缓存上限": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cache Limit"
+          }
+        }
+      }
+    },
+    "编辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "编辑音乐来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Music Source"
+          }
+        }
+      }
+    },
+    "编辑首页": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit Home"
+          }
+        }
+      }
+    },
+    "网易云音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NetEase Cloud Music"
+          }
+        }
+      }
+    },
+    "网络上的曲目会先完整缓存再播放，并预先缓存下一首。超过上限时自动删除最久未播放的缓存；离线下载的曲目不会被删除。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tracks from the network are cached before playing, and the next track is cached ahead of time. Above the limit, the least recently played cache is removed; tracks downloaded for offline are kept."
+          }
+        }
+      }
+    },
+    "群晖 Audio Station": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synology Audio Station"
+          }
+        }
+      }
+    },
+    "群晖 NAS": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Synology NAS"
+          }
+        }
+      }
+    },
+    "翡翠绿": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Emerald Green"
+          }
+        }
+      }
+    },
+    "耳机或蓝牙断开，暂停": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Headphones or Bluetooth disconnected, paused"
+          }
+        }
+      }
+    },
+    "自动发现，免登录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found automatically, no sign-in"
+          }
+        }
+      }
+    },
+    "自定义": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom"
+          }
+        }
+      }
+    },
+    "艺术家": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artists"
+          }
+        }
+      }
+    },
+    "艺术家（%lld）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artists (%lld)"
+          }
+        }
+      }
+    },
+    "菜单": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Menu"
+          }
+        }
+      }
+    },
+    "被系统打断（来电、闹钟或其他 App）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interrupted by the system (call, alarm or another app)"
+          }
+        }
+      }
+    },
+    "解码失败（%d）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Decoding failed (%d)"
+          }
+        }
+      }
+    },
+    "设置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Settings"
+          }
+        }
+      }
+    },
+    "设置经典 10 段均衡器，可以和上面的音效一起用。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sets the classic 10-band equalizer. Works together with the effects above."
+          }
+        }
+      }
+    },
+    "评分最高": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Top Rated"
+          }
+        }
+      }
+    },
+    "该设备没有 ContentDirectory 服务（不是媒体服务器）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device has no ContentDirectory service (it is not a media server)"
+          }
+        }
+      }
+    },
+    "读取失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Failed to read: %@"
+          }
+        }
+      }
+    },
+    "账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
+    "账号已停用": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The account is disabled"
+          }
+        }
+      }
+    },
+    "账号开启了两步验证，请为 Amplayer 单独建一个未开启两步验证的账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account uses two-step verification. Create a separate account without it for Amplayer."
+          }
+        }
+      }
+    },
+    "账号开启了两步验证，请为本 App 单独建一个未开启两步验证的账号": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This account uses two-step verification. Create a separate account without it for this app."
+          }
+        }
+      }
+    },
+    "账号或密码错误": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wrong username or password"
+          }
+        }
+      }
+    },
+    "超重低音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Super Bass"
+          }
+        }
+      }
+    },
+    "路径": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Path"
+          }
+        }
+      }
+    },
+    "路径缺少共享名：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The path is missing a share name: %@"
+          }
+        }
+      }
+    },
+    "输出设备": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output Device"
+          }
+        }
+      }
+    },
+    "输出设备变化后无法启动音频引擎：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot start the audio engine after the output device changed: %@"
+          }
+        }
+      }
+    },
+    "输出设备变化，从 %lld 秒继续（播放中：%@）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output device changed, resuming at %lld s (playing: %@)"
+          }
+        }
+      }
+    },
+    "边下边播（已下载 %lld KB）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streaming (%lld KB downloaded)"
+          }
+        }
+      }
+    },
+    "边下边播：下载中断，停在这里": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Streaming: the download stopped here"
+          }
+        }
+      }
+    },
+    "返回": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "还没有保存的播放列表": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No saved playlists yet"
+          }
+        }
+      }
+    },
+    "还没有来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Sources Yet"
+          }
+        }
+      }
+    },
+    "还没有记录": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing logged yet"
+          }
+        }
+      }
+    },
+    "这不是群晖 DSM 地址": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is not a Synology DSM address"
+          }
+        }
+      }
+    },
+    "这个格式不能边下边播": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This format cannot be streamed"
+          }
+        }
+      }
+    },
+    "这里没有音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No music here"
+          }
+        }
+      }
+    },
+    "这里还没有专辑": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No albums here yet"
+          }
+        }
+      }
+    },
+    "进度": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Position"
+          }
+        }
+      }
+    },
+    "连不上 NAS：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot reach the NAS: %@"
+          }
+        }
+      }
+    },
+    "连接": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connection"
+          }
+        }
+      }
+    },
+    "连接成功，根目录有 %lld 项": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected. The root folder has %lld items."
+          }
+        }
+      }
+    },
+    "连接音频链失败，重置音频引擎再试：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio chain connection failed, resetting the audio engine and retrying: %@"
+          }
+        }
+      }
+    },
+    "迷你模式": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mini Mode"
+          }
+        }
+      }
+    },
+    "迷你模式，再点一次恢复": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mini mode, tap again to restore"
+          }
+        }
+      }
+    },
+    "退出多选": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done Selecting"
+          }
+        }
+      }
+    },
+    "选择曲目": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select Tracks"
+          }
+        }
+      }
+    },
+    "速度与音调": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speed & Pitch"
+          }
+        }
+      }
+    },
+    "酷狗": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kugou"
+          }
+        }
+      }
+    },
+    "重新查找歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Find Lyrics Again"
+          }
+        }
+      }
+    },
+    "重置": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset"
+          }
+        }
+      }
+    },
+    "重试": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Retry"
+          }
+        }
+      }
+    },
+    "金属银": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Metal Silver"
+          }
+        }
+      }
+    },
+    "锁屏和车机显示歌词": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lyrics on Lock Screen and CarPlay"
+          }
+        }
+      }
+    },
+    "错误码 %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error code %lld"
+          }
+        }
+      }
+    },
+    "随便听听": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discover"
+          }
+        }
+      }
+    },
+    "随机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "随机 100 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "100 Random Songs"
+          }
+        }
+      }
+    },
+    "随机打乱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "随机播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle"
+          }
+        }
+      }
+    },
+    "随机播放 %@ %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffling %2$lld songs from %1$@"
+          }
+        }
+      }
+    },
+    "随机播放 %lld 首": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffling %lld songs"
+          }
+        }
+      }
+    },
+    "随机播放全部": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle All"
+          }
+        }
+      }
+    },
+    "随机播放：关": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle: Off"
+          }
+        }
+      }
+    },
+    "随机播放：开": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shuffle: On"
+          }
+        }
+      }
+    },
+    "隐藏%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide %@"
+          }
+        }
+      }
+    },
+    "静听蓝": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Classic Blue"
+          }
+        }
+      }
+    },
+    "静音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mute"
+          }
+        }
+      }
+    },
+    "非 HTTP 响应": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not an HTTP response"
+          }
+        }
+      }
+    },
+    "音乐": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music"
+          }
+        }
+      }
+    },
+    "音乐厅": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concert Hall"
+          }
+        }
+      }
+    },
+    "音乐服务器": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music Servers"
+          }
+        }
+      }
+    },
+    "音乐来源": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music Sources"
+          }
+        }
+      }
+    },
+    "音乐窗（曲库）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music Window (Library)"
+          }
+        }
+      }
+    },
+    "音效": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound Effects"
+          }
+        }
+      }
+    },
+    "音效叠加在经典 10 段均衡器之上。环绕、8D 旋转戴耳机效果最明显。": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effects apply on top of the classic 10-band equalizer. Surround and 8D Orbit work best with headphones."
+          }
+        }
+      }
+    },
+    "音效：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effect: %@"
+          }
+        }
+      }
+    },
+    "音色": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tone"
+          }
+        }
+      }
+    },
+    "音轨": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track"
+          }
+        }
+      }
+    },
+    "音量": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume"
+          }
+        }
+      }
+    },
+    "音频引擎启动失败：%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The audio engine failed to start: %@"
+          }
+        }
+      }
+    },
+    "音频输出还没准备好，1 秒后重试（第 %lld 次）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio output not ready, retrying in 1 s (attempt %lld)"
+          }
+        }
+      }
+    },
+    "音频输出还没准备好，请稍后再试（%@）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Audio output is not ready. Try again later (%@)"
+          }
+        }
+      }
+    },
+    "顺序": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Order"
+          }
+        }
+      }
+    },
+    "顺序播放": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Order"
+          }
+        }
+      }
+    },
+    "预设": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presets"
+          }
+        }
+      }
+    },
+    "频谱": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spectrum"
+          }
+        }
+      }
+    },
+    "首页显示": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown on Home"
+          }
+        }
+      }
+    },
+    "高音": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Treble"
+          }
+        }
+      }
+    },
+    "黑胶唱机": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vinyl"
+          }
+        }
+      }
+    },
+    "黑胶底噪": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vinyl Noise"
+          }
+        }
+      }
+    },
+    "（没有歌词内容）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(No lyrics)"
+          }
+        }
+      }
+    },
+    "（纯音乐）": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(Instrumental)"
+          }
+        }
+      }
+    },
+    "skin.eq.surround": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Surr."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "环绕"
+          }
+        }
+      }
+    }
+  }
+}

@@ -57,7 +57,7 @@ public final class SkinManager {
     public func select(_ id: String) {
         guard let entry = entries.first(where: { $0.id == id }) else { return }
         guard let skin = skin(for: entry) else {
-            lastError = "无法加载皮肤 \(entry.name)"
+            lastError = String(localized: "无法加载皮肤 \(entry.name)")
             return
         }
         current = skin

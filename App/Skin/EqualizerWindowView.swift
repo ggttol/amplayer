@@ -14,7 +14,7 @@ struct EqualizerWindowView: View {
         SkinCanvas(size: SkinLayout.windowSize) {
             SpriteView(S.eqBackground)
             SpriteView(S.eqTitleBarSelected)
-            SpriteButton(normal: S.eqCloseButton, pressed: S.eqCloseButtonDown, label: "关闭均衡器") { app.showEqualizer = false }
+            SpriteButton(normal: S.eqCloseButton, pressed: S.eqCloseButtonDown, label: String(localized: "关闭均衡器")) { app.showEqualizer = false }
                 .at(SkinLayout.eqClose)
 
             Button {
@@ -28,7 +28,7 @@ struct EqualizerWindowView: View {
             // AUTO：每首歌记住自己的均衡器，下次播放时自动换回来
             Button {
                 player.autoEqualizer.toggle()
-                app.show(player.autoEqualizer ? "AUTO：每首歌记住自己的均衡器" : "AUTO：关")
+                app.show(player.autoEqualizer ? String(localized: "AUTO：每首歌记住自己的均衡器") : String(localized: "AUTO：关"))
             } label: { EmptyView() }
                 .buttonStyle(ToggleSpriteStyle { S.eqAutoButton(on: player.autoEqualizer, down: $0) })
                 .accessibilityLabel(player.autoEqualizer ? "均衡器自动：开" : "均衡器自动：关")
@@ -43,7 +43,7 @@ struct EqualizerWindowView: View {
 
             EQGraph(settings: eq).at(SkinLayout.eqGraph)
 
-            EQSlider(value: Double(EqualizerSettings.normalized(eq.preamp)), label: "前级放大") { v in
+            EQSlider(value: Double(EqualizerSettings.normalized(eq.preamp)), label: String(localized: "前级放大")) { v in
                 var e = player.equalizer
                 e.preamp = snapped(v)
                 player.equalizer = e
@@ -51,7 +51,7 @@ struct EqualizerWindowView: View {
             .at(SkinLayout.eqPreamp)
 
             ForEach(0..<10, id: \.self) { i in
-                EQSlider(value: Double(EqualizerSettings.normalized(eq.bands[i])), label: "\(EqualizerSettings.bandLabels[i]) 赫兹") { v in
+                EQSlider(value: Double(EqualizerSettings.normalized(eq.bands[i])), label: String(localized: "\(EqualizerSettings.bandLabels[i]) 赫兹")) { v in
                     var e = player.equalizer
                     e.bands[i] = snapped(v)
                     player.equalizer = e

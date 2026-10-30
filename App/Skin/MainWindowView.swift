@@ -35,13 +35,13 @@ struct MainWindowView: View {
     private var titleBar: some View {
         Group {
             SpriteView(S.titleBarSelected)
-            SpriteButton(normal: S.optionsButton, pressed: S.optionsButtonDown, label: "菜单", hitSlop: EdgeInsets(top: 6, leading: 6, bottom: 8, trailing: 10)) { app.showSideMenu = true }
+            SpriteButton(normal: S.optionsButton, pressed: S.optionsButtonDown, label: String(localized: "菜单"), hitSlop: EdgeInsets(top: 6, leading: 6, bottom: 8, trailing: 10)) { app.showSideMenu = true }
                 .at(SkinLayout.options)
-            SpriteButton(normal: S.minimizeButton, pressed: S.minimizeButtonDown, label: app.isMiniMode ? "恢复窗口" : "迷你模式", hitSlop: EdgeInsets(top: 4, leading: 3, bottom: 8, trailing: 0)) { app.toggleMiniMode() }
+            SpriteButton(normal: S.minimizeButton, pressed: S.minimizeButtonDown, label: app.isMiniMode ? String(localized: "恢复窗口") : String(localized: "迷你模式"), hitSlop: EdgeInsets(top: 4, leading: 3, bottom: 8, trailing: 0)) { app.toggleMiniMode() }
                 .at(SkinLayout.minimize)
-            SpriteButton(normal: S.shadeButton, pressed: S.shadeButtonDown, label: "换下一套皮肤", hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0)) { app.nextSkin() }
+            SpriteButton(normal: S.shadeButton, pressed: S.shadeButtonDown, label: String(localized: "换下一套皮肤"), hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 0)) { app.nextSkin() }
                 .at(SkinLayout.shade)
-            SpriteButton(normal: S.closeButton, pressed: S.closeButtonDown, label: "关闭（停止播放）", hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 3)) { player.stop() }
+            SpriteButton(normal: S.closeButton, pressed: S.closeButtonDown, label: String(localized: "关闭（停止播放）"), hitSlop: EdgeInsets(top: 4, leading: 0, bottom: 8, trailing: 3)) { player.stop() }
                 .at(SkinLayout.close)
         }
     }
@@ -60,9 +60,9 @@ struct MainWindowView: View {
 
     private var marqueeText: String {
         if let error = player.lastError { return error }
-        guard let track = player.current, let index = player.queue.currentIndex else { return "Amplayer - 点左上角菜单打开来源，或点播放列表的 ADD 添加音乐" }
+        guard let track = player.current, let index = player.queue.currentIndex else { return String(localized: "Amplayer - 点左上角菜单打开来源，或点播放列表的 ADD 添加音乐") }
         let duration = (player.audio.info?.duration ?? track.duration).map { " (\(TimeFormat.clock($0)))" } ?? ""
-        let prefix = player.isLoading ? "[缓冲中\(player.loadingProgress.map { " " + $0 } ?? "")] " : ""
+        let prefix = player.isLoading ? String(localized: "[缓冲中\(player.loadingProgress.map { " " + $0 } ?? "")] ") : ""
         return "\(prefix)\(index + 1). \(track.displayName)\(duration)"
     }
 
@@ -92,7 +92,7 @@ struct MainWindowView: View {
                 width: 68, height: 13, thumbSize: CGSize(width: 14, height: 11), thumbY: 1,
                 value: Double(player.volume),
                 background: { S.volumeFrame(Int(($0 * 27).rounded())) },
-                thumb: S.volumeThumb, thumbPressed: S.volumeThumbSelected, label: "音量"
+                thumb: S.volumeThumb, thumbPressed: S.volumeThumbSelected, label: String(localized: "音量")
             ) { v, _ in player.volume = Float(v) }
                 .at(SkinLayout.volume.origin)
 
@@ -100,7 +100,7 @@ struct MainWindowView: View {
                 width: 38, height: 13, thumbSize: CGSize(width: 14, height: 11), thumbY: 1,
                 value: Double(player.balance + 1) / 2,
                 background: { S.balanceFrame(Int(abs($0 * 2 - 1) * 27)) },
-                thumb: S.balanceThumb, thumbPressed: S.balanceThumbSelected, label: "平衡"
+                thumb: S.balanceThumb, thumbPressed: S.balanceThumbSelected, label: String(localized: "平衡")
             ) { v, _ in
                 // 中间附近吸附到 0
                 let b = Float(v * 2 - 1)
@@ -129,18 +129,18 @@ struct MainWindowView: View {
 
     private var transport: some View {
         Group {
-            SpriteButton(normal: S.previous, pressed: S.previousDown, label: "上一首") { player.previous() }.at(SkinLayout.previous)
-            SpriteButton(normal: S.play, pressed: S.playDown, label: "播放") {
+            SpriteButton(normal: S.previous, pressed: S.previousDown, label: String(localized: "上一首")) { player.previous() }.at(SkinLayout.previous)
+            SpriteButton(normal: S.play, pressed: S.playDown, label: String(localized: "播放")) {
                 if player.audio.state == .playing { player.seek(to: 0) } else { player.play() }
             }.at(SkinLayout.play)
-            SpriteButton(normal: S.pause, pressed: S.pauseDown, label: "暂停") { player.togglePause() }.at(SkinLayout.pause)
-            SpriteButton(normal: S.stop, pressed: S.stopDown, label: "停止") { player.stop() }.at(SkinLayout.stop)
-            SpriteButton(normal: S.next, pressed: S.nextDown, label: "下一首") { player.next() }.at(SkinLayout.next)
-            SpriteButton(normal: S.eject, pressed: S.ejectDown, label: "打开文件") { app.isImportingFiles = true }.at(SkinLayout.eject)
+            SpriteButton(normal: S.pause, pressed: S.pauseDown, label: String(localized: "暂停")) { player.togglePause() }.at(SkinLayout.pause)
+            SpriteButton(normal: S.stop, pressed: S.stopDown, label: String(localized: "停止")) { player.stop() }.at(SkinLayout.stop)
+            SpriteButton(normal: S.next, pressed: S.nextDown, label: String(localized: "下一首")) { player.next() }.at(SkinLayout.next)
+            SpriteButton(normal: S.eject, pressed: S.ejectDown, label: String(localized: "打开文件")) { app.isImportingFiles = true }.at(SkinLayout.eject)
 
             Button {
                 player.shuffle.toggle()
-                app.show(player.shuffle ? "随机播放：开" : "随机播放：关")
+                app.show(player.shuffle ? String(localized: "随机播放：开") : String(localized: "随机播放：关"))
             } label: { EmptyView() }
                 .buttonStyle(ToggleSpriteStyle { pressed in S.shuffleButton(on: player.shuffle, down: pressed) })
                 .accessibilityLabel(player.shuffle ? "随机播放：开" : "随机播放：关")
@@ -234,7 +234,7 @@ struct TimeDisplay: View {
 
     private var accessibilityState: String {
         let player = app.player
-        let state = player.isLoading ? "缓冲中" : (player.audio.state == .playing ? "播放中" : (player.audio.state == .paused ? "已暂停" : "已停止"))
+        let state = player.isLoading ? String(localized: "缓冲中") : (player.audio.state == .playing ? String(localized: "播放中") : (player.audio.state == .paused ? String(localized: "已暂停") : String(localized: "已停止")))
         return "\(state) \(TimeFormat.clock(player.audio.currentTime)) \(player.current?.title ?? "")"
     }
 }
@@ -253,7 +253,7 @@ struct PositionSlider: View {
                 value: value,
                 background: { _ in S.positionBackground },
                 thumb: audio.state == .stopped && audio.info == nil ? nil : S.positionThumb,
-                thumbPressed: S.positionThumbSelected, label: "进度"
+                thumbPressed: S.positionThumbSelected, label: String(localized: "进度")
             ) { v, ended in
                 if ended, duration > 0 { app.player.seek(to: v * duration) }
             }

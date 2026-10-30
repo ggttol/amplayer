@@ -55,7 +55,7 @@ struct SideMenuView: View {
                         .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 8))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Amplayer").font(.headline)
-                        Text(app.player.current?.displayName ?? "未在播放")
+                        Text(app.player.current?.displayName ?? String(localized: "未在播放"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -64,17 +64,17 @@ struct SideMenuView: View {
                 .padding(.vertical, 4)
             }
             Section("音乐") {
-                row("打开文件…", "doc.badge.plus") {
+                row(String(localized: "打开文件…"), "doc.badge.plus") {
                     close()
                     Task { @MainActor in
                         try? await Task.sleep(for: .milliseconds(280))
                         app.isImportingFiles = true
                     }
                 }
-                row("音乐来源", "externaldrive.connected.to.line.below") { open(.sources) }
-                row("曲库与播放列表", "music.note.list") { open(.library) }
+                row(String(localized: "音乐来源"), "externaldrive.connected.to.line.below") { open(.sources) }
+                row(String(localized: "曲库与播放列表"), "music.note.list") { open(.library) }
                 if app.subsonicSourceID != nil {
-                    row("歌手", "music.mic") {
+                    row(String(localized: "歌手"), "music.mic") {
                         close()
                         Task { @MainActor in
                             try? await Task.sleep(for: .milliseconds(280))
@@ -83,7 +83,7 @@ struct SideMenuView: View {
                     }
                 }
                 if let track = app.player.current, app.canShowArtist(track), let artist = track.artist {
-                    row("查看歌手：\(artist)", "music.mic") {
+                    row(String(localized: "查看歌手：\(artist)"), "music.mic") {
                         close()
                         Task { @MainActor in
                             try? await Task.sleep(for: .milliseconds(280))
@@ -140,8 +140,8 @@ struct SideMenuView: View {
                 Toggle(isOn: $app.showRemainingTime) { Label("显示剩余时间", systemImage: "timer") }
             }
             Section {
-                row("皮肤", "paintpalette") { open(.skins) }
-                row("设置", "gearshape") { open(.settings) }
+                row(String(localized: "皮肤"), "paintpalette") { open(.skins) }
+                row(String(localized: "设置"), "gearshape") { open(.settings) }
             } header: {
                 Text("外观与设置")
             } footer: {
@@ -189,13 +189,13 @@ struct SideMenuView: View {
 
     private var effectName: String {
         let id = app.player.effects.presetID
-        if id == SoundEffectPreset.custom { return "自定义" }
-        return SoundEffectPreset.preset(id)?.name ?? "原声"
+        if id == SoundEffectPreset.custom { return String(localized: "自定义") }
+        return SoundEffectPreset.preset(id)?.name ?? String(localized: "原声")
     }
 
     private func sleepStatus(at date: Date) -> String {
-        if app.player.sleepAfterCurrent { return "播完这首" }
-        guard let deadline = app.player.sleepDeadline else { return "关" }
+        if app.player.sleepAfterCurrent { return String(localized: "播完这首") }
+        guard let deadline = app.player.sleepDeadline else { return String(localized: "关") }
         let left = max(0, Int(deadline.timeIntervalSince(date)))
         return String(format: "%d:%02d", left / 60, left % 60)
     }

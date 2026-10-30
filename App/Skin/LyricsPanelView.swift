@@ -47,7 +47,7 @@ struct LyricsPanelView: View {
                     if player.lyricsOffset != 0 {
                         Button("恢复歌词时间", systemImage: "arrow.uturn.backward") {
                             player.resetLyricsOffset()
-                            app.show("歌词时间已恢复")
+                            app.show(String(localized: "歌词时间已恢复"))
                         }
                     }
                 }
@@ -60,9 +60,9 @@ struct LyricsPanelView: View {
             let scoped = url.startAccessingSecurityScopedResource()
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             if let data = try? Data(contentsOf: url), let text = Lyrics.decode(data), player.setLyrics(text) {
-                app.show("已导入歌词")
+                app.show(String(localized: "已导入歌词"))
             } else {
-                app.show("不是有效的歌词文件")
+                app.show(String(localized: "不是有效的歌词文件"))
             }
         }
     }
@@ -93,8 +93,8 @@ struct LyricsPanelView: View {
             } else {
                 Text("没有找到歌词")
                 HStack(spacing: 8 * scale) {
-                    pixelButton("在线搜索") { searching = true }
-                    pixelButton("导入 .lrc") { importing = true }
+                    pixelButton(String(localized: "在线搜索")) { searching = true }
+                    pixelButton(String(localized: "导入 .lrc")) { importing = true }
                 }
                 .padding(.top, 2 * scale)
             }

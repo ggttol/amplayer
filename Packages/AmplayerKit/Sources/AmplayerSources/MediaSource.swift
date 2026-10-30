@@ -65,12 +65,12 @@ public enum SourceError: LocalizedError, Sendable {
 
     public var errorDescription: String? {
         switch self {
-        case .invalidURL(let s): "地址无效：\(s)"
-        case .http(let code, let detail): "服务器返回 HTTP \(code)" + (detail.map { "：\($0)" } ?? "")
-        case .authenticationFailed(let detail): "登录失败" + (detail.map { "：\($0)" } ?? "")
+        case .invalidURL(let s): String(localized: "地址无效：\(s)")
+        case .http(let code, let detail): String(localized: "服务器返回 HTTP \(code)") + (detail.map { "：\($0)" } ?? "")
+        case .authenticationFailed(let detail): String(localized: "登录失败") + (detail.map { "：\($0)" } ?? "")
         case .notConfigured(let s): s
-        case .unsupported(let s): "暂不支持：\(s)"
-        case .protocolError(let s): "协议错误：\(s)"
+        case .unsupported(let s): String(localized: "暂不支持：\(s)")
+        case .protocolError(let s): String(localized: "协议错误：\(s)")
         }
     }
 }

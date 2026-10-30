@@ -36,7 +36,7 @@ public final class HTTPClient: Sendable {
     /// 发送请求并检查状态码
     public func data(for request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let (data, response) = try await session.data(for: request)
-        guard let http = response as? HTTPURLResponse else { throw SourceError.protocolError("非 HTTP 响应") }
+        guard let http = response as? HTTPURLResponse else { throw SourceError.protocolError(String(localized: "非 HTTP 响应")) }
         guard (200..<300).contains(http.statusCode) || http.statusCode == 207 else {
             if http.statusCode == 401 || http.statusCode == 403 { throw SourceError.authenticationFailed("HTTP \(http.statusCode)") }
             throw SourceError.http(http.statusCode, String(data: data.prefix(200), encoding: .utf8))
@@ -47,7 +47,7 @@ public final class HTTPClient: Sendable {
     public func json(for request: URLRequest) async throws -> [String: Any] {
         let (data, _) = try await data(for: request)
         guard let object = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw SourceError.protocolError("响应不是 JSON 对象")
+            throw SourceError.protocolError(String(localized: "响应不是 JSON 对象"))
         }
         return object
     }
@@ -58,7 +58,7 @@ public final class HTTPClient: Sendable {
         try fm.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
         let part = destination.appendingPathExtension("part")
         try? fm.removeItem(at: part)
-        guard fm.createFile(atPath: part.path, contents: nil) else { throw SourceError.protocolError("无法创建缓存文件") }
+        guard fm.createFile(atPath: part.path, contents: nil) else { throw SourceError.protocolError(String(localized: "无法创建缓存文件")) }
         let writer = try StreamingWriter(file: part, report: DownloadProgress.report)
         let task = session.dataTask(with: request)
         task.delegate = writer
@@ -153,7 +153,7 @@ final class StreamingWriter: NSObject, URLSessionDataDelegate, @unchecked Sendab
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
                     completionHandler: @escaping @Sendable (URLSession.ResponseDisposition) -> Void) {
         guard let http = response as? HTTPURLResponse else {
-            lock.withLock { failure = SourceError.protocolError("非 HTTP 响应") }
+            lock.withLock { failure = SourceError.protocolError(String(localized: "非 HTTP 响应")) }
             return completionHandler(.cancel)
         }
         guard (200..<300).contains(http.statusCode) else {

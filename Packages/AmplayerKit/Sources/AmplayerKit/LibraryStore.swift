@@ -83,11 +83,11 @@ public final class LibraryStore {
     }
 
     public func artists(in list: [Track]? = nil) -> [Group] {
-        group(list ?? tracks) { $0.artist?.nilIfEmpty ?? "未知艺术家" }
+        group(list ?? tracks) { $0.artist?.nilIfEmpty ?? String(localized: "未知艺术家") }
     }
 
     public func albums(in list: [Track]? = nil) -> [Group] {
-        group(list ?? tracks) { $0.album?.nilIfEmpty ?? "未知专辑" }
+        group(list ?? tracks) { $0.album?.nilIfEmpty ?? String(localized: "未知专辑") }
             .map { Group(name: $0.name, tracks: $0.tracks.sorted { ($0.trackNumber ?? 999, $0.title) < ($1.trackNumber ?? 999, $1.title) }) }
     }
 
@@ -120,7 +120,7 @@ public final class LibraryStore {
             } catch is CancellationError {
                 self?.scanning[id] = nil
             } catch {
-                self?.lastError = "扫描 \(source.config.name) 失败：\(error.localizedDescription)"
+                self?.lastError = String(localized: "扫描 \(source.config.name) 失败：\(error.localizedDescription)")
                 self?.scanning[id] = nil
             }
         }
@@ -142,7 +142,7 @@ public final class LibraryStore {
     @discardableResult
     public func savePlaylist(_ tracks: [Track], name: String) throws -> URL {
         let safe = name.replacingOccurrences(of: "/", with: "-").trimmingCharacters(in: .whitespaces)
-        let url = Storage.playlistsDirectory.appendingPathComponent((safe.isEmpty ? "播放列表" : safe) + ".m3u8")
+        let url = Storage.playlistsDirectory.appendingPathComponent((safe.isEmpty ? String(localized: "播放列表") : safe) + ".m3u8")
         try PlaylistFile.makeM3U(PlaylistFile.entries(for: tracks)).write(to: url, atomically: true, encoding: .utf8)
         return url
     }

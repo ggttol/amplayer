@@ -58,9 +58,9 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
             var items = try await shares()
             if try await hasAudioStationSongs() {
                 items += [
-                    SourceItem(path: "as:albums", name: "Audio Station · 专辑", kind: .directory),
-                    SourceItem(path: "as:folders", name: "Audio Station · 文件夹", kind: .directory),
-                    SourceItem(path: "as:playlists", name: "Audio Station · 播放列表", kind: .directory),
+                    SourceItem(path: "as:albums", name: String(localized: "Audio Station · 专辑"), kind: .directory),
+                    SourceItem(path: "as:folders", name: String(localized: "Audio Station · 文件夹"), kind: .directory),
+                    SourceItem(path: "as:playlists", name: String(localized: "Audio Station · 播放列表"), kind: .directory),
                 ]
             }
             return items
@@ -80,7 +80,7 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
             }
             return
         }
-        guard path.hasPrefix("song/") else { throw SourceError.protocolError("不是曲目：\(path)") }
+        guard path.hasPrefix("song/") else { throw SourceError.protocolError(String(localized: "不是曲目：\(path)")) }
         let id = String(path.dropFirst("song/".count))
         let (apiPath, maxVersion) = try await info("SYNO.AudioStation.Stream")
         let ext = destination.pathExtension.isEmpty ? "mp3" : destination.pathExtension
@@ -211,7 +211,7 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
             let songs = data.array("playlists").first?.dict("additional")?.array("songs") ?? []
             return songs.compactMap(songItem)
         }
-        throw SourceError.protocolError("未知路径 \(path)")
+        throw SourceError.protocolError(String(localized: "未知路径 \(path)"))
     }
 
     private func asFolder(id: String?) async throws -> [SourceItem] {
@@ -267,10 +267,10 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
             json = try await http.json(for: URLRequest(url: url))
         } catch let error as URLError {
             await dropConnection()
-            throw SourceError.http(0, "连不上 NAS：\(error.localizedDescription)")
+            throw SourceError.http(0, String(localized: "连不上 NAS：\(error.localizedDescription)"))
         }
         guard json["success"] as? Bool == true, let data = json.dict("data") else {
-            throw SourceError.protocolError("这不是群晖 DSM 地址")
+            throw SourceError.protocolError(String(localized: "这不是群晖 DSM 地址"))
         }
         var parsed: [String: (String, Int)] = [:]
         for (key, value) in data {
@@ -278,7 +278,7 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
         }
         lock.withLock { apiInfo = parsed }
         guard let result = parsed[api] else {
-            throw SourceError.unsupported(api.hasPrefix("SYNO.AudioStation") ? "NAS 上没有 Audio Station" : "NAS 不支持 \(api)")
+            throw SourceError.unsupported(api.hasPrefix("SYNO.AudioStation") ? String(localized: "NAS 上没有 Audio Station") : String(localized: "NAS 不支持 \(api)"))
         }
         return result
     }
@@ -320,13 +320,13 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
 
     static func loginError(_ code: Int) -> String {
         switch code {
-        case 400: "账号或密码错误"
-        case 401: "账号已停用"
-        case 402: "没有权限"
-        case 403, 404, 406: "账号开启了两步验证，请为 Amplayer 单独建一个未开启两步验证的账号"
-        case 407: "IP 已被 NAS 自动封锁（多次登录失败），请在 DSM“安全性 › 账户”里解除"
-        case 408, 409, 410: "密码已过期，请先在 DSM 网页里修改密码"
-        default: "错误码 \(code)"
+        case 400: String(localized: "账号或密码错误")
+        case 401: String(localized: "账号已停用")
+        case 402: String(localized: "没有权限")
+        case 403, 404, 406: String(localized: "账号开启了两步验证，请为 Amplayer 单独建一个未开启两步验证的账号")
+        case 407: String(localized: "IP 已被 NAS 自动封锁（多次登录失败），请在 DSM“安全性 › 账户”里解除")
+        case 408, 409, 410: String(localized: "密码已过期，请先在 DSM 网页里修改密码")
+        default: String(localized: "错误码 \(code)")
         }
     }
 
@@ -350,7 +350,7 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
             }
             throw SourceError.protocolError(Self.apiError(api, code))
         }
-        throw SourceError.authenticationFailed("会话已过期")
+        throw SourceError.authenticationFailed(String(localized: "会话已过期"))
     }
 
     /// 下载时会话过期，DSM 返回的是 HTTP 200 + JSON 错误而不是文件；识别出来后重新登录再试一次
@@ -374,21 +374,21 @@ public final class SynologySource: MediaSource, @unchecked Sendable {
               json["success"] as? Bool == false else { return }
         try? FileManager.default.removeItem(at: url)
         let code = json.dict("error")?.int("code") ?? -1
-        throw SourceError.http([105, 106, 107, 119].contains(code) ? 401 : 404, "DSM 错误码 \(code)")
+        throw SourceError.http([105, 106, 107, 119].contains(code) ? 401 : 404, String(localized: "DSM 错误码 \(code)"))
     }
 
     static func apiError(_ api: String, _ code: Int) -> String {
         if api.hasPrefix("SYNO.FileStation") {
             switch code {
-            case 105, 407: return "没有访问这个文件夹的权限"
-            case 408: return "文件或文件夹不存在"
+            case 105, 407: return String(localized: "没有访问这个文件夹的权限")
+            case 408: return String(localized: "文件或文件夹不存在")
             default: break
             }
         }
         if api == "SYNO.AudioStation.Folder" && code == 401 {
-            return "Audio Station 还没有索引这个文件夹，可以改用共享文件夹浏览"
+            return String(localized: "Audio Station 还没有索引这个文件夹，可以改用共享文件夹浏览")
         }
-        return "\(api) 错误码 \(code)"
+        return String(localized: "\(api) 错误码 \(code)")
     }
 }
 

@@ -55,15 +55,15 @@ struct SkinPalette: Sendable {
 
     static let all: [SkinPalette] = [
         graphite,
-        SkinPalette(id: "amplayer-nixie", name: "Nixie 辉光", frame: "#2B211B", lcd: "#120804", accent: "#FF8A2A",
+        SkinPalette(id: "amplayer-nixie", name: String(localized: "Nixie 辉光"), frame: "#2B211B", lcd: "#120804", accent: "#FF8A2A",
                     icon: "#F2DCC8", warm: "#FFC46B", hot: "#FF4D2E", current: "#FFE7CF"),
-        SkinPalette(id: "amplayer-ocean", name: "Deep Ocean 深海", frame: "#1D2939", lcd: "#04101A", accent: "#4FD6FF",
+        SkinPalette(id: "amplayer-ocean", name: String(localized: "Deep Ocean 深海"), frame: "#1D2939", lcd: "#04101A", accent: "#4FD6FF",
                     icon: "#D6E6F5", warm: "#7CF2C8", hot: "#FF7A90", current: "#E8FBFF"),
-        SkinPalette(id: "amplayer-sakura", name: "Sakura 樱", frame: "#3A2833", lcd: "#140910", accent: "#FF8FBF",
+        SkinPalette(id: "amplayer-sakura", name: String(localized: "Sakura 樱"), frame: "#3A2833", lcd: "#140910", accent: "#FF8FBF",
                     icon: "#F6DCE8", warm: "#FFD1E3", hot: "#FF5C8A", current: "#FFF0F6"),
-        SkinPalette(id: "amplayer-synthwave", name: "Synthwave 霓虹", frame: "#231B36", lcd: "#0B0717", accent: "#C77DFF",
+        SkinPalette(id: "amplayer-synthwave", name: String(localized: "Synthwave 霓虹"), frame: "#231B36", lcd: "#0B0717", accent: "#C77DFF",
                     icon: "#E4D9FF", warm: "#FF9E64", hot: "#FF4F8B", current: "#FFE3F7"),
-        SkinPalette(id: "amplayer-ivory", name: "Ivory 象牙", frame: "#BDB6A6", lcd: "#1C2016", accent: "#C6F36B",
+        SkinPalette(id: "amplayer-ivory", name: String(localized: "Ivory 象牙"), frame: "#BDB6A6", lcd: "#1C2016", accent: "#C6F36B",
                     icon: "#2B2924", warm: "#FFD166", hot: "#FF6B4A", current: "#FFFFFF", title: "#57524A"),
     ]
 }

@@ -46,7 +46,7 @@ struct LibraryView: View {
                         NavigationLink {
                             List { albumsOrSongs(group.tracks) }.navigationTitle(group.name)
                         } label: {
-                            LabeledContent(group.name, value: "\(group.tracks.count) 首")
+                            LabeledContent(group.name, value: String(localized: "\(group.tracks.count) 首"))
                         }
                     }
                 case .albums:
@@ -71,7 +71,7 @@ struct LibraryView: View {
                                 if let tracks = try? app.library.loadPlaylist(url), !tracks.isEmpty {
                                     play(tracks, at: 0)
                                 } else {
-                                    app.show("播放列表为空或无法读取")
+                                    app.show(String(localized: "播放列表为空或无法读取"))
                                 }
                             } label: {
                                 Label(url.deletingPathExtension().lastPathComponent, systemImage: "music.note.list")
@@ -82,7 +82,7 @@ struct LibraryView: View {
                                     playlists = app.library.savedPlaylists()
                                 }
                                 Button("加入") {
-                                    if let tracks = try? app.library.loadPlaylist(url) { app.player.enqueue(tracks); app.show("已加入 \(tracks.count) 首") }
+                                    if let tracks = try? app.library.loadPlaylist(url) { app.player.enqueue(tracks); app.show(String(localized: "已加入 \(tracks.count) 首")) }
                                 }.tint(.green)
                             }
                         }
@@ -118,7 +118,7 @@ struct LibraryView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("完成") { dismiss() } }
                 ToolbarItem(placement: .principal) {
                     Picker("分类", selection: $tab) {
-                        ForEach(Tab.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                        ForEach(Tab.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                     }
                     .pickerStyle(.segmented)
                     .frame(maxWidth: 300)
@@ -172,10 +172,10 @@ struct LibraryView: View {
 
     private func offline(_ track: Track) {
         guard let source = app.sources.source(track.sourceID) else { return }
-        app.show("开始下载")
+        app.show(String(localized: "开始下载"))
         Task {
-            do { try await app.player.cache.makeOffline(track, source: source); app.show("下载完成") }
-            catch { app.show("下载失败：\(error.localizedDescription)") }
+            do { try await app.player.cache.makeOffline(track, source: source); app.show(String(localized: "下载完成")) }
+            catch { app.show(String(localized: "下载失败：\(error.localizedDescription)")) }
         }
     }
 }

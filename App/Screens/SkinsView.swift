@@ -49,7 +49,7 @@ struct SkinsView: View {
                 for url in urls {
                     if (try? app.skins.importSkin(from: url)) != nil { ok += 1 }
                 }
-                app.show(ok == urls.count ? "已导入 \(ok) 个皮肤" : "\(urls.count - ok) 个文件不是有效皮肤")
+                app.show(ok == urls.count ? String(localized: "已导入 \(ok) 个皮肤") : String(localized: "\(urls.count - ok) 个文件不是有效皮肤"))
             }
         }
     }

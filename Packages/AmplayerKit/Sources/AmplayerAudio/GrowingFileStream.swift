@@ -29,9 +29,9 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
 
         var errorDescription: String? {
             switch self {
-            case .open(let s): "无法边下边播（格式解析失败 \(s)）"
-            case .unsupported: "这个格式不能边下边播"
-            case .read(let s): "解码失败（\(s)）"
+            case .open(let s): String(localized: "无法边下边播（格式解析失败 \(s)）")
+            case .unsupported: String(localized: "这个格式不能边下边播")
+            case .read(let s): String(localized: "解码失败（\(s)）")
             }
         }
     }
@@ -165,7 +165,7 @@ final class GrowingFileStream: PCMStream, @unchecked Sendable {
             return 0
         }
         if status != noErr {
-            if file.error != nil { PlaybackLog.add("边下边播：下载中断，停在这里") }
+            if file.error != nil { PlaybackLog.add(String(localized: "边下边播：下载中断，停在这里")) }
             throw StreamError.read(status)
         }
         buffer.frameLength = frames

@@ -107,7 +107,7 @@ extension SubsonicSource {
     /// 专辑信息和曲目（按碟号、音轨号排好）
     public func album(id: String) async throws -> (album: SubsonicAlbum, songs: [SourceItem]) {
         let body = try await call("getAlbum", ["id": id])
-        guard let a = body.dict("album"), let album = Self.album(a) else { throw SourceError.protocolError("找不到专辑") }
+        guard let a = body.dict("album"), let album = Self.album(a) else { throw SourceError.protocolError(String(localized: "找不到专辑")) }
         return (album, a.array("song").compactMap(songItem))
     }
 
@@ -124,7 +124,7 @@ extension SubsonicSource {
 
     public func artist(id: String) async throws -> (artist: SubsonicArtist, albums: [SubsonicAlbum]) {
         let body = try await call("getArtist", ["id": id])
-        guard let a = body.dict("artist"), let artist = Self.artist(a) else { throw SourceError.protocolError("找不到艺术家") }
+        guard let a = body.dict("artist"), let artist = Self.artist(a) else { throw SourceError.protocolError(String(localized: "找不到艺术家")) }
         // 新专辑在前；GTMusic 的“单曲”虚拟专辑（as- 开头）始终排第一
         let albums = a.array("album").compactMap(Self.album).sorted {
             let (s0, s1) = ($0.id.hasPrefix("as-"), $1.id.hasPrefix("as-"))
@@ -142,7 +142,7 @@ extension SubsonicSource {
 
     public func playlist(id: String) async throws -> (playlist: SubsonicPlaylist, songs: [SourceItem]) {
         let body = try await call("getPlaylist", ["id": id])
-        guard let p = body.dict("playlist"), let playlist = Self.playlist(p) else { throw SourceError.protocolError("找不到播放列表") }
+        guard let p = body.dict("playlist"), let playlist = Self.playlist(p) else { throw SourceError.protocolError(String(localized: "找不到播放列表")) }
         return (playlist, p.array("entry").compactMap(songItem))
     }
 

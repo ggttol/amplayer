@@ -29,14 +29,14 @@ public final class JellyfinSource: MediaSource, @unchecked Sendable {
             }
         }
         let parts = path.split(separator: "/", maxSplits: 1).map(String.init)
-        guard parts.count == 2 else { throw SourceError.protocolError("未知路径 \(path)") }
+        guard parts.count == 2 else { throw SourceError.protocolError(String(localized: "未知路径 \(path)")) }
         let id = parts[1]
         switch parts[0] {
         case "library":
             return [
-                SourceItem(path: "albums/\(id)", name: "全部专辑", kind: .directory),
-                SourceItem(path: "artists/\(id)", name: "艺术家", kind: .directory),
-                SourceItem(path: "items/\(id)", name: "文件夹", kind: .directory),
+                SourceItem(path: "albums/\(id)", name: String(localized: "全部专辑"), kind: .directory),
+                SourceItem(path: "artists/\(id)", name: String(localized: "艺术家"), kind: .directory),
+                SourceItem(path: "items/\(id)", name: String(localized: "文件夹"), kind: .directory),
             ]
         case "albums":
             return try await items(userID: userID, query: [
@@ -55,12 +55,12 @@ public final class JellyfinSource: MediaSource, @unchecked Sendable {
         case "items":
             return try await items(userID: userID, query: [("ParentId", id), ("SortBy", "ParentIndexNumber,IndexNumber,SortName")])
         default:
-            throw SourceError.protocolError("未知路径 \(path)")
+            throw SourceError.protocolError(String(localized: "未知路径 \(path)"))
         }
     }
 
     public func download(path: String, to destination: URL) async throws {
-        guard path.hasPrefix("audio/") else { throw SourceError.protocolError("不是曲目：\(path)") }
+        guard path.hasPrefix("audio/") else { throw SourceError.protocolError(String(localized: "不是曲目：\(path)")) }
         let (token, _) = try await authenticate()
         let id = String(path.dropFirst("audio/".count))
         let url = try config.baseURL().appendingPathComponent("Audio/\(id)/stream").appendingQuery([("static", "true"), ("api_key", token)])
@@ -138,7 +138,7 @@ public final class JellyfinSource: MediaSource, @unchecked Sendable {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["Username": config.username, "Pw": password])
         let json = try await http.json(for: request)
         guard let token = json.string("AccessToken"), let userID = json.dict("User")?.string("Id") else {
-            throw SourceError.authenticationFailed("未返回令牌")
+            throw SourceError.authenticationFailed(String(localized: "未返回令牌"))
         }
         lock.withLock { session = (token, userID) }
         return (token, userID)

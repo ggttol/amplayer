@@ -7,7 +7,7 @@ import Observation
 /// 音频引擎拒绝连接：多半是输出设备正在切换（刚连上 CarPlay、蓝牙或 AirPlay）
 public struct AudioEngineError: LocalizedError, Sendable {
     public let reason: String
-    public var errorDescription: String? { "音频输出还没准备好，请稍后再试（\(reason)）" }
+    public var errorDescription: String? { String(localized: "音频输出还没准备好，请稍后再试（\(reason)）") }
 }
 
 @MainActor
@@ -131,7 +131,7 @@ public final class AudioPlayer {
         do {
             try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
         } catch {
-            PlaybackLog.add("启动时连接音频链失败（加载歌曲时会再接）：\(error.localizedDescription)")
+            PlaybackLog.add(String(localized: "启动时连接音频链失败（加载歌曲时会再接）：\(error.localizedDescription)"))
         }
         effectsChain.apply(effects)
         engine.mainMixerNode.outputVolume = volume
@@ -156,7 +156,7 @@ public final class AudioPlayer {
             } else {
                 // 有的 FLAC 文件头没写总采样数（转码工具生成的），AVAudioFile 当成 0 帧，排不进任何内容、也不报错。
                 // 改用逐块解码读到文件真正结束，时长用估计值
-                PlaybackLog.add("文件头没写总长度，改用逐块解码：\(url.lastPathComponent)")
+                PlaybackLog.add(String(localized: "文件头没写总长度，改用逐块解码：\(url.lastPathComponent)"))
                 let stream = try Self.wholeFileStream(url)
                 source = .stream(stream, BufferScheduler(node: playerNode, stream: stream))
             }
@@ -212,7 +212,7 @@ public final class AudioPlayer {
         do {
             try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
         } catch {
-            PlaybackLog.add("连接音频链失败，重置音频引擎再试：\(error.localizedDescription)")
+            PlaybackLog.add(String(localized: "连接音频链失败，重置音频引擎再试：\(error.localizedDescription)"))
             engine.stop()
             engine.reset()
             try effectsChain.connect(player: playerNode, equalizer: eqNode, fileFormat: format, in: engine)
@@ -261,7 +261,7 @@ public final class AudioPlayer {
         do {
             if !engine.isRunning { try engine.start() }
         } catch {
-            PlaybackLog.add("音频引擎启动失败：\(error.localizedDescription)")
+            PlaybackLog.add(String(localized: "音频引擎启动失败：\(error.localizedDescription)"))
             return
         }
         idleTask?.cancel()
@@ -405,7 +405,7 @@ public final class AudioPlayer {
     private func segmentFinished(_ token: Int) {
         guard token == currentToken else { return }
         guard state == .playing else {
-            PlaybackLog.add("曲目播完但当前不是播放状态（\(state)），不自动下一首")
+            PlaybackLog.add(String(localized: "曲目播完但当前不是播放状态（\(state)），不自动下一首"))
             return
         }
         if let next = pending {
@@ -519,7 +519,7 @@ public final class AudioPlayer {
             engine.connect(fader, to: mixer, fromBus: 0, toBus: mixer.nextAvailableInputBus, format: format)
         }
         if let failure {
-            PlaybackLog.add("淡出节点连接失败：\(failure)")
+            PlaybackLog.add(String(localized: "淡出节点连接失败：\(failure)"))
             return false
         }
         // 尾巴带着这首自己的音量均衡淡出；下一首换了 gainAdjustment 也不影响它
@@ -607,7 +607,7 @@ public final class AudioPlayer {
             let reason = (note.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap(AVAudioSession.RouteChangeReason.init)
             MainActor.assumeIsolated {
                 if reason == .oldDeviceUnavailable {
-                    PlaybackLog.add("耳机或蓝牙断开，暂停")
+                    PlaybackLog.add(String(localized: "耳机或蓝牙断开，暂停"))
                     self?.pause()
                     self?.onStateChangedExternally?()
                 }
@@ -622,11 +622,11 @@ public final class AudioPlayer {
     private func handleInterruption(type: AVAudioSession.InterruptionType?, shouldResume: Bool) {
         switch type {
         case .began:
-            PlaybackLog.add("被系统打断（来电、闹钟或其他 App）")
+            PlaybackLog.add(String(localized: "被系统打断（来电、闹钟或其他 App）"))
             resumeAfterInterruption = state == .playing
             pause()
         case .ended:
-            PlaybackLog.add("打断结束，\(shouldResume && resumeAfterInterruption ? "继续播放" : "保持暂停")")
+            PlaybackLog.add(String(localized: "打断结束，\(shouldResume && resumeAfterInterruption ? "继续播放" : "保持暂停")"))
             if shouldResume && resumeAfterInterruption { play() }
             resumeAfterInterruption = false
         default:
@@ -641,7 +641,7 @@ public final class AudioPlayer {
         let wasPlaying = state == .playing
         // 引擎此时多半已被系统停掉，读不到渲染时间：用最近记下的位置，而不是退回到 0 从头播
         let time = (engine.isRunning && playerNode.lastRenderTime != nil) ? currentTime : (wasPlaying ? lastObservedTime : pausedTime)
-        PlaybackLog.add("输出设备变化，从 \(Int(time)) 秒继续（播放中：\(wasPlaying)）")
+        PlaybackLog.add(String(localized: "输出设备变化，从 \(Int(time)) 秒继续（播放中：\(wasPlaying)）"))
         guard let source else { return }
         stopNode()
         schedule(from: AVAudioFramePosition(time * source.format.sampleRate))
@@ -653,7 +653,7 @@ public final class AudioPlayer {
                 playerNode.play()
             } catch {
                 state = .paused
-                PlaybackLog.add("输出设备变化后无法启动音频引擎：\(error.localizedDescription)")
+                PlaybackLog.add(String(localized: "输出设备变化后无法启动音频引擎：\(error.localizedDescription)"))
                 onStateChangedExternally?()
             }
         }

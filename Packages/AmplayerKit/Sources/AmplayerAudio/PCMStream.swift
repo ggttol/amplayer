@@ -30,9 +30,9 @@ enum PCMStreamError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .open(let code): "无法打开 APE 文件（错误 \(code)）"
-        case .decode(let code): "APE 解码失败（错误 \(code)）"
-        case .unsupportedFormat: "不支持的 APE 声道或位深"
+        case .open(let code): String(localized: "无法打开 APE 文件（错误 \(code)）")
+        case .decode(let code): String(localized: "APE 解码失败（错误 \(code)）")
+        case .unsupportedFormat: String(localized: "不支持的 APE 声道或位深")
         }
     }
 }

@@ -36,7 +36,7 @@ public final class DLNASource: MediaSource, @unchecked Sendable {
     public func download(path: String, to destination: URL) async throws {
         let (didl, _, _) = try await browse(objectID: path, flag: "BrowseMetadata", start: 0, count: 1)
         guard let entry = DIDLParser.parse(didl).first, let res = entry.resourceURL, let url = URL(string: res) else {
-            throw SourceError.protocolError("服务器没有返回音频地址")
+            throw SourceError.protocolError(String(localized: "服务器没有返回音频地址"))
         }
         try await http.download(URLRequest(url: url), to: destination)
     }
@@ -77,11 +77,11 @@ public final class DLNASource: MediaSource, @unchecked Sendable {
         let (data, _) = try await http.data(for: URLRequest(url: descriptionURL))
         let services = DeviceDescriptionParser.parse(data)
         guard let service = services.first(where: { $0.serviceType.hasPrefix("urn:schemas-upnp-org:service:ContentDirectory") }) else {
-            throw SourceError.unsupported("该设备没有 ContentDirectory 服务（不是媒体服务器）")
+            throw SourceError.unsupported(String(localized: "该设备没有 ContentDirectory 服务（不是媒体服务器）"))
         }
         let base = services.first?.urlBase.flatMap(URL.init(string:)) ?? descriptionURL
         guard let url = URL(string: service.controlURL, relativeTo: base)?.absoluteURL else {
-            throw SourceError.protocolError("controlURL 无效")
+            throw SourceError.protocolError(String(localized: "controlURL 无效"))
         }
         lock.withLock { controlURL = url }
         return url

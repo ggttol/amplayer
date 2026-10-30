@@ -153,7 +153,7 @@ public final class PlayerController {
               let i = queue.nextIndex(auto: true), queue.tracks[i].id == crossfadeReadyID else { return }
         crossfadeReadyID = nil
         guard audio.handOffForCrossfade(duration: fade, completedFile: currentFileURL), let next = queue.advance(auto: true) else { return }
-        PlaybackLog.add("淡入淡出到：\(next.displayName)")
+        PlaybackLog.add(String(localized: "淡入淡出到：\(next.displayName)"))
         pendingFadeIn = fade
         load(next, autoplay: true)
         persist()
@@ -189,10 +189,10 @@ public final class PlayerController {
 
     /// “歌词提前 0.5 秒” / “歌词延后 1 秒” / “歌词时间未调整”
     nonisolated public static func describeLyricsOffset(_ offset: TimeInterval) -> String {
-        if offset == 0 { return "歌词时间未调整" }
+        if offset == 0 { return String(localized: "歌词时间未调整") }
         let v = abs(offset)
         let text = v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v)
-        return offset > 0 ? "歌词提前 \(text) 秒" : "歌词延后 \(text) 秒"
+        return offset > 0 ? String(localized: "歌词提前 \(text) 秒") : String(localized: "歌词延后 \(text) 秒")
     }
 
     public var current: Track? { queue.current }
@@ -368,7 +368,7 @@ public final class PlayerController {
         }
         let deadline = Date().addingTimeInterval(TimeInterval(minutes * 60))
         sleepDeadline = deadline
-        PlaybackLog.add("定时关闭：\(minutes) 分钟后")
+        PlaybackLog.add(String(localized: "定时关闭：\(minutes) 分钟后"))
         sleepTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(deadline.timeIntervalSinceNow))
             guard !Task.isCancelled else { return }
@@ -381,7 +381,7 @@ public final class PlayerController {
         sleepTask?.cancel()
         sleepDeadline = nil
         sleepAfterCurrent = true
-        PlaybackLog.add("定时关闭：播完当前这首")
+        PlaybackLog.add(String(localized: "定时关闭：播完当前这首"))
         // 已经无缝排上的下一首要撤掉
         if audio.hasQueuedNext { audio.seek(to: audio.currentTime) }
         armedTrackID = nil
@@ -396,7 +396,7 @@ public final class PlayerController {
         pause()
         audio.volume = original
         sleepDeadline = nil
-        PlaybackLog.add("定时关闭：已暂停")
+        PlaybackLog.add(String(localized: "定时关闭：已暂停"))
     }
 
     public enum SortKey { case title, artist, album, path }
@@ -496,7 +496,7 @@ public final class PlayerController {
         resetPerTrackState(for: track)
         loadingTrackID = track.id
         updateNowPlaying()
-        PlaybackLog.add("加载：\(track.displayName)")
+        PlaybackLog.add(String(localized: "加载：\(track.displayName)"))
         // 启动后第一次加载的正好是上次没播完的那首：接着上次的位置
         let resumeAt = pendingResume?.trackID == track.id ? pendingResume?.time : nil
         pendingResume = nil
@@ -506,7 +506,7 @@ public final class PlayerController {
             await self.cache.cancelDownloads(except: [track.id])
             do {
                 guard let source = self.sources.source(track.sourceID) else {
-                    throw SourceError.notConfigured("来源已删除：\(track.sourceID)")
+                    throw SourceError.notConfigured(String(localized: "来源已删除：\(track.sourceID)"))
                 }
                 let playable = try await self.cache.playable(for: track, source: source)
                 try Task.checkCancellation()
@@ -518,7 +518,7 @@ public final class PlayerController {
                         break
                     } catch is AudioEngineError where attempt < 2 {
                         attempt += 1
-                        PlaybackLog.add("音频输出还没准备好，1 秒后重试（第 \(attempt) 次）")
+                        PlaybackLog.add(String(localized: "音频输出还没准备好，1 秒后重试（第 \(attempt) 次）"))
                         try await Task.sleep(for: .seconds(1))
                         try Task.checkCancellation()
                     }
@@ -527,7 +527,7 @@ public final class PlayerController {
                 self.loadingTrackID = nil
                 if let resumeAt, resumeAt < (self.audio.info?.duration ?? 0) - 5 {
                     self.audio.seek(to: resumeAt)
-                    self.onNotice?("从 \(TimeFormat.clock(resumeAt)) 继续播放")
+                    self.onNotice?(String(localized: "从 \(TimeFormat.clock(resumeAt)) 继续播放"))
                 }
                 if autoplay {
                     if fadeIn > 0 { self.audio.fadeIn(duration: fadeIn) }
@@ -549,7 +549,7 @@ public final class PlayerController {
                 self.loadingTrackID = nil
                 self.lyricsLoading = false
                 self.lastError = "\(track.displayName)：\(error.localizedDescription)"
-                PlaybackLog.add("加载失败：\(self.lastError!)")
+                PlaybackLog.add(String(localized: "加载失败：\(self.lastError!)"))
                 self.updateNowPlaying()
             }
         }
@@ -563,13 +563,13 @@ public final class PlayerController {
         case .growing(let file):
             do {
                 try await audio.load(growing: file, fallbackDuration: track.duration)
-                PlaybackLog.add("边下边播（已下载 \(file.receivedBytes / 1024) KB）")
+                PlaybackLog.add(String(localized: "边下边播（已下载 \(file.receivedBytes / 1024) KB）"))
             } catch let error as AudioEngineError {
                 throw error
             } catch is CancellationError {
                 throw CancellationError()
             } catch {
-                PlaybackLog.add("不能边下边播（\(error.localizedDescription)），等下载完")
+                PlaybackLog.add(String(localized: "不能边下边播（\(error.localizedDescription)），等下载完"))
                 let url = try await cache.localURL(for: track, source: source)
                 try Task.checkCancellation()
                 try audio.load(url: url)
@@ -616,7 +616,7 @@ public final class PlayerController {
         let expected = armedTrackID
         armedTrackID = nil
         guard let next = queue.advance(auto: true) else { return }
-        PlaybackLog.add("无缝衔接到：\(next.displayName)\(next.id == expected ? "" : "（列表已变，改为普通切歌）")")
+        PlaybackLog.add(String(localized: "无缝衔接到：\(next.displayName)\(next.id == expected ? "" : "（列表已变，改为普通切歌）")"))
         guard next.id == expected, let source = sources.source(next.sourceID) else {
             // 播放列表在这期间变了：按普通方式切到正确的那首
             load(next, autoplay: true)
@@ -648,16 +648,16 @@ public final class PlayerController {
     private func trackFinished() {
         if sleepAfterCurrent {
             sleepAfterCurrent = false
-            PlaybackLog.add("定时关闭：当前这首播完，停止")
+            PlaybackLog.add(String(localized: "定时关闭：当前这首播完，停止"))
             updateNowPlaying()
             return
         }
         guard let next = queue.advance(auto: true) else {
-            PlaybackLog.add("播完：已是列表最后一首（共 \(queue.tracks.count) 首，循环：\(queue.repeatMode)，随机：\(queue.shuffle)），停止")
+            PlaybackLog.add(String(localized: "播完：已是列表最后一首（共 \(queue.tracks.count) 首，循环：\(queue.repeatMode)，随机：\(queue.shuffle)），停止"))
             updateNowPlaying()
             return
         }
-        PlaybackLog.add("播完，自动下一首：\(next.displayName)")
+        PlaybackLog.add(String(localized: "播完，自动下一首：\(next.displayName)"))
         load(next, autoplay: true)
         persist()
     }
@@ -698,7 +698,7 @@ public final class PlayerController {
     private func applyDuration(_ seconds: TimeInterval, to track: Track) {
         guard seconds > 0, audio.info?.duration == 0 else { return }
         audio.updateDuration(seconds)
-        PlaybackLog.add("拿到时长 \(TimeFormat.clock(seconds))，可以拖动了")
+        PlaybackLog.add(String(localized: "拿到时长 \(TimeFormat.clock(seconds))，可以拖动了"))
         if var t = queue.tracks.first(where: { $0.id == track.id }), (t.duration ?? 0) <= 0 {
             t.duration = seconds
             queue.update(t)

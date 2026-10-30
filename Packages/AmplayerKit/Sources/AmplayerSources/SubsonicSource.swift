@@ -20,14 +20,14 @@ public struct SubsonicSource: MediaSource {
         switch path {
         case "/", "":
             return [
-                SourceItem(path: "artists", name: "艺术家", kind: .directory),
-                SourceItem(path: "albums", name: "最近添加的专辑", kind: .directory),
-                SourceItem(path: "playlists", name: "播放列表", kind: .directory),
-                SourceItem(path: "starred", name: "我的收藏", kind: .directory),
-                SourceItem(path: "recent", name: "最近播放", kind: .directory),
-                SourceItem(path: "frequent", name: "最常播放", kind: .directory),
-                SourceItem(path: "genres", name: "流派", kind: .directory),
-                SourceItem(path: "random", name: "随机 100 首", kind: .directory),
+                SourceItem(path: "artists", name: String(localized: "艺术家"), kind: .directory),
+                SourceItem(path: "albums", name: String(localized: "最近添加的专辑"), kind: .directory),
+                SourceItem(path: "playlists", name: String(localized: "播放列表"), kind: .directory),
+                SourceItem(path: "starred", name: String(localized: "我的收藏"), kind: .directory),
+                SourceItem(path: "recent", name: String(localized: "最近播放"), kind: .directory),
+                SourceItem(path: "frequent", name: String(localized: "最常播放"), kind: .directory),
+                SourceItem(path: "genres", name: String(localized: "流派"), kind: .directory),
+                SourceItem(path: "random", name: String(localized: "随机 100 首"), kind: .directory),
             ]
         case "artists":
             let body = try await call("getArtists")
@@ -61,7 +61,7 @@ public struct SubsonicSource: MediaSource {
             break
         }
         let parts = path.split(separator: "/", maxSplits: 1).map(String.init)
-        guard parts.count == 2 else { throw SourceError.protocolError("未知路径 \(path)") }
+        guard parts.count == 2 else { throw SourceError.protocolError(String(localized: "未知路径 \(path)")) }
         let (kind, id) = (parts[0], parts[1])
         switch kind {
         case "artist":
@@ -76,12 +76,12 @@ public struct SubsonicSource: MediaSource {
             let body = try await call("getPlaylist", ["id": id])
             return (body.dict("playlist")?.array("entry") ?? []).compactMap(songItem)
         default:
-            throw SourceError.protocolError("未知路径 \(path)")
+            throw SourceError.protocolError(String(localized: "未知路径 \(path)"))
         }
     }
 
     public func download(path: String, to destination: URL) async throws {
-        guard path.hasPrefix("song/") else { throw SourceError.protocolError("不是曲目：\(path)") }
+        guard path.hasPrefix("song/") else { throw SourceError.protocolError(String(localized: "不是曲目：\(path)")) }
         let id = String(path.dropFirst("song/".count))
         // format=raw 请求原始文件，不转码
         try await http.download(URLRequest(url: try endpoint("stream", ["id": id, "format": "raw"])), to: destination)
@@ -178,20 +178,20 @@ public struct SubsonicSource: MediaSource {
             // 服务器不支持 token 登录（如 Music），改用账号密码再试一次，并记住
             SubsonicPlainAuth.mark(authKey)
             do { return try await callOnce(method, params) } catch is SubsonicPlainAuth.TokenUnsupported {
-                throw SourceError.authenticationFailed("服务器不接受这种登录方式")
+                throw SourceError.authenticationFailed(String(localized: "服务器不接受这种登录方式"))
             }
         }
     }
 
     private func callOnce(_ method: String, _ params: [String: String]) async throws -> [String: Any] {
         let json = try await http.json(for: URLRequest(url: try endpoint(method, params)))
-        guard let body = json.dict("subsonic-response") else { throw SourceError.protocolError("不是 Subsonic 响应") }
+        guard let body = json.dict("subsonic-response") else { throw SourceError.protocolError(String(localized: "不是 Subsonic 响应")) }
         if body.string("status") != "ok" {
             let error = body.dict("error")
             let message = error?.string("message")
             if error?.int("code") == 41, !SubsonicPlainAuth.needs(authKey) { throw SubsonicPlainAuth.TokenUnsupported() }
             if let code = error?.int("code"), code == 40 || code == 41 { throw SourceError.authenticationFailed(message) }
-            throw SourceError.protocolError(message ?? "未知错误")
+            throw SourceError.protocolError(message ?? String(localized: "未知错误"))
         }
         return body
     }

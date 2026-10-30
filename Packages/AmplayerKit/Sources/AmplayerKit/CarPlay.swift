@@ -19,8 +19,8 @@ public final class CarPlayHub {
 @MainActor
 public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegate, CPNowPlayingTemplateObserver {
     private var interface: CPInterfaceController?
-    private let queueTemplate = CPListTemplate(title: "播放列表", sections: [])
-    private let lyricsTemplate = CPListTemplate(title: "歌词", sections: [])
+    private let queueTemplate = CPListTemplate(title: String(localized: "播放列表"), sections: [])
+    private let lyricsTemplate = CPListTemplate(title: String(localized: "歌词"), sections: [])
     private var lyricsTimer: Timer?
     private var lyricsKey = ""
     private var observing = false
@@ -29,10 +29,10 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
 
     public func templateApplicationScene(_ templateApplicationScene: CPTemplateApplicationScene, didConnect interfaceController: CPInterfaceController) {
         interface = interfaceController
-        queueTemplate.tabTitle = "播放列表"
+        queueTemplate.tabTitle = String(localized: "播放列表")
         queueTemplate.tabImage = UIImage(systemName: "list.bullet")
-        queueTemplate.emptyViewTitleVariants = ["播放列表是空的"]
-        queueTemplate.emptyViewSubtitleVariants = ["在“曲库”或“来源”里选歌"]
+        queueTemplate.emptyViewTitleVariants = [String(localized: "播放列表是空的")]
+        queueTemplate.emptyViewSubtitleVariants = [String(localized: "在“曲库”或“来源”里选歌")]
         let tabs = CPTabBarTemplate(templates: [queueTemplate, libraryTemplate(), sourcesTemplate()])
         interfaceController.setRootTemplate(tabs, animated: false, completion: nil)
         configureNowPlaying()
@@ -54,7 +54,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     private func configureNowPlaying() {
         let now = CPNowPlayingTemplate.shared
         now.isUpNextButtonEnabled = true
-        now.upNextTitle = "播放列表"
+        now.upNextTitle = String(localized: "播放列表")
         now.add(self)
         let shuffle = CPNowPlayingShuffleButton { [weak self] _ in
             guard let player = self?.hub.player else { return }
@@ -78,7 +78,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
         Task { @MainActor in
             guard let interface = self.interface else { return }
             // 列表项不能同时挂在两个模板上：另建一份
-            let list = CPListTemplate(title: "播放列表", sections: [self.queueSection()])
+            let list = CPListTemplate(title: String(localized: "播放列表"), sections: [self.queueSection()])
             interface.pushTemplate(list, animated: true, completion: nil)
         }
     }
@@ -103,8 +103,8 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     /// “正在播放”页面的歌词按钮：打开歌词页，播放时每半秒看一次唱到哪句
     private func showLyrics() {
         guard let interface else { return }
-        lyricsTemplate.emptyViewTitleVariants = ["没有歌词"]
-        lyricsTemplate.emptyViewSubtitleVariants = ["在手机上长按歌词区域可以在线搜索"]
+        lyricsTemplate.emptyViewTitleVariants = [String(localized: "没有歌词")]
+        lyricsTemplate.emptyViewSubtitleVariants = [String(localized: "在手机上长按歌词区域可以在线搜索")]
         lyricsKey = ""
         refreshLyrics()
         if !interface.templates.contains(where: { $0 === lyricsTemplate }) {
@@ -211,14 +211,14 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
     // MARK: 曲库
 
     private func libraryTemplate() -> CPListTemplate {
-        let template = CPListTemplate(title: "曲库", sections: [])
-        template.tabTitle = "曲库"
+        let template = CPListTemplate(title: String(localized: "曲库"), sections: [])
+        template.tabTitle = String(localized: "曲库")
         template.tabImage = UIImage(systemName: "music.note.list")
         let rows: [(String, String, () -> CPListTemplate?)] = [
-            ("歌曲", "music.note", { [weak self] in self?.songsTemplate() }),
-            ("艺术家", "music.mic", { [weak self] in self?.groupsTemplate(title: "艺术家", groups: self?.hub.library?.artists() ?? []) }),
-            ("专辑", "square.stack", { [weak self] in self?.groupsTemplate(title: "专辑", groups: self?.hub.library?.albums() ?? []) }),
-            ("播放列表", "list.bullet.rectangle", { [weak self] in self?.playlistsTemplate() }),
+            (String(localized: "歌曲"), "music.note", { [weak self] in self?.songsTemplate() }),
+            (String(localized: "艺术家"), "music.mic", { [weak self] in self?.groupsTemplate(title: String(localized: "艺术家"), groups: self?.hub.library?.artists() ?? []) }),
+            (String(localized: "专辑"), "square.stack", { [weak self] in self?.groupsTemplate(title: String(localized: "专辑"), groups: self?.hub.library?.albums() ?? []) }),
+            (String(localized: "播放列表"), "list.bullet.rectangle", { [weak self] in self?.playlistsTemplate() }),
         ]
         var items: [CPListItem] = rows.map { title, symbol, make in
             let item = CPListItem(text: title, detailText: nil, image: UIImage(systemName: symbol))
@@ -229,7 +229,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             }
             return item
         }
-        let shuffleAll = CPListItem(text: "随机播放全部", detailText: nil, image: UIImage(systemName: "shuffle"))
+        let shuffleAll = CPListItem(text: String(localized: "随机播放全部"), detailText: nil, image: UIImage(systemName: "shuffle"))
         shuffleAll.handler = { [weak self] _, done in
             if let self, let tracks = self.hub.library?.tracks, !tracks.isEmpty {
                 self.hub.player?.shuffle = true
@@ -239,7 +239,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
         }
         items.insert(shuffleAll, at: 0)
         template.updateSections([CPListSection(items: items)])
-        template.emptyViewTitleVariants = ["曲库是空的"]
+        template.emptyViewTitleVariants = [String(localized: "曲库是空的")]
         return template
     }
 
@@ -257,15 +257,15 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
 
     private func songsTemplate() -> CPListTemplate {
         let tracks = (hub.library?.tracks ?? []).sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
-        let t = CPListTemplate(title: "歌曲", sections: [CPListSection(items: trackItems(tracks))])
-        t.emptyViewTitleVariants = ["曲库是空的"]
-        t.emptyViewSubtitleVariants = ["在手机上把来源扫描进曲库"]
+        let t = CPListTemplate(title: String(localized: "歌曲"), sections: [CPListSection(items: trackItems(tracks))])
+        t.emptyViewTitleVariants = [String(localized: "曲库是空的")]
+        t.emptyViewSubtitleVariants = [String(localized: "在手机上把来源扫描进曲库")]
         return t
     }
 
     private func groupsTemplate(title: String, groups: [LibraryStore.Group]) -> CPListTemplate {
         let items = groups.prefix(Self.limit).map { group -> CPListItem in
-            let item = CPListItem(text: group.name, detailText: "\(group.tracks.count) 首")
+            let item = CPListItem(text: group.name, detailText: String(localized: "\(group.tracks.count) 首"))
             item.accessoryType = .disclosureIndicator
             item.handler = { [weak self] _, done in
                 guard let self else { done(); return }
@@ -276,7 +276,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             return item
         }
         let t = CPListTemplate(title: title, sections: [CPListSection(items: Array(items))])
-        t.emptyViewTitleVariants = ["曲库是空的"]
+        t.emptyViewTitleVariants = [String(localized: "曲库是空的")]
         return t
     }
 
@@ -293,16 +293,16 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             }
             return item
         }
-        let t = CPListTemplate(title: "播放列表", sections: [CPListSection(items: Array(items))])
-        t.emptyViewTitleVariants = ["没有保存的播放列表"]
+        let t = CPListTemplate(title: String(localized: "播放列表"), sections: [CPListSection(items: Array(items))])
+        t.emptyViewTitleVariants = [String(localized: "没有保存的播放列表")]
         return t
     }
 
     // MARK: 来源（逐级浏览文件夹）
 
     private func sourcesTemplate() -> CPListTemplate {
-        let template = CPListTemplate(title: "来源", sections: [])
-        template.tabTitle = "来源"
+        let template = CPListTemplate(title: String(localized: "来源"), sections: [])
+        template.tabTitle = String(localized: "来源")
         template.tabImage = UIImage(systemName: "externaldrive.connected.to.line.below")
         let configs = hub.sources?.configs ?? []
         let items = configs.map { config -> CPListItem in
@@ -315,8 +315,8 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
             return item
         }
         template.updateSections([CPListSection(items: items)])
-        template.emptyViewTitleVariants = ["还没有来源"]
-        template.emptyViewSubtitleVariants = ["在手机上添加 NAS 或媒体服务器"]
+        template.emptyViewTitleVariants = [String(localized: "还没有来源")]
+        template.emptyViewSubtitleVariants = [String(localized: "在手机上添加 NAS 或媒体服务器")]
         return template
     }
 
@@ -330,7 +330,7 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
                 let tracks = files.map { $0.makeTrack(sourceID: source.id) }
                 var items: [CPListItem] = []
                 if !files.isEmpty || !folders.isEmpty {
-                    let playAll = CPListItem(text: "播放全部", detailText: nil, image: UIImage(systemName: "play.fill"))
+                    let playAll = CPListItem(text: String(localized: "播放全部"), detailText: nil, image: UIImage(systemName: "play.fill"))
                     playAll.handler = { [weak self] _, finish in
                         Task { @MainActor in
                             let all = (try? await source.collectTracks(path: path, maxDepth: 3, limit: 500)) ?? tracks
@@ -357,11 +357,11 @@ public final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationScene
                     items.append(item)
                 }
                 let list = CPListTemplate(title: title, sections: [CPListSection(items: items)])
-                list.emptyViewTitleVariants = ["这里没有音乐"]
+                list.emptyViewTitleVariants = [String(localized: "这里没有音乐")]
                 self?.interface?.pushTemplate(list, animated: true, completion: nil)
             } catch {
-                let alert = CPAlertTemplate(titleVariants: ["打开失败：\(error.localizedDescription)"], actions: [
-                    CPAlertAction(title: "好", style: .cancel) { [weak self] _ in self?.interface?.dismissTemplate(animated: true, completion: nil) },
+                let alert = CPAlertTemplate(titleVariants: [String(localized: "打开失败：\(error.localizedDescription)")], actions: [
+                    CPAlertAction(title: String(localized: "好"), style: .cancel) { [weak self] _ in self?.interface?.dismissTemplate(animated: true, completion: nil) },
                 ])
                 self?.interface?.presentTemplate(alert, animated: true, completion: nil)
             }

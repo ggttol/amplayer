@@ -63,7 +63,7 @@ public actor QuickConnectResolver {
         }
         guard let best else {
             let kinds = Set(candidates.map(\.kind)).sorted().joined(separator: "、")
-            throw SourceError.http(0, "QuickConnect 找到了 NAS，但\(kinds.isEmpty ? "没有可用地址" : "所有地址（\(kinds)）都连不上")，中继也不可用")
+            throw SourceError.http(0, String(localized: "QuickConnect 找到了 NAS，但\(kinds.isEmpty ? "没有可用地址" : "所有地址（\(kinds)）都连不上")，中继也不可用"))
         }
         cache[key] = (best, Date().addingTimeInterval(600))
         return best
@@ -91,11 +91,11 @@ public actor QuickConnectResolver {
                 continue
             }
             if errno == 4 || errno == 30 {
-                throw SourceError.notConfigured("QuickConnect ID “\(id)”不存在，或 NAS 未开启 QuickConnect")
+                throw SourceError.notConfigured(String(localized: "QuickConnect ID “\(id)”不存在，或 NAS 未开启 QuickConnect"))
             }
-            throw SourceError.protocolError("QuickConnect 返回错误 \(errno)")
+            throw SourceError.protocolError(String(localized: "QuickConnect 返回错误 \(errno)"))
         }
-        throw SourceError.protocolError("QuickConnect 区域跳转过多")
+        throw SourceError.protocolError(String(localized: "QuickConnect 区域跳转过多"))
     }
 
     private func serv(_ host: String, command: String, id: String) async throws -> [String: Any] {
@@ -110,7 +110,7 @@ public actor QuickConnectResolver {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, _) = try await http.data(for: request)
         guard let array = try JSONSerialization.jsonObject(with: data) as? [[String: Any]], let first = array.first else {
-            throw SourceError.protocolError("QuickConnect 响应格式不对")
+            throw SourceError.protocolError(String(localized: "QuickConnect 响应格式不对"))
         }
         return first
     }
@@ -130,8 +130,8 @@ public actor QuickConnectResolver {
             if !list.contains(where: { $0.url == url }) { list.append(Candidate(url: url, priority: priority, kind: kind)) }
         }
         // 局域网（SmartDNS 把内网 IP 编进官方域名，证书有效）
-        for h in (smartdns["lan"] as? [String]) ?? [] { add(h, port, 0, "局域网") }
-        for h in (smartdns["lanv6"] as? [String]) ?? [] { add(h, port, 1, "局域网 IPv6") }
+        for h in (smartdns["lan"] as? [String]) ?? [] { add(h, port, 0, String(localized: "局域网")) }
+        for h in (smartdns["lanv6"] as? [String]) ?? [] { add(h, port, 1, String(localized: "局域网 IPv6")) }
         // 用户自己的 DDNS / 域名
         for key in ["ddns", "fqdn"] {
             add(server.string(key), extPort, 2, "DDNS")
@@ -140,11 +140,11 @@ public actor QuickConnectResolver {
         // 路由器端口转发探测到的外网地址（只取域名）
         for desc in (service["pingpong_desc"] as? [String]) ?? [] {
             let parts = desc.split(separator: ":")
-            if parts.count == 2, let p = Int(parts[1]) { add(String(parts[0]), p, 4, "外网") }
+            if parts.count == 2, let p = Int(parts[1]) { add(String(parts[0]), p, 4, String(localized: "外网")) }
         }
         // SmartDNS 外网域名
-        add(smartdns.string("host"), extPort, 5, "外网")
-        if extPort != port { add(smartdns.string("host"), port, 6, "外网") }
+        add(smartdns.string("host"), extPort, 5, String(localized: "外网"))
+        if extPort != port { add(smartdns.string("host"), port, 6, String(localized: "外网")) }
         return list
     }
 
@@ -155,7 +155,7 @@ public actor QuickConnectResolver {
         let port = service.int("relay_port") ?? 443
         guard let host = service.string("relay_dn") ?? service.string("https_ip").flatMap({ Self.isIPAddress($0) ? nil : $0 }),
               let url = URL(string: "https://\(host):\(port)") else { return nil }
-        return Candidate(url: url, priority: 9, kind: "中继")
+        return Candidate(url: url, priority: 9, kind: String(localized: "中继"))
     }
 
     /// 并发探测，返回优先级最高的可用地址。

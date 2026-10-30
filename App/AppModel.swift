@@ -83,7 +83,7 @@ final class AppModel {
             miniRestore = (showEqualizer, showPlaylist)
             showEqualizer = false
             showPlaylist = false
-            show("迷你模式，再点一次恢复")
+            show(String(localized: "迷你模式，再点一次恢复"))
         } else {
             showEqualizer = true
             showPlaylist = true
@@ -97,7 +97,7 @@ final class AppModel {
         let i = entries.firstIndex { $0.id == skins.current.id } ?? -1
         let next = entries[(i + 1) % entries.count]
         skins.select(next.id)
-        show("皮肤：\(next.name)")
+        show(String(localized: "皮肤：\(next.name)"))
     }
 
     /// 退出多选并清空选择
@@ -170,14 +170,14 @@ final class AppModel {
                 }
             }
             if !fm.fileExists(atPath: target.path) {
-                do { try fm.copyItem(at: url, to: target) } catch { show("导入失败：\(error.localizedDescription)"); continue }
+                do { try fm.copyItem(at: url, to: target) } catch { show(String(localized: "导入失败：\(error.localizedDescription)")); continue }
             }
             tracks.append(Track(sourceID: SourceConfig.localID, path: "/Imported/\(target.lastPathComponent)", title: Track.title(fromFileName: target.lastPathComponent)))
         }
         guard !tracks.isEmpty else { return }
         library.add(tracks)
         player.enqueue(tracks, playIfIdle: play)
-        show("已添加 \(tracks.count) 首")
+        show(String(localized: "已添加 \(tracks.count) 首"))
     }
 
     /// 处理“用 Amplayer 打开”的文件：皮肤或播放列表
@@ -186,16 +186,16 @@ final class AppModel {
         if ext == "wsz" || ext == "zip" {
             do {
                 let entry = try skins.importSkin(from: url)
-                show("已切换到皮肤 \(entry.name)")
+                show(String(localized: "已切换到皮肤 \(entry.name)"))
             } catch {
-                show("不是有效的皮肤文件")
+                show(String(localized: "不是有效的皮肤文件"))
             }
         } else if ["m3u", "m3u8", "pls"].contains(ext) {
             let access = url.startAccessingSecurityScopedResource()
             defer { if access { url.stopAccessingSecurityScopedResource() } }
             if let tracks = try? library.loadPlaylist(url), !tracks.isEmpty {
                 player.setQueue(tracks, startAt: 0, autoplay: false)
-                show("已载入 \(tracks.count) 首")
+                show(String(localized: "已载入 \(tracks.count) 首"))
             }
         } else if AudioFormats.isPlayable(url.lastPathComponent) {
             importAudioFiles([url], play: true)

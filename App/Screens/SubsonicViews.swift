@@ -12,17 +12,17 @@ enum SubsonicHomeSection: String, CaseIterable, Identifiable, Codable {
 
     var title: String {
         switch self {
-        case .randomSongs: "随机播放"
-        case .newest: "最近添加"
-        case .recent: "最近播放"
-        case .starred: "我的收藏"
-        case .playlists: "播放列表"
-        case .artists: "艺术家"
-        case .genres: "流派"
-        case .frequent: "最常播放"
-        case .randomAlbums: "随便听听"
-        case .decades: "年代"
-        case .highest: "评分最高"
+        case .randomSongs: String(localized: "随机播放")
+        case .newest: String(localized: "最近添加")
+        case .recent: String(localized: "最近播放")
+        case .starred: String(localized: "我的收藏")
+        case .playlists: String(localized: "播放列表")
+        case .artists: String(localized: "艺术家")
+        case .genres: String(localized: "流派")
+        case .frequent: String(localized: "最常播放")
+        case .randomAlbums: String(localized: "随便听听")
+        case .decades: String(localized: "年代")
+        case .highest: String(localized: "评分最高")
         }
     }
 
@@ -82,12 +82,12 @@ private struct SubsonicContext {
 
     func playNext(_ items: [SourceItem]) {
         app.player.playNext(items.map { $0.makeTrack(sourceID: sourceID) })
-        app.show(items.count == 1 ? "下一首播放" : "\(items.count) 首将接着播放")
+        app.show(items.count == 1 ? String(localized: "下一首播放") : String(localized: "\(items.count) 首将接着播放"))
     }
 
     func enqueue(_ items: [SourceItem]) {
         app.player.enqueue(items.map { $0.makeTrack(sourceID: sourceID) })
-        app.show("已加入播放列表 \(items.count) 首")
+        app.show(String(localized: "已加入播放列表 \(items.count) 首"))
     }
 
     func isPlaying(_ item: SourceItem) -> Bool {
@@ -242,7 +242,7 @@ private struct ShelfHeader<Destination: View>: View {
 private func durationText(_ seconds: TimeInterval?) -> String? {
     guard let seconds, seconds > 0 else { return nil }
     let minutes = Int(seconds / 60)
-    return minutes >= 60 ? "\(minutes / 60) 小时 \(minutes % 60) 分钟" : "\(max(1, minutes)) 分钟"
+    return minutes >= 60 ? String(localized: "\(minutes / 60) 小时 \(minutes % 60) 分钟") : String(localized: "\(max(1, minutes)) 分钟")
 }
 
 /// 专辑卡片：封面 + 名称 + 艺术家
@@ -373,7 +373,7 @@ struct SubsonicHomeView: View {
                     Button("编辑首页", systemImage: "slider.horizontal.3") { editing = true }
                     Button("按目录浏览", systemImage: "folder") { showFolders = true }
                     Button("扫描到曲库", systemImage: "square.and.arrow.down.on.square") {
-                        if let source = ctx.source { app.library.scan(source, path: source.rootPath); app.show("开始扫描 \(title)") }
+                        if let source = ctx.source { app.library.scan(source, path: source.rootPath); app.show(String(localized: "开始扫描 \(title)")) }
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -449,11 +449,11 @@ private struct QuickLinks: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            tile("歌手", "music.mic", Color(red: 0.95, green: 0.35, blue: 0.4)) { ArtistListView(sourceID: sourceID) }
-            tile("专辑", "square.stack", Color(red: 0.3, green: 0.6, blue: 0.98)) { AlbumGridView(sourceID: sourceID, title: "全部专辑", list: .alphabetical) }
-            tile("歌单", "music.note.list", Color(red: 0.55, green: 0.4, blue: 0.95)) { PlaylistListView(sourceID: sourceID) }
-            tile("流派", "guitars", Color(red: 0.2, green: 0.72, blue: 0.55)) { GenreListView(sourceID: sourceID) }
-            tile("收藏", "star.fill", Color(red: 0.98, green: 0.7, blue: 0.2)) { StarredView(sourceID: sourceID) }
+            tile(String(localized: "歌手"), "music.mic", Color(red: 0.95, green: 0.35, blue: 0.4)) { ArtistListView(sourceID: sourceID) }
+            tile(String(localized: "专辑"), "square.stack", Color(red: 0.3, green: 0.6, blue: 0.98)) { AlbumGridView(sourceID: sourceID, title: String(localized: "全部专辑"), list: .alphabetical) }
+            tile(String(localized: "歌单"), "music.note.list", Color(red: 0.55, green: 0.4, blue: 0.95)) { PlaylistListView(sourceID: sourceID) }
+            tile(String(localized: "流派"), "guitars", Color(red: 0.2, green: 0.72, blue: 0.55)) { GenreListView(sourceID: sourceID) }
+            tile(String(localized: "收藏"), "star.fill", Color(red: 0.98, green: 0.7, blue: 0.2)) { StarredView(sourceID: sourceID) }
         }
         .padding(.horizontal, 18)
     }
@@ -491,7 +491,7 @@ private struct RandomSongsCard: View {
                 do {
                     let songs = try await ctx.source?.randomSongs(size: 100) ?? []
                     ctx.play(songs)
-                    app.show("随机播放 \(songs.count) 首")
+                    app.show(String(localized: "随机播放 \(songs.count) 首"))
                 } catch {
                     app.show(error.localizedDescription)
                 }
@@ -584,7 +584,7 @@ private struct StarredShelf: View {
         Group {
             if let starred, !starred.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    ShelfHeader(title: "我的收藏", subtitle: summary(starred)) { StarredView(sourceID: sourceID) }
+                    ShelfHeader(title: String(localized: "我的收藏"), subtitle: summary(starred)) { StarredView(sourceID: sourceID) }
                     if !starred.albums.isEmpty {
                         ScrollView(.horizontal) {
                             LazyHStack(alignment: .top, spacing: 14) {
@@ -628,7 +628,7 @@ private struct StarredShelf: View {
     }
 
     private func summary(_ r: SubsonicResults) -> String {
-        [r.albums.isEmpty ? nil : "\(r.albums.count) 张专辑", r.songs.isEmpty ? nil : "\(r.songs.count) 首歌", r.artists.isEmpty ? nil : "\(r.artists.count) 位艺术家"]
+        [r.albums.isEmpty ? nil : String(localized: "\(r.albums.count) 张专辑"), r.songs.isEmpty ? nil : String(localized: "\(r.songs.count) 首歌"), r.artists.isEmpty ? nil : String(localized: "\(r.artists.count) 位艺术家")]
             .compactMap { $0 }.joined(separator: " · ")
     }
 }
@@ -643,7 +643,7 @@ private struct PlaylistShelf: View {
         Group {
             if let playlists, !playlists.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    ShelfHeader(title: "播放列表") { PlaylistListView(sourceID: sourceID) }
+                    ShelfHeader(title: String(localized: "播放列表")) { PlaylistListView(sourceID: sourceID) }
                     ScrollView(.horizontal) {
                         LazyHStack(alignment: .top, spacing: 14) {
                             ForEach(playlists) { playlist in
@@ -685,7 +685,7 @@ private struct ArtistShelf: View {
             if let index, !index.isEmpty {
                 let total = index.reduce(0) { $0 + $1.artists.count }
                 VStack(alignment: .leading, spacing: 12) {
-                    ShelfHeader(title: "艺术家", subtitle: "共 \(total) 位") { ArtistListView(sourceID: sourceID, preloaded: index) }
+                    ShelfHeader(title: String(localized: "艺术家"), subtitle: String(localized: "共 \(total) 位")) { ArtistListView(sourceID: sourceID, preloaded: index) }
                     ScrollView(.horizontal) {
                         LazyHStack(alignment: .top, spacing: 16) {
                             ForEach(sample) { artist in
@@ -725,7 +725,7 @@ private struct GenreShelf: View {
         Group {
             if let genres, !genres.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
-                    ShelfHeader(title: "流派", subtitle: "共 \(genres.count) 种") { GenreListView(sourceID: sourceID, preloaded: genres) }
+                    ShelfHeader(title: String(localized: "流派"), subtitle: String(localized: "共 \(genres.count) 种")) { GenreListView(sourceID: sourceID, preloaded: genres) }
                     ChipFlow {
                         ForEach(genres.prefix(14)) { genre in
                             NavigationLink { AlbumGridView(sourceID: sourceID, title: genre.name, list: .genre(genre.name)) } label: {
@@ -755,16 +755,16 @@ private struct DecadeShelf: View {
             ChipFlow {
                 ForEach(decades, id: \.self) { decade in
                     NavigationLink {
-                        AlbumGridView(sourceID: sourceID, title: "\(decade) 年代", list: .years(decade + 9, decade))
+                        AlbumGridView(sourceID: sourceID, title: String(localized: "\(decade) 年代"), list: .years(decade + 9, decade))
                     } label: {
-                        Chip(text: decade >= 2000 ? "\(decade) 年代" : "\(decade % 100) 年代")
+                        Chip(text: decade >= 2000 ? String(localized: "\(decade) 年代") : String(localized: "\(decade % 100) 年代"))
                     }
                     .buttonStyle(.plain)
                 }
                 NavigationLink {
-                    AlbumGridView(sourceID: sourceID, title: "更早", list: .years(1959, 1900))
+                    AlbumGridView(sourceID: sourceID, title: String(localized: "更早"), list: .years(1959, 1900))
                 } label: {
-                    Chip(text: "更早")
+                    Chip(text: String(localized: "更早"))
                 }
                 .buttonStyle(.plain)
             }
@@ -903,7 +903,7 @@ struct AlbumDetailView: View {
                     .swipeActions { swipe(ctx, song) }
                 }
                 if !songs.isEmpty {
-                    Text("\(songs.count) 首" + (durationText(album.duration).map { " · \($0)" } ?? ""))
+                    Text(String(localized: "\(songs.count) 首") + (durationText(album.duration).map { " · \($0)" } ?? ""))
                         .font(.caption).foregroundStyle(.secondary)
                         .listRowSeparator(.hidden)
                 }
@@ -945,14 +945,14 @@ struct AlbumDetailView: View {
     }
 
     private var meta: String {
-        [album.genre, album.year.map(String.init), album.songCount.map { "\($0) 首" }].compactMap { $0 }.joined(separator: " · ")
+        [album.genre, album.year.map(String.init), album.songCount.map { String(localized: "\($0) 首") }].compactMap { $0 }.joined(separator: " · ")
     }
 
     private func toggleStar(_ ctx: SubsonicContext) async {
         do {
             try await ctx.source?.setStarred(!album.starred, albumID: album.id)
             album.starred.toggle()
-            app.show(album.starred ? "已收藏" : "已取消收藏")
+            app.show(album.starred ? String(localized: "已收藏") : String(localized: "已取消收藏"))
         } catch {
             app.show(error.localizedDescription)
         }
@@ -968,7 +968,7 @@ private func songMenu(_ ctx: SubsonicContext, _ song: SourceItem) -> some View {
             Task {
                 do {
                     try await ctx.source?.setStarred(true, songID: String(song.path.dropFirst(5)))
-                    ctx.app.show("已收藏")
+                    ctx.app.show(String(localized: "已收藏"))
                 } catch {
                     ctx.app.show(error.localizedDescription)
                 }
@@ -1009,7 +1009,7 @@ struct ArtistListView: View {
         .safeAreaInset(edge: .top) {
             if query.isEmpty {
                 Picker("显示", selection: $mode) {
-                    ForEach(Mode.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    ForEach(Mode.allCases, id: \.self) { Text(LocalizedStringKey($0.rawValue)).tag($0) }
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal, 18)
@@ -1198,7 +1198,7 @@ struct ArtistDetailView: View {
                     .shadow(color: .black.opacity(0.4), radius: 12, y: 6)
                 Text(artist.name).font(.title.weight(.bold)).multilineTextAlignment(.center)
                 if albums != nil {
-                    Text([hasSingles ? "\(singles!.count) 首单曲" : nil, hasAlbums ? "\(albums!.count) 张专辑" : nil].compactMap { $0 }.joined(separator: " · "))
+                    Text([hasSingles ? String(localized: "\(singles!.count) 首单曲") : nil, hasAlbums ? String(localized: "\(albums!.count) 张专辑") : nil].compactMap { $0 }.joined(separator: " · "))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 if hasSingles, hasAlbums {
@@ -1340,7 +1340,7 @@ struct PlaylistListView: View {
                         .frame(width: 52, height: 52)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(playlist.name)
-                        Text(["\(playlist.songCount ?? 0) 首", durationText(playlist.duration)].compactMap { $0 }.joined(separator: " · "))
+                        Text([String(localized: "\(playlist.songCount ?? 0) 首"), durationText(playlist.duration)].compactMap { $0 }.joined(separator: " · "))
                             .font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -1372,7 +1372,7 @@ struct PlaylistDetailView: View {
                     .frame(width: 210, height: 210)
                     .shadow(color: .black.opacity(0.45), radius: 16, y: 8)
                 Text(playlist.name).font(.title2.weight(.bold)).multilineTextAlignment(.center)
-                Text(["\(playlist.songCount ?? songs?.count ?? 0) 首", durationText(playlist.duration), playlist.owner].compactMap { $0 }.joined(separator: " · "))
+                Text([String(localized: "\(playlist.songCount ?? songs?.count ?? 0) 首"), durationText(playlist.duration), playlist.owner].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -1476,7 +1476,7 @@ struct GenreListView: View {
                     Task {
                         let songs = (try? await ctx.source?.randomSongs(size: 100, genre: genre.name)) ?? []
                         ctx.play(songs)
-                        app.show("随机播放 \(genre.name) \(songs.count) 首")
+                        app.show(String(localized: "随机播放 \(genre.name) \(songs.count) 首"))
                     }
                 }
                 .tint(Color.accentColor)

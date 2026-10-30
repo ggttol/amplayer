@@ -8,12 +8,12 @@ public struct SoundEffects: Codable, Sendable, Equatable {
         public var id: String { rawValue }
         public var title: String {
             switch self {
-            case .room: "小房间"
-            case .studio: "录音棚"
-            case .hall: "音乐厅"
-            case .largeHall: "大型场馆"
-            case .cathedral: "教堂"
-            case .plate: "板式（KTV）"
+            case .room: String(localized: "小房间")
+            case .studio: String(localized: "录音棚")
+            case .hall: String(localized: "音乐厅")
+            case .largeHall: String(localized: "大型场馆")
+            case .cathedral: String(localized: "教堂")
+            case .plate: String(localized: "板式（KTV）")
             }
         }
     }
@@ -97,39 +97,39 @@ public struct SoundEffectPreset: Identifiable, Sendable {
             return SoundEffectPreset(id: id, name: name, detail: detail, symbol: symbol, effects: e)
         }
         return [
-            make("off", "原声", "不加任何处理", "waveform") { _ in },
-            make("bass", "超重低音", "下潜更深，鼓点更有力", "speaker.wave.3.fill") { e in
+            make("off", String(localized: "原声"), String(localized: "不加任何处理"), "waveform") { _ in },
+            make("bass", String(localized: "超重低音"), String(localized: "下潜更深，鼓点更有力"), "speaker.wave.3.fill") { e in
                 e.bass = 9; e.treble = 1; e.loudness = true
             },
-            make("vocal", "清澈人声", "人声靠前，齿音柔和", "music.mic") { e in
+            make("vocal", String(localized: "清澈人声"), String(localized: "人声靠前，齿音柔和"), "music.mic") { e in
                 e.vocal = 5; e.bass = -2; e.treble = 2
             },
-            make("surround3d", "3D 环绕", "声场变宽，像在房间里听音箱", "dot.radiowaves.left.and.right") { e in
+            make("surround3d", String(localized: "3D 环绕"), String(localized: "声场变宽，像在房间里听音箱"), "dot.radiowaves.left.and.right") { e in
                 e.reverbType = .room; e.reverbMix = 14; e.echoMix = 6; e.echoTime = 0.03
                 e.surround = 0.35; e.surroundSpeed = 0.05; e.bass = 2
             },
-            make("orbit8d", "8D 旋转", "声音绕着头转圈，戴耳机听", "arrow.triangle.2.circlepath") { e in
+            make("orbit8d", String(localized: "8D 旋转"), String(localized: "声音绕着头转圈，戴耳机听"), "arrow.triangle.2.circlepath") { e in
                 e.surround = 1; e.surroundSpeed = 0.12; e.reverbType = .room; e.reverbMix = 12
             },
-            make("concert", "演唱会", "大型场馆的空间感", "music.note.house.fill") { e in
+            make("concert", String(localized: "演唱会"), String(localized: "大型场馆的空间感"), "music.note.house.fill") { e in
                 e.reverbType = .largeHall; e.reverbMix = 32; e.bass = 3; e.vocal = 1; e.surround = 0.15; e.surroundSpeed = 0.03
             },
-            make("ktv", "KTV", "包厢里的混响和回声", "music.quarternote.3") { e in
+            make("ktv", "KTV", String(localized: "包厢里的混响和回声"), "music.quarternote.3") { e in
                 e.reverbType = .plate; e.reverbMix = 26; e.echoMix = 18; e.echoTime = 0.18; e.vocal = 3
             },
-            make("studio", "录音棚", "紧凑、干净，适合细听", "slider.horizontal.3") { e in
+            make("studio", String(localized: "录音棚"), String(localized: "紧凑、干净，适合细听"), "slider.horizontal.3") { e in
                 e.reverbType = .studio; e.reverbMix = 8; e.loudness = true; e.bass = 1; e.treble = 2
             },
-            make("vinyl", "黑胶唱机", "温暖的中频和细微底噪", "opticaldisc") { e in
+            make("vinyl", String(localized: "黑胶唱机"), String(localized: "温暖的中频和细微底噪"), "opticaldisc") { e in
                 e.treble = -5; e.bass = 2; e.vocal = 1; e.vinylNoise = 0.6; e.reverbType = .room; e.reverbMix = 6
             },
-            make("lofi", "Lo-Fi", "复古、放松，慢一点", "cup.and.saucer.fill") { e in
+            make("lofi", "Lo-Fi", String(localized: "复古、放松，慢一点"), "cup.and.saucer.fill") { e in
                 e.treble = -8; e.bass = 3; e.vinylNoise = 0.35; e.rate = 0.92; e.pitch = -1.4; e.reverbType = .room; e.reverbMix = 10
             },
-            make("edm", "电音舞曲", "低音和高音都推上去，带点回声", "bolt.fill") { e in
+            make("edm", String(localized: "电音舞曲"), String(localized: "低音和高音都推上去，带点回声"), "bolt.fill") { e in
                 e.bass = 7; e.treble = 5; e.vocal = -1; e.echoMix = 14; e.echoTime = 0.24; e.surround = 0.25; e.surroundSpeed = 0.25; e.loudness = true
             },
-            make("night", "夜间轻柔", "压住突然的大声，小音量也听得清", "moon.stars.fill") { e in
+            make("night", String(localized: "夜间轻柔"), String(localized: "压住突然的大声，小音量也听得清"), "moon.stars.fill") { e in
                 e.loudness = true; e.treble = -3; e.bass = -1; e.vocal = 2
             },
         ]

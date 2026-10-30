@@ -50,6 +50,7 @@ final class AmplayerUITests: XCTestCase {
     /// 本机文件：播放、暂停、继续、下一首、停止
     func testTransportControls() {
         app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         waitForState("播放中")
         app.buttons["暂停"].tap()
@@ -67,6 +68,7 @@ final class AmplayerUITests: XCTestCase {
     /// 均衡器预设与开关
     func testEqualizerPreset() {
         app.launchArguments = ["-AmplayerReset", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         app.buttons["预设"].tap()
         pickEQPreset("Rock")
@@ -81,6 +83,7 @@ final class AmplayerUITests: XCTestCase {
     /// 通过表单添加 WebDAV 来源 → 测试连接 → 保存 → 浏览 → 点歌播放
     func testAddWebDAVSourceAndPlay() {
         app.launchArguments = ["-AmplayerReset", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         app.buttons["菜单"].tap()
         tapWhenReady(app.buttons["menu.音乐来源"])
@@ -138,6 +141,7 @@ final class AmplayerUITests: XCTestCase {
     /// 皮肤列表可打开并切换回内置皮肤
     func testSkinsSheet() {
         app.launchArguments = ["-AmplayerReset", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         app.buttons["菜单"].tap()
         // 侧边菜单较长，“皮肤”可能在第一屏以外
@@ -154,6 +158,7 @@ final class AmplayerUITests: XCTestCase {
     /// 点歌名直接播放；长按进入多选后点歌名是勾选
     func testPlaylistTapPlaysAndMultiSelect() {
         app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES", "-amplayer.showPL", "YES", "-amplayer.showLyrics", "NO"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         waitForState("播放中")
         let row3 = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "3. ")).firstMatch
@@ -181,6 +186,7 @@ final class AmplayerUITests: XCTestCase {
     /// 长按菜单“移动 › 移到最前”；清空列表后歌词面板不再显示旧歌词
     func testPlaylistMoveAndClear() {
         app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES", "-amplayer.showPL", "YES", "-amplayer.showLyrics", "NO"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         waitForState("播放中")
         let third = row("3. ")
@@ -202,6 +208,7 @@ final class AmplayerUITests: XCTestCase {
     /// 侧边菜单：定时关闭显示倒计时，取消后恢复“关”
     func testSleepTimer() {
         app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         waitForState("播放中")
         app.buttons["菜单"].tap()
@@ -218,6 +225,7 @@ final class AmplayerUITests: XCTestCase {
     /// 均衡器 AUTO 能打开和关闭
     func testEqualizerAuto() {
         app.launchArguments = ["-AmplayerReset", "YES", "-amplayer.showEQ", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         let auto = app.buttons["均衡器自动：关"]
         tapWhenReady(auto)
@@ -229,6 +237,7 @@ final class AmplayerUITests: XCTestCase {
     /// 扫描本机文件进曲库时读标签：艺术家页能看到 m4a 标签里的“测试艺术家”
     func testLibraryScanReadsTags() {
         app.launchArguments = ["-AmplayerReset", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         app.buttons["菜单"].tap()
         tapWhenReady(app.buttons["menu.音乐来源"])
@@ -247,6 +256,7 @@ final class AmplayerUITests: XCTestCase {
     /// 音效面板：选一个预设，侧边菜单里显示它的名字
     func testSoundEffectsPreset() {
         app.launchArguments = ["-AmplayerReset", "YES", "-AmplayerDemoPlay", "YES"]
+        app.launchArguments += ["-AppleLanguages", "(zh-Hans)", "-AppleLocale", "zh_CN"]
         app.launch()
         waitForState("播放中")
         app.buttons["菜单"].tap()

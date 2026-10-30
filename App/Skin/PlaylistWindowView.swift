@@ -43,9 +43,9 @@ struct PlaylistWindowView: View {
             Button("保存") {
                 do {
                     try app.library.savePlaylist(player.queue.tracks, name: playlistName)
-                    app.show("已保存到 文件 › Amplayer › Playlists")
+                    app.show(String(localized: "已保存到 文件 › Amplayer › Playlists"))
                 } catch {
-                    app.show("保存失败：\(error.localizedDescription)")
+                    app.show(String(localized: "保存失败：\(error.localizedDescription)"))
                 }
             }
             Button("取消", role: .cancel) {}
@@ -85,7 +85,7 @@ struct PlaylistWindowView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     app.showLyrics.toggle()
-                    app.show(app.showLyrics ? "歌词" : "播放列表")
+                    app.show(app.showLyrics ? String(localized: "歌词") : String(localized: "播放列表"))
                 }
                 .at(25, 0)
                 .accessibilityLabel(app.showLyrics ? "切换到播放列表" : "切换到歌词")
@@ -338,7 +338,7 @@ struct PlaylistWindowView: View {
                 .at(101, y)
             Menu {
                 Button("保存播放列表…", systemImage: "square.and.arrow.down") {
-                    playlistName = player.current?.album ?? "我的播放列表"
+                    playlistName = player.current?.album ?? String(localized: "我的播放列表")
                     isSaving = true
                 }
                 .disabled(player.queue.isEmpty)
@@ -365,12 +365,12 @@ struct PlaylistWindowView: View {
 
     private var miniTransport: some View {
         HStack(spacing: 0) {
-            mini("列表·上一首") { player.previous() }
-            mini("列表·播放") { player.play() }
-            mini("列表·暂停") { player.togglePause() }
-            mini("列表·停止") { player.stop() }
-            mini("列表·下一首") { player.next() }
-            mini("列表·打开文件") { app.isImportingFiles = true }
+            mini(String(localized: "列表·上一首")) { player.previous() }
+            mini(String(localized: "列表·播放")) { player.play() }
+            mini(String(localized: "列表·暂停")) { player.togglePause() }
+            mini(String(localized: "列表·停止")) { player.stop() }
+            mini(String(localized: "列表·下一首")) { player.next() }
+            mini(String(localized: "列表·打开文件")) { app.isImportingFiles = true }
         }
     }
 
@@ -411,7 +411,7 @@ struct PlaylistWindowView: View {
         }
         player.remove(at: dupes)
         app.endSelection()
-        app.show(dupes.isEmpty ? "没有重复项" : "已删除 \(dupes.count) 个重复项")
+        app.show(dupes.isEmpty ? String(localized: "没有重复项") : String(localized: "已删除 \(dupes.count) 个重复项"))
     }
 
     private func sort(_ key: PlayerController.SortKey) {
@@ -422,14 +422,14 @@ struct PlaylistWindowView: View {
     private func makeOffline(_ tracks: [Track]) {
         let sources = app.sources
         let cache = player.cache
-        app.show("开始离线下载 \(tracks.count) 首")
+        app.show(String(localized: "开始离线下载 \(tracks.count) 首"))
         Task {
             var failed = 0
             for t in tracks {
                 guard let source = sources.source(t.sourceID) else { failed += 1; continue }
                 do { try await cache.makeOffline(t, source: source) } catch { failed += 1 }
             }
-            app.show(failed == 0 ? "离线下载完成" : "\(failed) 首下载失败")
+            app.show(failed == 0 ? String(localized: "离线下载完成") : String(localized: "\(failed) 首下载失败"))
         }
     }
 }

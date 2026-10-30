@@ -43,7 +43,7 @@ struct LyricsSearchView: View {
             .sheet(item: $preview) { r in
                 LyricsPreview(result: r) { text in
                     if app.player.setLyrics(text) {
-                        app.show("已使用这份歌词")
+                        app.show(String(localized: "已使用这份歌词"))
                         app.showLyrics = true
                         app.showPlaylist = true
                     }
@@ -94,7 +94,7 @@ struct LyricsSearchView: View {
                 .map(\.element)
             error = nil
         } catch {
-            self.error = "搜索失败：\(error.localizedDescription)"
+            self.error = String(localized: "搜索失败：\(error.localizedDescription)")
         }
     }
 }
@@ -111,7 +111,7 @@ private struct LyricsPreview: View {
             ScrollView {
                 if let loaded {
                     let lines = Lyrics.parse(loaded.text ?? "")?.lines.map(\.text) ?? []
-                    Text(lines.isEmpty ? (loaded.isInstrumental ? "（纯音乐）" : "（没有歌词内容）") : lines.joined(separator: "\n"))
+                    Text(lines.isEmpty ? (loaded.isInstrumental ? String(localized: "（纯音乐）") : String(localized: "（没有歌词内容）")) : lines.joined(separator: "\n"))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding()
                 } else if failed {

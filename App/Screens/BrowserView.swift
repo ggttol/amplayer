@@ -62,7 +62,7 @@ struct BrowserView: View {
                         Task { await addFolder(SourceItem(path: path, name: target.title, kind: .directory), play: true) }
                     }
                     Button("扫描到曲库", systemImage: "square.and.arrow.down.on.square") {
-                        if let source { app.library.scan(source, path: path); app.show("开始扫描") }
+                        if let source { app.library.scan(source, path: path); app.show(String(localized: "开始扫描")) }
                     }
                 } label: {
                     if collecting { ProgressView() } else { Image(systemName: "ellipsis.circle") }
@@ -101,10 +101,10 @@ struct BrowserView: View {
         Button("离线下载", systemImage: "arrow.down.circle") {
             let track = item.makeTrack(sourceID: target.sourceID)
             guard let source else { return }
-            app.show("开始下载")
+            app.show(String(localized: "开始下载"))
             Task {
-                do { try await app.player.cache.makeOffline(track, source: source); app.show("下载完成") }
-                catch { app.show("下载失败：\(error.localizedDescription)") }
+                do { try await app.player.cache.makeOffline(track, source: source); app.show(String(localized: "下载完成")) }
+                catch { app.show(String(localized: "下载失败：\(error.localizedDescription)")) }
             }
         }
     }
@@ -113,12 +113,12 @@ struct BrowserView: View {
         Button("播放整个文件夹", systemImage: "play.fill") { Task { await addFolder(item, play: true) } }
         Button("加入播放列表", systemImage: "text.badge.plus") { Task { await addFolder(item, play: false) } }
         Button("扫描到曲库", systemImage: "square.and.arrow.down.on.square") {
-            if let source { app.library.scan(source, path: item.path); app.show("开始扫描 \(item.name)") }
+            if let source { app.library.scan(source, path: item.path); app.show(String(localized: "开始扫描 \(item.name)")) }
         }
     }
 
     private func load() async {
-        guard let source else { error = "来源不存在"; loading = false; return }
+        guard let source else { error = String(localized: "来源不存在"); loading = false; return }
         loading = items.isEmpty
         do {
             items = try await source.list(path: path).sortedForBrowsing()
@@ -148,7 +148,7 @@ struct BrowserView: View {
 
     private func enqueue(_ items: [SourceItem]) {
         app.player.enqueue(items.map { $0.makeTrack(sourceID: target.sourceID) }, playIfIdle: false)
-        app.show("已加入 \(items.count) 首")
+        app.show(String(localized: "已加入 \(items.count) 首"))
     }
 
     private func addFolder(_ item: SourceItem, play: Bool) async {
@@ -157,17 +157,17 @@ struct BrowserView: View {
         defer { collecting = false }
         do {
             let tracks = try await source.collectTracks(path: item.path)
-            guard !tracks.isEmpty else { app.show("没有找到音乐"); return }
+            guard !tracks.isEmpty else { app.show(String(localized: "没有找到音乐")); return }
             if play {
                 app.player.setQueue(tracks, startAt: 0)
                 app.endSelection()
                 app.sheet = nil
             } else {
                 app.player.enqueue(tracks)
-                app.show("已加入 \(tracks.count) 首")
+                app.show(String(localized: "已加入 \(tracks.count) 首"))
             }
         } catch {
-            app.show("读取失败：\(error.localizedDescription)")
+            app.show(String(localized: "读取失败：\(error.localizedDescription)"))
         }
     }
 }

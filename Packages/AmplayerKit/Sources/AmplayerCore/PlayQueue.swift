@@ -5,9 +5,9 @@ public enum RepeatMode: String, Codable, Sendable, CaseIterable {
 
     public var title: String {
         switch self {
-        case .off: "顺序播放"
-        case .all: "列表循环"
-        case .one: "单曲循环"
+        case .off: String(localized: "顺序播放")
+        case .all: String(localized: "列表循环")
+        case .one: String(localized: "单曲循环")
         }
     }
 }

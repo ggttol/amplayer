@@ -7,14 +7,14 @@ public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
 
     public var title: String {
         switch self {
-        case .local: "本机文件"
+        case .local: String(localized: "本机文件")
         case .webdav: "WebDAV / Alist / OpenList"
-        case .smb: "SMB 共享"
+        case .smb: String(localized: "SMB 共享")
         case .subsonic: "Subsonic / Navidrome"
         case .jellyfin: "Jellyfin"
         case .emby: "Emby"
-        case .synology: "群晖 Audio Station"
-        case .dlna: "UPnP / DLNA 媒体服务器"
+        case .synology: String(localized: "群晖 Audio Station")
+        case .dlna: String(localized: "UPnP / DLNA 媒体服务器")
         }
     }
 
@@ -36,12 +36,12 @@ public enum SourceKind: String, Codable, CaseIterable, Sendable, Identifiable {
 
     public var urlPlaceholder: String {
         switch self {
-        case .webdav: "https://nas.local:5006/music 或 http://alist:5244/dav"
+        case .webdav: String(localized: "https://nas.local:5006/music 或 http://alist:5244/dav")
         case .smb: "smb://192.168.1.10/Music"
         case .subsonic: "https://music.example.com"
         case .jellyfin: "http://192.168.1.10:8096"
         case .emby: "http://192.168.1.10:8096/emby"
-        case .synology: "https://192.168.1.10:5001 或 QuickConnect ID"
+        case .synology: String(localized: "https://192.168.1.10:5001 或 QuickConnect ID")
         case .dlna: "http://192.168.1.10:8200/rootDesc.xml"
         default: ""
         }
@@ -68,7 +68,7 @@ public struct SourceConfig: Codable, Identifiable, Hashable, Sendable {
     }
 
     public static let localID = "local"
-    public static let local = SourceConfig(id: localID, kind: .local, name: "本机文件")
+    public static let local = SourceConfig(id: localID, kind: .local, name: String(localized: "本机文件"))
 
     /// 去掉末尾斜杠的基础 URL
     public func baseURL() throws -> URL {

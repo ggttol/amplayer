@@ -28,7 +28,7 @@ struct SourcesView: View {
                     ForEach(app.sources.configs) { config in
                         NavigationLink(value: BrowseTarget(sourceID: config.id, path: nil, title: config.name)) {
                             SourceRow(kind: config.kind, title: config.name,
-                                      detail: config.kind == .local ? "“文件”App › Amplayer" : (config.url.isEmpty ? config.kind.title : config.url))
+                                      detail: config.kind == .local ? String(localized: "“文件”App › Amplayer") : (config.url.isEmpty ? config.kind.title : config.url))
                         }
                         .swipeActions {
                             if config.id != SourceConfig.localID {
@@ -47,7 +47,7 @@ struct SourcesView: View {
                             Button("扫描到曲库", systemImage: "square.and.arrow.down.on.square") {
                                 if let s = app.sources.source(config.id) {
                                     app.library.scan(s, path: s.rootPath)
-                                    app.show("开始扫描 \(config.name)")
+                                    app.show(String(localized: "开始扫描 \(config.name)"))
                                 }
                             }
                         }
@@ -169,9 +169,9 @@ struct AddSourceView: View {
     let onPick: (SourceConfig) -> Void
 
     private let groups: [(title: String, detail: String, kinds: [SourceKind])] = [
-        ("NAS 与网盘", "家里 NAS 上的音乐文件夹，或者通过 Alist / OpenList 接入的网盘", [.synology, .smb, .webdav]),
-        ("音乐服务器", "按艺术家、专辑浏览，带封面和歌词", [.subsonic, .jellyfin, .emby]),
-        ("局域网媒体", "电视盒子、路由器、NAS 自带的媒体服务，不用账号", [.dlna]),
+        (String(localized: "NAS 与网盘"), String(localized: "家里 NAS 上的音乐文件夹，或者通过 Alist / OpenList 接入的网盘"), [.synology, .smb, .webdav]),
+        (String(localized: "音乐服务器"), String(localized: "按艺术家、专辑浏览，带封面和歌词"), [.subsonic, .jellyfin, .emby]),
+        (String(localized: "局域网媒体"), String(localized: "电视盒子、路由器、NAS 自带的媒体服务，不用账号"), [.dlna]),
     ]
     private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
 
@@ -180,7 +180,7 @@ struct AddSourceView: View {
             VStack(alignment: .leading, spacing: 26) {
                 if !discovered.isEmpty {
                     VStack(alignment: .leading, spacing: 10) {
-                        heading("在局域网中发现", "点一下，填上账号就能用")
+                        heading(String(localized: "在局域网中发现"), String(localized: "点一下，填上账号就能用"))
                         ForEach(discovered) { found in
                             Button {
                                 onPick(SourceConfig(kind: found.kind, name: found.name, url: found.url))
@@ -308,9 +308,9 @@ extension SourceKind {
     var cardTitle: String {
         switch self {
         case .webdav: "WebDAV / Alist"
-        case .smb: "SMB 共享"
+        case .smb: String(localized: "SMB 共享")
         case .subsonic: "Navidrome"
-        case .synology: "群晖 NAS"
+        case .synology: String(localized: "群晖 NAS")
         case .dlna: "DLNA / UPnP"
         default: title
         }
@@ -318,14 +318,14 @@ extension SourceKind {
 
     var blurb: String {
         switch self {
-        case .local: "“文件”App 里的音乐"
-        case .synology: "支持 QuickConnect，在外也能连"
-        case .smb: "电脑共享文件夹、各品牌 NAS"
-        case .webdav: "Alist / OpenList 网盘、NAS WebDAV"
-        case .subsonic: "Subsonic、Airsonic、Gonic 等"
-        case .jellyfin: "Jellyfin 里的音乐库"
-        case .emby: "Emby 里的音乐库"
-        case .dlna: "自动发现，免登录"
+        case .local: String(localized: "“文件”App 里的音乐")
+        case .synology: String(localized: "支持 QuickConnect，在外也能连")
+        case .smb: String(localized: "电脑共享文件夹、各品牌 NAS")
+        case .webdav: String(localized: "Alist / OpenList 网盘、NAS WebDAV")
+        case .subsonic: String(localized: "Subsonic、Airsonic、Gonic 等")
+        case .jellyfin: String(localized: "Jellyfin 里的音乐库")
+        case .emby: String(localized: "Emby 里的音乐库")
+        case .dlna: String(localized: "自动发现，免登录")
         }
     }
 }
@@ -424,13 +424,13 @@ struct SourceEditorView: View {
 
     private var hint: String {
         switch config.kind {
-        case .webdav: "Alist / OpenList 的地址形如 http://IP:5244/dav；群晖 WebDAV Server 默认端口 5005（HTTP）/ 5006（HTTPS）。"
-        case .smb: "可写成 smb://IP 浏览全部共享，或 smb://IP/共享名 直接进入。"
-        case .subsonic: "Navidrome、Airsonic、Gonic、Ampache 等，填服务器根地址。"
-        case .jellyfin: "填 Jellyfin 服务器地址，例如 http://IP:8096。"
-        case .emby: "填 Emby 服务器地址，部分安装需要带 /emby 后缀。"
-        case .synology: "填 DSM 地址（例如 https://IP:5001、DDNS 域名），或直接填 QuickConnect ID，会自动选择局域网或外网线路。可浏览所有共享文件夹；装了 Audio Station 并建好索引时，还会显示专辑与播放列表。不支持开启了两步验证的账号。"
-        case .dlna: "填媒体服务器的设备描述地址；一般在上方“局域网”里自动发现即可。"
+        case .webdav: String(localized: "Alist / OpenList 的地址形如 http://IP:5244/dav；群晖 WebDAV Server 默认端口 5005（HTTP）/ 5006（HTTPS）。")
+        case .smb: String(localized: "可写成 smb://IP 浏览全部共享，或 smb://IP/共享名 直接进入。")
+        case .subsonic: String(localized: "Navidrome、Airsonic、Gonic、Ampache 等，填服务器根地址。")
+        case .jellyfin: String(localized: "填 Jellyfin 服务器地址，例如 http://IP:8096。")
+        case .emby: String(localized: "填 Emby 服务器地址，部分安装需要带 /emby 后缀。")
+        case .synology: String(localized: "填 DSM 地址（例如 https://IP:5001、DDNS 域名），或直接填 QuickConnect ID，会自动选择局域网或外网线路。可浏览所有共享文件夹；装了 Audio Station 并建好索引时，还会显示专辑与播放列表。不支持开启了两步验证的账号。")
+        case .dlna: String(localized: "填媒体服务器的设备描述地址；一般在上方“局域网”里自动发现即可。")
         case .local: ""
         }
     }
@@ -445,9 +445,9 @@ struct SourceEditorView: View {
             try await source.testConnection()
             let items = try await source.list(path: source.rootPath)
             testOK = true
-            testResult = "连接成功，根目录有 \(items.count) 项"
+            testResult = String(localized: "连接成功，根目录有 \(items.count) 项")
             if let syno = source as? SynologySource, syno.quickConnectID != nil, let address = try? await syno.connectedAddress() {
-                testResult! += "\n经 QuickConnect 连接到 \(address.host ?? "")"
+                testResult! += String(localized: "\n经 QuickConnect 连接到 \(address.host ?? "")")
             }
         } catch {
             testOK = false

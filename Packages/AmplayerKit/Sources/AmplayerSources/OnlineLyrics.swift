@@ -10,9 +10,9 @@ public struct OnlineLyrics: Sendable {
         public var name: String {
             switch self {
             case .lrclib: "LRCLIB"
-            case .netease: "网易云音乐"
-            case .qq: "QQ 音乐"
-            case .kugou: "酷狗"
+            case .netease: String(localized: "网易云音乐")
+            case .qq: String(localized: "QQ 音乐")
+            case .kugou: String(localized: "酷狗")
             }
         }
     }
@@ -133,7 +133,7 @@ public struct OnlineLyrics: Sendable {
         r.isLoaded = true
         if let text = text?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty, let parsed = Lyrics.parse(text) {
             // 纯音乐各家会放一句“纯音乐，请欣赏”
-            if parsed.lines.count <= 2, parsed.lines.contains(where: { $0.text.contains("纯音乐") }) {
+            if parsed.lines.count <= 2, parsed.lines.contains(where: { $0.text.contains(String(localized: "纯音乐")) }) {
                 r.isInstrumental = true
             } else if parsed.isSynced {
                 r.synced = text
