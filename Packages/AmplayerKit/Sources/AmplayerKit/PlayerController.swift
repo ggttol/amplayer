@@ -121,6 +121,7 @@ public final class PlayerController {
         }
         perTrackEQ = Storage.load([String: EqualizerSettings].self, from: "eq-per-track.json") ?? [:]
         audio.onFinished = { [weak self] in self?.trackFinished() }
+        audio.onFailed = { [weak self] reason in self?.playbackInterrupted(reason) }
         audio.onAdvancedToNext = { [weak self] url in self?.advancedGaplessly(to: url) }
         audio.onStateChangedExternally = { [weak self] in self?.updateNowPlaying() }
         setupRemoteCommands()
@@ -226,6 +227,16 @@ public final class PlayerController {
         audio.pause()
         updateNowPlaying()
         savePosition()
+    }
+
+    /// 边下边播断了：记下位置、提示，按播放从断开的地方接着放（不自动跳到下一首）
+    private func playbackInterrupted(_ reason: String) {
+        guard let track = current else { return }
+        let at = audio.currentTime
+        audio.unload()
+        pendingResume = ResumePoint(trackID: track.id, time: at)
+        lastError = "\(track.displayName)：" + String(localized: "播放中断（\(reason)），按播放从断开的地方继续")
+        updateNowPlaying()
     }
 
     public func togglePause() {
@@ -392,9 +403,13 @@ public final class PlayerController {
         for step in stride(from: 1.0, through: 0.0, by: -0.05) {
             audio.volume = original * Float(step)
             try? await Task.sleep(for: .milliseconds(250))
+            // 淡出途中取消或改了定时：恢复音量，不暂停，也不动新的定时状态
+            if Task.isCancelled { audio.volume = original; return }
         }
-        pause()
+        // 先停声音再恢复音量，然后再记状态：存下来的是原来的音量，不是淡出到 0 的
+        audio.pause()
         audio.volume = original
+        pause()
         sleepDeadline = nil
         PlaybackLog.add(String(localized: "定时关闭：已暂停"))
     }

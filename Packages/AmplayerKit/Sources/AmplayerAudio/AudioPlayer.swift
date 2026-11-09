@@ -27,6 +27,8 @@ public final class AudioPlayer {
     public private(set) var info: FileInfo?
     /// 当前文件自然播完时回调（不包括 stop 和跳转）
     @ObservationIgnored public var onFinished: (() -> Void)?
+    /// 边下边播读到一半出错（断网等）：停在出错的位置，原因交给上层
+    @ObservationIgnored public var onFailed: ((String) -> Void)?
     /// 无缝衔接：预先排好的下一首开始播放时回调（参数是它的文件地址）
     @ObservationIgnored public var onAdvancedToNext: ((URL) -> Void)?
     /// 系统打断（来电等）或耳机拔出导致暂停/恢复时回调
@@ -245,7 +247,7 @@ public final class AudioPlayer {
         generation += 1
         let token = generation
         playerNode.scheduleSegment(
-            file, startingFrame: 0, frameCount: AVAudioFrameCount(file.length), at: nil,
+            file, startingFrame: 0, frameCount: AVAudioFrameCount(clamping: file.length), at: nil,
             completionCallbackType: .dataPlayedBack,
             completionHandler: Self.makeCompletion(self, token: token)
         )
@@ -336,7 +338,11 @@ public final class AudioPlayer {
         stopNode()
         schedule(from: frame)
         pausedTime = clamped
-        if wasPlaying { playerNode.play() }
+        if wasPlaying {
+            // 切换输出设备的空档引擎可能刚停：没在跑时直接 play() 会抛异常闪退
+            if !engine.isRunning { try? engine.start() }
+            if engine.isRunning { playerNode.play() }
+        }
     }
 
     /// 当前播放位置（秒）。UI 定时读取，不参与 Observation。
@@ -375,7 +381,7 @@ public final class AudioPlayer {
         switch source {
         case .file(let file):
             playerNode.scheduleSegment(
-                file, startingFrame: frame, frameCount: AVAudioFrameCount(remaining), at: nil,
+                file, startingFrame: frame, frameCount: AVAudioFrameCount(clamping: remaining), at: nil,
                 completionCallbackType: .dataPlayedBack,
                 completionHandler: Self.makeCompletion(self, token: token)
             )
@@ -384,9 +390,9 @@ public final class AudioPlayer {
         }
     }
 
-    private nonisolated static func makeStreamCompletion(_ player: AudioPlayer) -> @Sendable (Int) -> Void {
-        { [weak player] token in
-            Task { @MainActor in player?.segmentFinished(token) }
+    private nonisolated static func makeStreamCompletion(_ player: AudioPlayer) -> @Sendable (Int, String?) -> Void {
+        { [weak player] token, failure in
+            Task { @MainActor in player?.segmentFinished(token, failure: failure) }
         }
     }
 
@@ -402,8 +408,18 @@ public final class AudioPlayer {
         }
     }
 
-    private func segmentFinished(_ token: Int) {
+    private func segmentFinished(_ token: Int, failure: String? = nil) {
         guard token == currentToken else { return }
+        if let failure {
+            // 读到一半出错：停在出错的位置，交给上层提示、重试
+            let at = lastObservedTime
+            stopNode()
+            pausedTime = at
+            state = .stopped
+            PlaybackLog.add(String(localized: "播放中断：\(failure)"))
+            onFailed?(failure)
+            return
+        }
         guard state == .playing else {
             PlaybackLog.add(String(localized: "曲目播完但当前不是播放状态（\(state)），不自动下一首"))
             return
@@ -526,8 +542,8 @@ public final class AudioPlayer {
         fadeTailGain = gainAdjustment
         fadeLevel = playerLevel
         applyEqualizer()
-        fadeNode.scheduleSegment(file, startingFrame: start, frameCount: AVAudioFrameCount(remaining), at: nil)
-        fadeNode.play()
+        fadeNode.scheduleSegment(file, startingFrame: start, frameCount: AVAudioFrameCount(clamping: remaining), at: nil)
+        if engine.isRunning { fadeNode.play() }
         fadeOutTimer = ramp(from: fadeLevel, to: 0, over: duration, set: { [weak self] in self?.fadeLevel = $0 }) { [weak self] in
             guard let self else { return }
             self.fadeNode.stop()

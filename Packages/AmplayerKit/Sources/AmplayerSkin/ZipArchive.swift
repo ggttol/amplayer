@@ -67,6 +67,8 @@ public struct ZipArchive: Sendable {
         }
     }
 
+    private static let maxEntrySize = 32 * 1024 * 1024
+
     public func data(for entry: Entry) throws -> Data {
         let o = entry.localHeaderOffset
         guard o + 30 <= bytes.count, Self.u32(bytes, o) == 0x04034B50 else { throw ZipError.corrupt }
@@ -77,6 +79,8 @@ public struct ZipArchive: Sendable {
         case 0:
             return Data(bytes[start..<end])
         case 8:
+            // 皮肤里的单个文件不会超过 32 MB：头里谎报几 GB 的（恶意或损坏的包）直接拒绝，不按它分配内存
+            guard entry.uncompressedSize <= Self.maxEntrySize else { throw ZipError.corrupt }
             let capacity = max(entry.uncompressedSize, 1)
             var output = [UInt8](repeating: 0, count: capacity)
             let written = bytes.withUnsafeBufferPointer { src in

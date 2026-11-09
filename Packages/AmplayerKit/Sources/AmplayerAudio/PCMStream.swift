@@ -110,15 +110,17 @@ final class BufferScheduler: @unchecked Sendable {
     private var outstandingFrames: AVAudioFramePosition = 0
     private var targetFrames: AVAudioFramePosition = 0
     private var reachedEnd = false
-    private var onFinished: (@Sendable (Int) -> Void)?
+    /// 读到一半出错的原因（断网、解码失败）；nil 表示正常读完
+    private var failure: String?
+    private var onFinished: (@Sendable (Int, String?) -> Void)?
 
     init(node: AVAudioPlayerNode, stream: PCMStream) {
         self.node = node
         self.stream = stream
     }
 
-    /// 从 frame 开始排缓冲区；token 用来识别过期回调；结束时回调 onFinished(token)
-    func start(from frame: AVAudioFramePosition, token: Int, onFinished: @escaping @Sendable (Int) -> Void) {
+    /// 从 frame 开始排缓冲区；token 用来识别过期回调；结束时回调 onFinished(token, 出错原因)
+    func start(from frame: AVAudioFramePosition, token: Int, onFinished: @escaping @Sendable (Int, String?) -> Void) {
         let epoch = stream.readEpoch
         let work: @Sendable () -> Void = { [self] in
             stream.resumeReading(epoch: epoch)
@@ -126,6 +128,7 @@ final class BufferScheduler: @unchecked Sendable {
             self.outstanding = 0
             self.outstandingFrames = 0
             self.reachedEnd = false
+            self.failure = nil
             self.onFinished = onFinished
             self.targetFrames = Self.aheadFrames(sampleRate: stream.format.sampleRate)
             try? stream.seek(to: frame)
@@ -160,7 +163,13 @@ final class BufferScheduler: @unchecked Sendable {
     private func fill() {
         while !reachedEnd && outstandingFrames < targetFrames {
             guard let buffer = AVAudioPCMBuffer(pcmFormat: stream.format, frameCapacity: framesPerBuffer) else { break }
-            let frames = (try? stream.read(into: buffer)) ?? 0
+            let frames: Int
+            do { frames = try stream.read(into: buffer) } catch {
+                // 断网、解码出错：不能当成播完，记下原因交给播放器
+                failure = error.localizedDescription
+                reachedEnd = true
+                break
+            }
             guard frames > 0 else {
                 reachedEnd = true
                 break
@@ -184,7 +193,7 @@ final class BufferScheduler: @unchecked Sendable {
     private func finishIfDone() {
         if reachedEnd && outstanding == 0, let onFinished {
             self.onFinished = nil
-            onFinished(token)
+            onFinished(token, failure)
         }
     }
 }

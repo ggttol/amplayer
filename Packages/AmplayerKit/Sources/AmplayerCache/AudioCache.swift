@@ -165,14 +165,26 @@ public actor AudioCache {
     /// 离线下载：下载（或从缓存移动）到不会被淘汰的目录
     public func makeOffline(_ track: Track, source: any MediaSource) async throws {
         guard source.localURL(path: track.path) == nil, !isOffline(track) else { return }
+        // 正在边下边播：等它下完直接移过去，不重复下载
+        if let task = inFlight[track.id] { _ = try? await task.value }
         let name = fileName(for: track)
         let target = offlineDirectory.appendingPathComponent(name)
         let cached = cacheDirectory.appendingPathComponent(name)
-        if FileManager.default.fileExists(atPath: cached.path) {
-            try FileManager.default.moveItem(at: cached, to: target)
+        let fm = FileManager.default
+        if fm.fileExists(atPath: cached.path) {
+            try fm.moveItem(at: cached, to: target)
             return
         }
-        try await source.download(path: track.path, to: target)
+        // 先下到临时文件，下完再改名：中途失败不会留下半截文件被当成已下载
+        let staging = offlineDirectory.appendingPathComponent("dl-\(UUID().uuidString.prefix(8))-\(name)")
+        do {
+            try await source.download(path: track.path, to: staging)
+            if fm.fileExists(atPath: target.path) { try? fm.removeItem(at: target) }
+            try fm.moveItem(at: staging, to: target)
+        } catch {
+            try? fm.removeItem(at: staging)
+            throw error
+        }
     }
 
     public func removeOffline(_ track: Track) {

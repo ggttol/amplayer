@@ -147,7 +147,7 @@ public struct Lyrics: Sendable, Equatable {
     /// mm:ss、mm:ss.xx、mm:ss:xx
     static func timestamp(_ tag: Substring) -> TimeInterval? {
         let parts = tag.split(separator: ":", omittingEmptySubsequences: false)
-        guard parts.count == 2 || parts.count == 3, let minutes = Int(parts[0].trimmingCharacters(in: .whitespaces)), minutes >= 0 else { return nil }
+        guard parts.count == 2 || parts.count == 3, let minutes = Int(parts[0].trimmingCharacters(in: .whitespaces)), minutes >= 0, minutes < 100_000 else { return nil }
         let secondsText = parts.count == 3 ? "\(parts[1]).\(parts[2])" : String(parts[1])
         guard let seconds = Double(secondsText.trimmingCharacters(in: .whitespaces)), seconds >= 0, seconds < 60 else { return nil }
         return TimeInterval(minutes * 60) + seconds

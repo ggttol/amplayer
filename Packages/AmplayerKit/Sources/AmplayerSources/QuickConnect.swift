@@ -99,7 +99,8 @@ public actor QuickConnectResolver {
     }
 
     private func serv(_ host: String, command: String, id: String) async throws -> [String: Any] {
-        var request = URLRequest(url: URL(string: "https://\(host)/Serv.php")!)
+        guard let url = URL(string: "https://\(host)/Serv.php") else { throw SourceError.protocolError(String(localized: "QuickConnect 返回的地址不对：\(host)")) }
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")

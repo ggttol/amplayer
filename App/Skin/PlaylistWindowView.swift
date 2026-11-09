@@ -327,11 +327,12 @@ struct PlaylistWindowView: View {
                 Button("反转顺序") { player.reverse(); app.endSelection() }
                 Button("随机打乱") { player.randomize(); app.endSelection() }
                 Button("离线下载所选") {
-                    makeOffline(app.selection.sorted().map { player.queue.tracks[$0] })
+                    makeOffline(app.selection.sorted().filter { player.queue.tracks.indices.contains($0) }.map { player.queue.tracks[$0] })
                 }
                 .disabled(app.selection.isEmpty)
                 Button("曲目信息") {
-                    if let first = app.selection.min() ?? player.queue.currentIndex { infoTrack = player.queue.tracks[first] }
+                    if let first = app.selection.filter({ player.queue.tracks.indices.contains($0) }).min() ?? player.queue.currentIndex,
+                       player.queue.tracks.indices.contains(first) { infoTrack = player.queue.tracks[first] }
                 }
             } label: { hitArea }
                 .accessibilityLabel("更多操作")

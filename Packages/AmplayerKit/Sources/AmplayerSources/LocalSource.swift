@@ -49,6 +49,10 @@ public struct LocalSource: MediaSource {
 
     private func url(for path: String) -> URL {
         let trimmed = path.hasPrefix("/") ? String(path.dropFirst()) : path
-        return trimmed.isEmpty ? root : root.appendingPathComponent(trimmed)
+        guard !trimmed.isEmpty else { return root }
+        let url = root.appendingPathComponent(trimmed).standardizedFileURL
+        // 用 ../ 跑出音乐目录的路径一律不认（指向一个不存在的文件，读的时候报找不到）
+        let base = root.standardizedFileURL.path
+        return url.path == base || url.path.hasPrefix(base + "/") ? url : root.appendingPathComponent(".invalid-path")
     }
 }

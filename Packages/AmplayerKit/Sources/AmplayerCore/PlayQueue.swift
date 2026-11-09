@@ -67,27 +67,29 @@ public struct PlayQueue: Codable, Sendable, Equatable {
             // 原位置之前被删掉几首，就往前挪几位；指向原来排在它后面的那首
             let shift = offsets.filter { $0 < old }.count
             resumeIndex = tracks.isEmpty ? nil : min(old - shift, tracks.count - 1)
-        } else if let currentID {
-            currentIndex = tracks.firstIndex { $0.id == currentID }
+        } else if let old = currentIndex {
+            // 按位置算，不按 ID 找：队列里可能有同一首歌两次
+            currentIndex = old - offsets.filter { $0 < old }.count
         }
         rebuildOrder(keepCurrentFirst: true)
     }
 
     public mutating func move(from source: IndexSet, to destination: Int) {
-        let currentID = current?.id
-        let moving = source.sorted().map { tracks[$0] }
-        var rest: [Track] = []
+        let old = currentIndex
+        let moving = source.sorted()
+        var rest: [Int] = []
         var insertAt = destination
-        for (i, t) in tracks.enumerated() {
+        for i in tracks.indices {
             if source.contains(i) {
                 if i < destination { insertAt -= 1 }
             } else {
-                rest.append(t)
+                rest.append(i)
             }
         }
         rest.insert(contentsOf: moving, at: min(max(insertAt, 0), rest.count))
-        tracks = rest
-        if let currentID { currentIndex = tracks.firstIndex { $0.id == currentID } }
+        tracks = rest.map { tracks[$0] }
+        // 跟着原来的位置走，不按 ID 找：队列里可能有同一首歌两次
+        if let old { currentIndex = rest.firstIndex(of: old) }
         rebuildOrder(keepCurrentFirst: true)
     }
 
@@ -99,10 +101,7 @@ public struct PlayQueue: Codable, Sendable, Equatable {
     }
 
     public mutating func sort(by areInIncreasingOrder: (Track, Track) -> Bool) {
-        let currentID = current?.id
-        tracks.sort(by: areInIncreasingOrder)
-        if let currentID { currentIndex = tracks.firstIndex { $0.id == currentID } }
-        rebuildOrder(keepCurrentFirst: true)
+        sortPreservingCurrent { $0.sort { areInIncreasingOrder($0.element, $1.element) } }
     }
 
     public mutating func reverse() {
@@ -113,10 +112,13 @@ public struct PlayQueue: Codable, Sendable, Equatable {
         sortPreservingCurrent { $0.shuffle() }
     }
 
-    private mutating func sortPreservingCurrent(_ body: (inout [Track]) -> Void) {
-        let currentID = current?.id
-        body(&tracks)
-        if let currentID { currentIndex = tracks.firstIndex { $0.id == currentID } }
+    /// 排序、倒序、打乱：带着原位置一起排，当前这首按位置找回（队列里可能有同一首歌两次）
+    private mutating func sortPreservingCurrent(_ body: (inout [(offset: Int, element: Track)]) -> Void) {
+        let old = currentIndex
+        var pairs = Array(tracks.enumerated())
+        body(&pairs)
+        tracks = pairs.map(\.element)
+        if let old { currentIndex = pairs.firstIndex { $0.offset == old } }
         rebuildOrder(keepCurrentFirst: true)
     }
 
